@@ -526,7 +526,7 @@ def initialize_database():
             connection.execute(
                 """
                 UPDATE admin_users
-                SET username = ?, name = ?, password_hash = ?, is_active = TRUE
+                SET username = ?, name = ?, password_hash = ?, is_active = 1
                 WHERE id = ?
                 """,
                 (
