@@ -160,7 +160,7 @@ class PostgresConnection:
         )
         query = query.replace(
             "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP",
-            "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP::text",
         )
         query = query.replace("?", "%s")
 
