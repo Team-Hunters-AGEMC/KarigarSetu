@@ -34,6 +34,9 @@ from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 # Keep existing artisan sessions valid when the local development server restarts.
 _secret_path = Path(__file__).with_name(".flask_secret")
 if not os.environ.get("SECRET_KEY") and not _secret_path.exists():
