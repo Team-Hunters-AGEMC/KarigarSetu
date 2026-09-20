@@ -34,9 +34,6 @@ from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__)
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SECURE"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 # Keep existing artisan sessions valid when the local development server restarts.
 _secret_path = Path(__file__).with_name(".flask_secret")
 if not os.environ.get("SECRET_KEY") and not _secret_path.exists():
@@ -48,9 +45,7 @@ if not os.environ.get("SECRET_KEY") and not _secret_path.exists():
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or _secret_path.read_text().strip()
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = (
-    os.environ.get("FLASK_ENV") == "production"
-)
+app.config["SESSION_COOKIE_SECURE"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
 
 CORS(
@@ -513,18 +508,32 @@ def initialize_database():
             "SELECT id FROM admin_users WHERE email = ?",
             (admin_email,),
         ).fetchone()
+
         if existing_admin is None:
             connection.execute(
                 """
-                INSERT INTO admin_users (
-                    username, email, name, password_hash
-                ) VALUES (?, ?, ?, ?)
+                INSERT INTO admin_users (username, email, name, password_hash)
+                VALUES (?, ?, ?, ?)
                 """,
                 (
                     admin_email.split("@")[0],
                     admin_email,
                     admin_name,
                     generate_password_hash(admin_password),
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                UPDATE admin_users
+                SET username = ?, name = ?, password_hash = ?, is_active = TRUE
+                WHERE id = ?
+                """,
+                (
+                    admin_email.split("@")[0],
+                    admin_name,
+                    generate_password_hash(admin_password),
+                    existing_admin["id"],
                 ),
             )
 
