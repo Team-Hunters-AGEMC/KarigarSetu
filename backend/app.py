@@ -46,6 +46,7 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or _secret_path.read_tex
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_PARTITIONED"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
 
 CORS(
