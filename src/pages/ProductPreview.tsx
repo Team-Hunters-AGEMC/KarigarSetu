@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../services/apiConfig';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -15,7 +16,7 @@ import {
 import { getCurrentArtisan } from '../data/seedData';
 
 // All artisan requests share the Vite origin and its Flask proxy, including cookies.
-const API_BASE = '';
+
 
 export const ProductPreview: React.FC = () => {
   const navigate = useNavigate();

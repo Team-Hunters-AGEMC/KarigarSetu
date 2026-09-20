@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { API_BASE } from '../services/apiConfig';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -25,7 +26,7 @@ import { getStoredProducts, saveStoredProducts } from '../data/seedData';
 import { ProductItem, ProductStatus } from '../types';
 import { adminApi, AdminUser, AdminAuditLog, ArtisanApplication } from '../services/adminApi';
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
+
 
 type AdminViewType = 'review' | 'total' | 'auto_approved' | 'approved' | 'rejected' | 'reported' | 'audit_logs';
 

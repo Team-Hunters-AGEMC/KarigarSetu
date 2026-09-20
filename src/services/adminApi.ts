@@ -4,7 +4,7 @@
  * All requests include credentials (HttpOnly cookies).
  * Never relies on client-side state as proof of administrative authorization.
  */
-
+import { API_BASE } from './apiConfig';
 export interface AdminUser {
   id: number;
   name: string;
@@ -45,7 +45,7 @@ export interface ArtisanApplication {
   proof_image_1: string; proof_image_2: string; proof_video: string;
   verification_status: 'pending'|'approved'|'rejected'; review_note?: string; created_at: string;
 }
-const API_BASE = window.location.origin;
+
 
 export const adminApi = {
   async getArtisanApplications(): Promise<ArtisanApplication[]> {

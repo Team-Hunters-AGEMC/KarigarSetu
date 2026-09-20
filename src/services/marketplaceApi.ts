@@ -1,7 +1,8 @@
 import { ProductItem, ArtisanProfile, CraftCategory } from '../types';
+import { API_BASE } from './apiConfig';
 import { getStoredProducts } from '../data/seedData';
 
-const API_BASE = window.location.origin;
+
 
 export interface MarketplaceProduct {
   id: number;
