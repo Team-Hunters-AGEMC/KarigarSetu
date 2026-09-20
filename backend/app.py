@@ -1,0 +1,2572 @@
+from pathlib import Path
+from urllib.parse import urlparse
+from uuid import uuid4
+from math import isfinite
+from datetime import datetime, timedelta
+from functools import lru_cache, wraps
+import base64
+import hashlib
+import json
+import mimetypes
+import os
+import re
+import secrets
+import sqlite3
+import requests
+from io import BytesIO
+from PIL import Image
+
+from flask import (
+    Flask,
+    g,
+    jsonify,
+    request,
+    session,
+    send_from_directory,
+)
+from flask_cors import CORS
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+
+
+app = Flask(__name__)
+# Keep existing artisan sessions valid when the local development server restarts.
+_secret_path = Path(__file__).with_name(".flask_secret")
+if not os.environ.get("SECRET_KEY") and not _secret_path.exists():
+    try:
+        with _secret_path.open("x") as _secret_file:
+            _secret_file.write(secrets.token_hex(32))
+    except FileExistsError:
+        pass
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or _secret_path.read_text().strip()
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.environ.get("FLASK_ENV") == "production"
+)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
+
+CORS(
+    app,
+    supports_credentials=True,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3001",
+            ]
+        }
+    },
+)
+
+DATABASE_PATH = Path(__file__).with_name("karigarsetu.db")
+N8N_CATALOG_WEBHOOK_URL = os.environ.get(
+    "N8N_CATALOG_WEBHOOK_URL",
+    "http://127.0.0.1:5678/webhook/karigarsetu-catalog",
+)
+UPLOAD_FOLDER = Path(__file__).with_name("uploads")
+
+ALLOWED_IMAGE_EXTENSIONS = {
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+}
+ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov"}
+MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024
+
+MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+MIN_IMAGE_SIZE_BYTES = 1024
+
+UPLOAD_FOLDER.mkdir(exist_ok=True)
+
+
+def trim_transparent_image(image_bytes):
+    """Tightly frame the visible craft while leaving a small transparent margin."""
+    with Image.open(BytesIO(image_bytes)) as source:
+        image = source.convert("RGBA")
+
+    # Ignore near-invisible edge noise from the segmentation model.
+    visible = image.getchannel("A").point(lambda alpha: 255 if alpha >= 24 else 0)
+    bounds = visible.getbbox()
+    if bounds is None:
+        raise ValueError("Background removal did not find a visible product")
+
+    left, top, right, bottom = bounds
+    margin = max(8, round(max(right - left, bottom - top) * 0.04))
+    image = image.crop((
+        max(0, left - margin), max(0, top - margin),
+        min(image.width, right + margin), min(image.height, bottom + margin),
+    ))
+    output = BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
+
+
+
+def is_allowed_image(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower()
+        in ALLOWED_IMAGE_EXTENSIONS
+    )
+
+def get_database():
+    connection = sqlite3.connect(DATABASE_PATH)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
+    return connection
+
+
+def get_request_artisan_id():
+    if session.get("user_role") != "artisan":
+        return None
+    return session.get("user_id")
+
+
+def remove_uploaded_image(image_url):
+    image_path = get_uploaded_image_path(image_url)
+
+    if image_path is not None:
+        image_path.unlink()
+
+
+def parse_ai_suggested_price(value):
+    if isinstance(value, bool) or value is None:
+        return None
+
+    if isinstance(value, str):
+        value = re.sub(r"[^0-9.-]", "", value.replace(",", ""))
+
+    try:
+        price = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if not isfinite(price) or price <= 0:
+        return None
+
+    return round(price, 2)
+
+
+def parse_ai_score(value):
+    if isinstance(value, bool) or value is None:
+        return None
+
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if not isfinite(score):
+        return None
+
+    return round(max(0, min(100, score)), 2)
+
+
+def decide_product_approval(approval_check, duplicate_detected):
+    if not isinstance(approval_check, dict):
+        return {
+            "status": "admin_review",
+            "confidence_score": None,
+            "risk_score": None,
+            "checks": {
+                "validationError": "AI approval check was missing or invalid",
+                "backendFinalStatus": "admin_review",
+            },
+            "reason": "AI approval result is missing or invalid; admin review required.",
+        }
+
+    confidence_score = parse_ai_score(
+        approval_check.get("confidenceScore")
+    )
+    handmade_probability = parse_ai_score(
+        approval_check.get("handmadeProductProbability")
+    )
+
+    if confidence_score is None or handmade_probability is None:
+        checks = dict(approval_check)
+        checks["validationError"] = "Required AI scores were missing or invalid"
+        checks["backendFinalStatus"] = "admin_review"
+
+        return {
+            "status": "admin_review",
+            "confidence_score": confidence_score,
+            "risk_score": (
+                round(100 - confidence_score, 2)
+                if confidence_score is not None
+                else None
+            ),
+            "checks": checks,
+            "reason": "Required AI scores are missing or invalid; admin review required.",
+        }
+
+    risk_score = round(100 - confidence_score, 2)
+    image_present = approval_check.get("imagePresent") is True
+    name_image_match = approval_check.get("nameImageMatch") is True
+    description_match = approval_check.get("descriptionMatch") is True
+    inappropriate_content = (
+        approval_check.get("inappropriateContent") is True
+    )
+    suspicious_content = (
+        approval_check.get("suspiciousContent") is True
+    )
+    image_quality = str(
+        approval_check.get("imageQuality", "")
+    ).strip().lower()
+    raw_issues = approval_check.get("issues", [])
+    issues = (
+        [str(issue).strip() for issue in raw_issues[:10] if str(issue).strip()]
+        if isinstance(raw_issues, list)
+        else []
+    )
+
+    if duplicate_detected:
+        status = "admin_review"
+        reason = "Exact duplicate image detected; admin review required."
+    elif not image_present:
+        status = "admin_review"
+        reason = "AI could not verify the product image; admin decision required."
+    elif inappropriate_content:
+        status = "admin_review"
+        reason = "AI flagged possible inappropriate content; admin decision required."
+    elif confidence_score < 60 and handmade_probability < 30:
+        status = "admin_review"
+        reason = "AI found low handmade-product confidence; admin decision required."
+    elif (
+        confidence_score > 80
+        and risk_score < 20
+        and handmade_probability >= 70
+        and name_image_match
+        and description_match
+        and image_quality in {"clear", "good", "high", "acceptable"}
+        and not suspicious_content
+        and not issues
+    ):
+        status = "approved"
+        reason = "AI checks passed with high confidence and no risk flags."
+    else:
+        status = "admin_review"
+        reason = "AI confidence or validation checks require an admin decision."
+
+    checks = dict(approval_check)
+    checks.update(
+        {
+            "confidenceScore": confidence_score,
+            "riskScore": risk_score,
+            "handmadeProductProbability": handmade_probability,
+            "issues": issues,
+            "duplicateImageDetected": duplicate_detected,
+            "backendFinalStatus": status,
+        }
+    )
+
+    return {
+        "status": status,
+        "confidence_score": confidence_score,
+        "risk_score": risk_score,
+        "checks": checks,
+        "reason": reason,
+    }
+
+
+def initialize_database():
+    connection = get_database()
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS artisans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT UNIQUE NOT NULL,
+            language TEXT NOT NULL,
+            craft_type TEXT NOT NULL,
+            location TEXT NOT NULL,
+            experience INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            artisan_id INTEGER,
+            product_name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            description TEXT NOT NULL,
+            material_cost REAL NOT NULL DEFAULT 0,
+            labour_cost REAL NOT NULL DEFAULT 0,
+            suggested_price REAL NOT NULL DEFAULT 0,
+            selling_price REAL,
+            stock_quantity INTEGER NOT NULL DEFAULT 1,
+            image_url TEXT,
+            status TEXT NOT NULL DEFAULT 'pending_ai_check',
+            ai_confidence_score REAL,
+            ai_risk_score REAL,
+            ai_checks_json TEXT,
+            ai_decision_reason TEXT,
+            image_sha256 TEXT,
+            image_phash TEXT,
+            reported_count INTEGER NOT NULL DEFAULT 0,
+            reviewed_by INTEGER,
+            reviewed_at TEXT,
+            updated_at TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (artisan_id) REFERENCES artisans (id)
+        )
+        """
+    )
+
+    artisan_columns = {row["name"] for row in connection.execute("PRAGMA table_info(artisans)").fetchall()}
+    artisan_migrations = {
+        "email": "TEXT",
+        "address": "TEXT",
+        "password_hash": "TEXT",
+        "verification_status": "TEXT NOT NULL DEFAULT 'pending'",
+        "proof_image_1": "TEXT",
+        "proof_image_2": "TEXT",
+        "proof_video": "TEXT",
+        "review_note": "TEXT",
+        "reviewed_by": "INTEGER",
+        "reviewed_at": "TEXT",
+    }
+    for column, definition in artisan_migrations.items():
+        if column not in artisan_columns:
+            connection.execute(f"ALTER TABLE artisans ADD COLUMN {column} {definition}")
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_uid TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            mobile TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            address TEXT,
+            city TEXT,
+            district TEXT,
+            state TEXT,
+            pin_code TEXT,
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customer_orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number TEXT UNIQUE NOT NULL,
+            customer_id INTEGER NOT NULL,
+            total_amount REAL NOT NULL,
+            status TEXT NOT NULL DEFAULT 'confirmed',
+            delivery_address TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers (id)
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customer_order_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            artisan_id INTEGER,
+            artisan_name TEXT,
+            product_name TEXT NOT NULL,
+            unit_price REAL NOT NULL,
+            quantity INTEGER NOT NULL CHECK (quantity > 0),
+            image_url TEXT,
+            FOREIGN KEY (order_id) REFERENCES customer_orders (id),
+            FOREIGN KEY (product_id) REFERENCES products (id)
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'admin',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            failed_attempts INTEGER NOT NULL DEFAULT 0,
+            locked_until TEXT,
+            last_login TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            admin_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            target_type TEXT,
+            target_id INTEGER,
+            ip_address TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (admin_id) REFERENCES admin_users (id)
+        )
+        """
+    )
+
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "")
+    admin_name = os.environ.get("ADMIN_NAME", "KarigarSetu Admin").strip()
+    if admin_email and admin_password:
+        existing_admin = connection.execute(
+            "SELECT id FROM admin_users WHERE email = ?",
+            (admin_email,),
+        ).fetchone()
+        if existing_admin is None:
+            connection.execute(
+                """
+                INSERT INTO admin_users (
+                    username, email, name, password_hash
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (
+                    admin_email.split("@")[0],
+                    admin_email,
+                    admin_name,
+                    generate_password_hash(admin_password),
+                ),
+            )
+
+    migrate_product_schema(connection)
+    connection.commit()
+    connection.close()
+
+
+def detect_image_format(file_bytes):
+    if file_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+
+    if file_bytes.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+
+    if (
+        len(file_bytes) >= 12
+        and file_bytes[:4] == b"RIFF"
+        and file_bytes[8:12] == b"WEBP"
+    ):
+        return "webp"
+
+    return None
+
+
+def get_uploaded_image_path(image_url):
+    if not image_url:
+        return None
+
+    filename = Path(urlparse(image_url).path).name
+
+    if not filename or secure_filename(filename) != filename:
+        return None
+
+    image_path = UPLOAD_FOLDER / filename
+    return image_path if image_path.is_file() else None
+
+
+def calculate_file_sha256(image_path):
+    digest = hashlib.sha256()
+
+    with image_path.open("rb") as image_file:
+        for chunk in iter(lambda: image_file.read(65536), b""):
+            digest.update(chunk)
+
+    return digest.hexdigest()
+
+
+def find_duplicate_products(connection, image_sha256):
+    if not image_sha256:
+        return []
+
+    return connection.execute(
+        """
+        SELECT id, artisan_id
+        FROM products
+        WHERE image_sha256 = ?
+        ORDER BY id DESC
+        """,
+        (image_sha256,),
+    ).fetchall()
+
+
+def migrate_product_schema(connection):
+    product_columns = {
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(products)"
+        ).fetchall()
+    }
+
+    product_migrations = {
+        "selling_price": "REAL",
+        "stock_quantity": "INTEGER NOT NULL DEFAULT 1",
+        "image_url": "TEXT",
+        "ai_confidence_score": "REAL",
+        "ai_risk_score": "REAL",
+        "ai_checks_json": "TEXT",
+        "ai_decision_reason": "TEXT",
+        "image_sha256": "TEXT",
+        "image_phash": "TEXT",
+        "reported_count": "INTEGER NOT NULL DEFAULT 0",
+        "reviewed_by": "INTEGER",
+        "reviewed_at": "TEXT",
+        "updated_at": "TEXT",
+    }
+
+    for column_name, column_definition in product_migrations.items():
+        if column_name not in product_columns:
+            connection.execute(
+                f"ALTER TABLE products ADD COLUMN {column_name} {column_definition}"
+            )
+
+    connection.execute(
+        """
+        UPDATE products
+        SET selling_price = suggested_price
+        WHERE selling_price IS NULL OR selling_price <= 0
+        """
+    )
+
+    products_without_hash = connection.execute(
+        """
+        SELECT id, image_url
+        FROM products
+        WHERE image_url IS NOT NULL
+          AND TRIM(image_url) != ''
+          AND (image_sha256 IS NULL OR TRIM(image_sha256) = '')
+        """
+    ).fetchall()
+
+    for product in products_without_hash:
+        image_path = get_uploaded_image_path(product["image_url"])
+
+        if image_path is not None:
+            connection.execute(
+                """
+                UPDATE products
+                SET image_sha256 = ?
+                WHERE id = ?
+                """,
+                (
+                    calculate_file_sha256(image_path),
+                    product["id"],
+                ),
+            )
+
+    connection.execute(
+        """
+        UPDATE products
+        SET status = CASE
+            WHEN LOWER(status) = 'published' THEN 'approved'
+            WHEN LOWER(status) = 'draft' THEN 'pending_ai_check'
+            WHEN LOWER(status) IN (
+                'pending_ai_check',
+                'approved',
+                'admin_review',
+                'rejected',
+                'under_review'
+            ) THEN LOWER(status)
+            ELSE 'admin_review'
+        END
+        """
+    )
+
+    connection.execute(
+        """
+        UPDATE products
+        SET updated_at = COALESCE(updated_at, created_at)
+        """
+    )
+
+
+def create_image_data_url(image_url):
+    """Convert one of our uploaded images into a Gemini-ready data URL."""
+    image_path = get_uploaded_image_path(image_url)
+
+    if image_path is None:
+        return ""
+
+    mime_type = (
+        mimetypes.guess_type(image_path.name)[0]
+        or "image/png"
+    )
+    encoded_image = base64.b64encode(
+        image_path.read_bytes()
+    ).decode("ascii")
+
+    return f"data:{mime_type};base64,{encoded_image}"
+
+
+@app.get("/")
+def home():
+    return jsonify(
+        {
+            "message": "KarigarSetu AI Backend",
+            "status": "running",
+        }
+    )
+
+
+@app.get("/api/health")
+def health_check():
+    return jsonify(
+        {
+            "success": True,
+            "message": "Backend API and database are working",
+        }
+    )
+
+
+@app.post("/api/artisans")
+def create_artisan():
+    data = request.form
+
+    required_fields = [
+        "name",
+        "phone",
+        "language",
+        "craftType",
+        "location",
+        "experience",
+        "email",
+        "address",
+        "password",
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if str(data.get(field, "")).strip() == ""
+    ]
+
+    if missing_fields:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Required information is missing",
+                "missingFields": missing_fields,
+            }
+        ), 400
+
+    proof_1 = request.files.get("proofImage1")
+    proof_2 = request.files.get("proofImage2")
+    proof_video = request.files.get("proofVideo")
+    if not proof_1 or not proof_2 or not proof_video:
+        return jsonify({"success": False, "message": "দুটি ছবি এবং একটি ভিডিও অবশ্যই দিতে হবে"}), 400
+    if not is_allowed_image(proof_1.filename) or not is_allowed_image(proof_2.filename):
+        return jsonify({"success": False, "message": "ছবির format PNG, JPG অথবা WEBP হতে হবে"}), 400
+    video_ext = proof_video.filename.rsplit(".", 1)[-1].lower() if "." in proof_video.filename else ""
+    if video_ext not in ALLOWED_VIDEO_EXTENSIONS:
+        return jsonify({"success": False, "message": "ভিডিও MP4, WEBM অথবা MOV হতে হবে"}), 400
+
+    def save_proof(upload, prefix):
+        ext = secure_filename(upload.filename).rsplit(".", 1)[-1].lower()
+        filename = f"{prefix}_{uuid4().hex}.{ext}"
+        upload.save(UPLOAD_FOLDER / filename)
+        return f"/uploads/{filename}"
+
+    proof_image_1 = save_proof(proof_1, "artisan_proof")
+    proof_image_2 = save_proof(proof_2, "artisan_proof")
+    proof_video_url = save_proof(proof_video, "artisan_video")
+    connection = get_database()
+
+    try:
+        cursor = connection.execute(
+            """
+            INSERT INTO artisans (
+                name,
+                phone,
+                language,
+                craft_type,
+                location,
+                experience,
+                email,
+                address,
+                password_hash,
+                verification_status,
+                proof_image_1,
+                proof_image_2,
+                proof_video
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+            """,
+            (
+                data["name"].strip(),
+                data["phone"].strip(),
+                data["language"].strip(),
+                data["craftType"].strip(),
+                data["location"].strip(),
+                int(data["experience"]),
+                data["email"].strip().lower(),
+                data["address"].strip(),
+                generate_password_hash(data["password"]),
+                proof_image_1,
+                proof_image_2,
+                proof_video_url,
+            ),
+        )
+
+        connection.commit()
+        artisan_id = cursor.lastrowid
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "আবেদন Admin-এর কাছে পাঠানো হয়েছে। অনুমোদনের পরে login করতে পারবেন।",
+                "artisanId": artisan_id,
+                "status": "pending",
+            }
+        ), 201
+
+    except sqlite3.IntegrityError:
+        return jsonify(
+            {
+                "success": False,
+                "message": "This mobile number is already registered",
+            }
+        ), 409
+
+    finally:
+        connection.close()
+
+
+@app.get("/api/artisans")
+def get_artisans():
+    connection = get_database()
+
+    artisans = connection.execute(
+        """
+        SELECT
+            id,
+            name,
+            phone,
+            language,
+            craft_type,
+            location,
+            experience,
+            created_at
+        FROM artisans
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "artisans": [dict(artisan) for artisan in artisans],
+        }
+    )
+
+
+@app.post("/api/artisans/login")
+def login_artisan():
+    data = request.get_json(silent=True) or {}
+    phone = re.sub(r"\D", "", str(data.get("phone", "")))
+    password = str(data.get("password", ""))
+
+    if len(phone) != 10:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Enter a valid 10-digit mobile number",
+            }
+        ), 400
+
+    connection = get_database()
+    artisan = connection.execute(
+        """
+        SELECT
+            id,
+            name,
+            phone,
+            language,
+            craft_type,
+            location,
+            experience,
+            email,
+            address,
+            password_hash,
+            verification_status
+        FROM artisans
+        WHERE phone = ?
+        """,
+        (phone,),
+    ).fetchone()
+    connection.close()
+
+    if artisan is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "এই mobile number-এ কোনো artisan profile পাওয়া যায়নি",
+            }
+        ), 404
+
+    if artisan["verification_status"] != "approved":
+        message = "আপনার আবেদন এখনও Admin-এর অনুমোদনের অপেক্ষায় আছে"
+        if artisan["verification_status"] == "rejected":
+            message = "আপনার Artisan আবেদন অনুমোদিত হয়নি"
+        elif artisan["verification_status"] == "banned":
+            message = "আপনার Artisan account Admin দ্বারা ban করা হয়েছে"
+        return jsonify({"success": False, "status": artisan["verification_status"], "message": message}), 403
+
+    if not artisan["password_hash"] or not check_password_hash(artisan["password_hash"], password):
+        return jsonify({"success": False, "message": "Phone number অথবা password ভুল"}), 401
+
+    session.clear()
+    session.permanent = True
+    session.update({"user_id": artisan["id"], "user_role": "artisan"})
+
+    return jsonify(
+        {
+            "success": True,
+            "artisan": {
+                "id": artisan["id"],
+                "name": artisan["name"],
+                "phone": artisan["phone"],
+                "language": artisan["language"],
+                "craftType": artisan["craft_type"],
+                "location": artisan["location"],
+                "experience": artisan["experience"],
+                "email": artisan["email"],
+                "address": artisan["address"],
+                "verificationStatus": "approved",
+            },
+        }
+    )
+
+
+@app.get("/api/artisans/me")
+def artisan_me():
+    if session.get("user_role") != "artisan":
+        return jsonify({"success": False, "authenticated": False}), 401
+    connection = get_database()
+    artisan = connection.execute(
+        "SELECT id, name, phone, email, address, language, craft_type, location, experience, verification_status FROM artisans WHERE id = ?",
+        (session.get("user_id"),),
+    ).fetchone()
+    connection.close()
+    if artisan is None or artisan["verification_status"] != "approved":
+        session.clear()
+        return jsonify({"success": False, "authenticated": False}), 403
+    return jsonify({"success": True, "authenticated": True, "artisan": dict(artisan)})
+
+
+@app.post("/api/artisans/logout")
+def artisan_logout():
+    session.clear()
+    return jsonify({"success": True})
+
+@app.post("/api/products")
+def create_product():
+    data = request.get_json(silent=True) or {}
+
+    if session.get("user_role") != "artisan":
+        return jsonify({"success": False, "message": "Approved Artisan login required"}), 401
+    data["artisanId"] = session.get("user_id")
+
+    required_fields = [
+        "artisanId",
+        "productName",
+        "category",
+        "description",
+        "materialCost",
+        "labourCost",
+        "imageUrl",
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if str(data.get(field, "")).strip() == ""
+    ]
+
+    if missing_fields:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Required product information is missing",
+                "missingFields": missing_fields,
+            }
+        ), 400
+
+    try:
+        artisan_id = int(data["artisanId"])
+        material_cost = float(data["materialCost"])
+        labour_cost = float(data["labourCost"])
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "success": False,
+                "message": "Invalid artisan ID or cost information",
+            }
+        ), 400
+
+    if material_cost < 0 or labour_cost < 0:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product costs cannot be negative",
+            }
+        ), 400
+
+    professional_listing = data.get("listingMode") == "professional"
+    ai_suggested_price = parse_ai_suggested_price(
+        data.get("suggestedPrice")
+    )
+
+    if ai_suggested_price is None and not professional_listing:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Enter a valid selling price greater than zero.",
+            }
+        ), 400
+
+    product_name = str(data["productName"]).strip()
+    category = str(data["category"]).strip()
+    description = str(data["description"]).strip()
+
+    if not 3 <= len(product_name) <= 120:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product name must be between 3 and 120 characters",
+            }
+        ), 400
+
+    if not 20 <= len(description) <= 2000:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product description must be between 20 and 2000 characters",
+            }
+        ), 400
+
+    image_url = str(data["imageUrl"]).strip()
+    image_path = get_uploaded_image_path(image_url)
+
+    if image_path is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Uploaded product image was not found",
+            }
+        ), 400
+
+    image_sha256 = calculate_file_sha256(image_path)
+
+    suggested_price = ai_suggested_price
+
+    connection = get_database()
+
+    artisan = connection.execute(
+        "SELECT id, verification_status FROM artisans WHERE id = ?",
+        (artisan_id,),
+    ).fetchone()
+
+    if artisan is None:
+        connection.close()
+
+        return jsonify(
+            {
+                "success": False,
+                "message": "Artisan profile not found",
+            }
+        ), 404
+
+    if artisan["verification_status"] != "approved":
+        connection.close()
+        return jsonify({"success": False, "message": "Artisan account requires Admin approval"}), 403
+
+    duplicate_products = find_duplicate_products(
+        connection,
+        image_sha256,
+    )
+    duplicate_detected = len(duplicate_products) > 0
+    approval_check = data.get("approvalCheck")
+    if professional_listing:
+        # The server gets the verification from n8n; browser-provided scores
+        # cannot be used to approve a manually written listing.
+        image_data_url = create_image_data_url(image_url)
+        if not image_data_url:
+            connection.close()
+            return jsonify({"success": False, "message": "Product image could not be checked by AI."}), 502
+        try:
+            ai_response = requests.post(
+                N8N_CATALOG_WEBHOOK_URL,
+                json={
+                    "productName": product_name,
+                    "category": category,
+                    "description": description,
+                    "materialCost": material_cost,
+                    "labourCost": labour_cost,
+                    "imageUrl": image_url,
+                    "imageDataUrl": image_data_url,
+                    "imageSha256": image_sha256,
+                    "duplicateImageDetected": duplicate_detected,
+                    "duplicateImageCount": len(duplicate_products),
+                },
+                timeout=60,
+            )
+            ai_response.raise_for_status()
+            ai_result = ai_response.json()
+            if not ai_result.get("success") or not isinstance(ai_result.get("catalog"), dict):
+                raise ValueError("AI verification response was incomplete")
+            suggested_price = parse_ai_suggested_price(
+                ai_result["catalog"].get("suggestedPrice")
+            )
+            if suggested_price is None:
+                raise ValueError("AI suggested price was missing")
+            approval_check = ai_result["catalog"].get("approvalCheck")
+            if not isinstance(approval_check, dict):
+                raise ValueError("AI verification score was missing")
+            if (
+                parse_ai_score(approval_check.get("confidenceScore")) is None
+                or parse_ai_score(approval_check.get("handmadeProductProbability")) is None
+            ):
+                raise ValueError("AI verification scores were incomplete")
+        except (requests.RequestException, ValueError):
+            connection.close()
+            return jsonify({"success": False, "message": "AI verification is unavailable. Please try again later."}), 502
+
+    selling_price = suggested_price
+    if professional_listing and data.get("sellingPrice") is not None:
+        selling_price = parse_ai_suggested_price(data["sellingPrice"])
+        if selling_price is None:
+            connection.close()
+            return jsonify({"success": False, "message": "Enter a valid selling price greater than zero."}), 400
+
+    approval_decision = decide_product_approval(approval_check, duplicate_detected)
+    initial_status = approval_decision["status"]
+    initial_decision_reason = approval_decision["reason"]
+    ai_checks_json = json.dumps(
+        approval_decision["checks"],
+        ensure_ascii=False,
+    )
+
+    cursor = connection.execute(
+        """
+        INSERT INTO products (
+            artisan_id,
+            product_name,
+            category,
+            description,
+            material_cost,
+            labour_cost,
+            suggested_price,
+            selling_price,
+            stock_quantity,
+            image_url,
+            status,
+            image_sha256,
+            ai_confidence_score,
+            ai_risk_score,
+            ai_checks_json,
+            ai_decision_reason
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            artisan_id,
+            product_name,
+            category,
+            description,
+            material_cost,
+            labour_cost,
+            suggested_price,
+            selling_price,
+            1,
+            image_url,
+            initial_status,
+            image_sha256,
+            approval_decision["confidence_score"],
+            approval_decision["risk_score"],
+            ai_checks_json,
+            initial_decision_reason,
+        ),
+    )
+
+    connection.commit()
+    product_id = cursor.lastrowid
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Product saved successfully",
+            "productId": product_id,
+            "suggestedPrice": suggested_price,
+            "sellingPrice": selling_price,
+            "stockQuantity": 1,
+            "status": initial_status,
+            "duplicateImageDetected": duplicate_detected,
+            "aiConfidenceScore": approval_decision["confidence_score"],
+            "aiRiskScore": approval_decision["risk_score"],
+            "decisionReason": initial_decision_reason,
+        }
+    ), 201
+
+
+@app.get("/api/products")
+def get_products():
+    artisan_id = request.args.get("artisan_id")
+    connection = get_database()
+
+    if artisan_id:
+        products = connection.execute(
+            """
+            SELECT *
+            FROM products
+            WHERE artisan_id = ?
+            ORDER BY id DESC
+            """,
+            (artisan_id,),
+        ).fetchall()
+    else:
+        products = connection.execute(
+            """
+            SELECT *
+            FROM products
+            ORDER BY id DESC
+            """
+        ).fetchall()
+
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "products": [dict(product) for product in products],
+        }
+    )
+
+
+def public_product(row):
+    product = dict(row)
+    return {
+        "id": product["id"],
+        "product_name": product["product_name"],
+        "category": product["category"],
+        "description": product["description"],
+        "selling_price": product["selling_price"] or product["suggested_price"],
+        "stock_quantity": product["stock_quantity"],
+        "image_url": product["image_url"],
+        "artisan_id": product["artisan_id"],
+        "artisan_name": product.get("artisan_name") or "Artisan",
+        "artisan_location": product.get("artisan_location") or "",
+        "created_at": product["created_at"],
+    }
+
+
+@app.get("/api/marketplace/products")
+def marketplace_products():
+    category = request.args.get("category", "").strip()
+    search = request.args.get("search", "").strip().lower()
+    sort = request.args.get("sort", "newest").strip().lower()
+    in_stock = request.args.get("in_stock", "").lower() == "true"
+    try:
+        min_price = float(request.args["min_price"]) if "min_price" in request.args else None
+        max_price = float(request.args["max_price"]) if "max_price" in request.args else None
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid price filter"}), 400
+
+    clauses = ["products.status = 'approved'"]
+    values = []
+    if category and category.lower() != "all":
+        clauses.append("LOWER(products.category) = LOWER(?)")
+        values.append(category)
+    if search:
+        clauses.append("(LOWER(products.product_name) LIKE ? OR LOWER(products.description) LIKE ? OR LOWER(artisans.name) LIKE ?)")
+        pattern = f"%{search}%"
+        values.extend([pattern, pattern, pattern])
+    if min_price is not None:
+        clauses.append("COALESCE(products.selling_price, products.suggested_price) >= ?")
+        values.append(min_price)
+    if max_price is not None:
+        clauses.append("COALESCE(products.selling_price, products.suggested_price) <= ?")
+        values.append(max_price)
+    if in_stock:
+        clauses.append("products.stock_quantity > 0")
+
+    order_sql = {
+        "price_asc": "COALESCE(products.selling_price, products.suggested_price) ASC",
+        "price_desc": "COALESCE(products.selling_price, products.suggested_price) DESC",
+        "newest": "products.id DESC",
+        "popular": "products.id DESC",
+    }.get(sort, "products.id DESC")
+    connection = get_database()
+    rows = connection.execute(
+        f"""
+        SELECT products.*, artisans.name AS artisan_name,
+               artisans.location AS artisan_location
+        FROM products
+        LEFT JOIN artisans ON artisans.id = products.artisan_id
+        WHERE {' AND '.join(clauses)}
+        ORDER BY {order_sql}
+        """,
+        values,
+    ).fetchall()
+    connection.close()
+    return jsonify({"success": True, "data": [public_product(row) for row in rows]})
+
+
+@app.get("/api/marketplace/products/<int:product_id>")
+def marketplace_product_details(product_id):
+    connection = get_database()
+    row = connection.execute(
+        """
+        SELECT products.*, artisans.name AS artisan_name,
+               artisans.location AS artisan_location
+        FROM products
+        LEFT JOIN artisans ON artisans.id = products.artisan_id
+        WHERE products.id = ? AND products.status = 'approved'
+        """,
+        (product_id,),
+    ).fetchone()
+    connection.close()
+    if row is None:
+        return jsonify({"success": False, "message": "Approved product not found"}), 404
+    return jsonify({"success": True, "data": public_product(row)})
+
+
+@app.get("/api/marketplace/artisans/<int:artisan_id>")
+def marketplace_artisan(artisan_id):
+    connection = get_database()
+    artisan = connection.execute(
+        "SELECT id, name, craft_type, location, experience, created_at FROM artisans WHERE id = ?",
+        (artisan_id,),
+    ).fetchone()
+    if artisan is None:
+        connection.close()
+        return jsonify({"success": False, "message": "Artisan not found"}), 404
+    rows = connection.execute(
+        """
+        SELECT products.*, artisans.name AS artisan_name,
+               artisans.location AS artisan_location
+        FROM products JOIN artisans ON artisans.id = products.artisan_id
+        WHERE products.artisan_id = ? AND products.status = 'approved'
+        ORDER BY products.id DESC
+        """,
+        (artisan_id,),
+    ).fetchall()
+    connection.close()
+    return jsonify({"success": True, "data": {
+        "id": artisan["id"], "name": artisan["name"],
+        "craftType": artisan["craft_type"], "location": artisan["location"],
+        "experience": artisan["experience"], "joinedDate": artisan["created_at"],
+        "products": [public_product(row) for row in rows],
+    }})
+
+
+def customer_payload(row):
+    return {key: row[key] for key in (
+        "id", "customer_uid", "name", "mobile", "email", "address",
+        "city", "district", "state", "pin_code"
+    )}
+
+
+@app.post("/api/customers/register")
+def register_customer():
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()
+    mobile = re.sub(r"\D", "", str(data.get("mobile", "")))
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
+    if not name or not re.fullmatch(r"[6-9]\d{9}", mobile) or "@" not in email or len(password) < 8:
+        return jsonify({"success": False, "message": "Valid name, mobile, email and 8-character password are required"}), 400
+    connection = get_database()
+    try:
+        customer_uid = f"CUST-{secrets.token_hex(4).upper()}"
+        cursor = connection.execute(
+            """
+            INSERT INTO customers (customer_uid, name, mobile, email, password_hash, address, city, district, state, pin_code)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (customer_uid, name, mobile, email, generate_password_hash(password),
+             str(data.get("address", "")).strip(), str(data.get("city", "")).strip(),
+             str(data.get("district", "")).strip(), str(data.get("state", "")).strip(),
+             str(data.get("pinCode", data.get("pin_code", ""))).strip()),
+        )
+        connection.commit()
+        row = connection.execute("SELECT * FROM customers WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        session.clear(); session.permanent = True
+        session.update({"user_id": row["id"], "user_role": "customer"})
+        return jsonify({"success": True, "data": customer_payload(row)}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({"success": False, "message": "Mobile number or email is already registered"}), 409
+    finally:
+        connection.close()
+
+
+@app.post("/api/customers/login")
+def login_customer():
+    data = request.get_json(silent=True) or {}
+    identifier = str(data.get("identifier", "")).strip().lower()
+    password = str(data.get("password", ""))
+    connection = get_database()
+    row = connection.execute("SELECT * FROM customers WHERE LOWER(email) = ? OR mobile = ?", (identifier, re.sub(r"\D", "", identifier))).fetchone()
+    connection.close()
+    if row is None or row["status"] != "active" or not check_password_hash(row["password_hash"], password):
+        return jsonify({"success": False, "message": "Invalid login credentials"}), 401
+    session.clear(); session.permanent = True
+    session.update({"user_id": row["id"], "user_role": "customer"})
+    return jsonify({"success": True, "data": customer_payload(row)})
+
+
+@app.get("/api/customers/me")
+def current_customer():
+    if session.get("user_role") != "customer":
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+    connection = get_database()
+    row = connection.execute("SELECT * FROM customers WHERE id = ?", (session.get("user_id"),)).fetchone()
+    connection.close()
+    if row is None:
+        session.clear()
+        return jsonify({"success": False, "message": "Customer not found"}), 401
+    return jsonify({"success": True, "data": customer_payload(row)})
+
+
+@app.post("/api/customers/logout")
+def logout_customer_api():
+    session.clear()
+    return jsonify({"success": True, "message": "Logged out"})
+
+
+def require_customer_id():
+    if session.get("user_role") != "customer" or not session.get("user_id"):
+        return None
+    return int(session["user_id"])
+
+
+@app.post("/api/customers/orders")
+def create_customer_order():
+    customer_id = require_customer_id()
+    if customer_id is None:
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    raw_items = data.get("items")
+    if not isinstance(raw_items, list) or not raw_items:
+        return jsonify({"success": False, "message": "Your cart is empty"}), 400
+
+    requested = {}
+    try:
+        for item in raw_items:
+            product_id = int(item.get("product_id"))
+            quantity = int(item.get("quantity"))
+            if product_id <= 0 or quantity <= 0:
+                raise ValueError
+            requested[product_id] = requested.get(product_id, 0) + quantity
+    except (AttributeError, TypeError, ValueError):
+        return jsonify({"success": False, "message": "Every order item needs a valid product and quantity"}), 400
+
+    connection = get_database()
+    try:
+        # BEGIN IMMEDIATE serializes stock checks and decrements so two checkouts
+        # cannot both purchase the same final unit.
+        connection.execute("BEGIN IMMEDIATE")
+        customer = connection.execute(
+            "SELECT * FROM customers WHERE id = ? AND status = 'active'",
+            (customer_id,),
+        ).fetchone()
+        if customer is None:
+            connection.rollback()
+            return jsonify({"success": False, "message": "Customer account is not active"}), 403
+
+        products = []
+        total_amount = 0.0
+        for product_id, quantity in requested.items():
+            product = connection.execute(
+                """
+                SELECT products.*, artisans.name AS artisan_name
+                FROM products
+                LEFT JOIN artisans ON artisans.id = products.artisan_id
+                WHERE products.id = ? AND products.status = 'approved'
+                """,
+                (product_id,),
+            ).fetchone()
+            if product is None:
+                connection.rollback()
+                return jsonify({
+                    "success": False,
+                    "message": "A product in your cart is no longer available",
+                    "product_id": product_id,
+                    "available_stock": 0,
+                }), 409
+
+            available_stock = max(0, int(product["stock_quantity"] or 0))
+            if quantity > available_stock:
+                connection.rollback()
+                return jsonify({
+                    "success": False,
+                    "message": f"Only {available_stock} unit(s) of {product['product_name']} are available",
+                    "product_id": product_id,
+                    "available_stock": available_stock,
+                }), 409
+
+            unit_price = float(product["selling_price"] or product["suggested_price"] or 0)
+            total_amount += unit_price * quantity
+            products.append((product, quantity, unit_price))
+
+        submitted_address = data.get("delivery_address")
+        if isinstance(submitted_address, dict):
+            address_parts = [
+                str(submitted_address.get(key, "")).strip()
+                for key in ("address", "city", "district", "state", "pin_code")
+            ]
+            delivery_address = ", ".join(filter(None, address_parts))
+        else:
+            delivery_address = ", ".join(filter(None, [
+                customer["address"], customer["city"], customer["district"],
+                customer["state"], customer["pin_code"],
+            ]))
+        if len(delivery_address) < 10:
+            connection.rollback()
+            return jsonify({"success": False, "message": "A complete delivery address is required"}), 400
+        order_number = f"KS-{datetime.now().strftime('%y%m%d%H%M%S')}-{secrets.token_hex(2).upper()}"
+        cursor = connection.execute(
+            """
+            INSERT INTO customer_orders (
+                order_number, customer_id, total_amount, status, delivery_address
+            ) VALUES (?, ?, ?, 'confirmed', ?)
+            """,
+            (order_number, customer_id, round(total_amount, 2), delivery_address),
+        )
+        order_id = cursor.lastrowid
+
+        for product, quantity, unit_price in products:
+            stock_update = connection.execute(
+                """
+                UPDATE products
+                SET stock_quantity = stock_quantity - ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND stock_quantity >= ?
+                """,
+                (quantity, product["id"], quantity),
+            )
+            if stock_update.rowcount != 1:
+                raise sqlite3.IntegrityError("Stock changed during checkout")
+            connection.execute(
+                """
+                INSERT INTO customer_order_items (
+                    order_id, product_id, artisan_id, artisan_name,
+                    product_name, unit_price, quantity, image_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    order_id, product["id"], product["artisan_id"],
+                    product["artisan_name"], product["product_name"],
+                    unit_price, quantity, product["image_url"],
+                ),
+            )
+
+        connection.commit()
+        return jsonify({
+            "success": True,
+            "message": "Order confirmed and stock updated",
+            "data": {"id": order_number, "total": round(total_amount, 2), "status": "Confirmed"},
+        }), 201
+    except sqlite3.Error:
+        connection.rollback()
+        return jsonify({"success": False, "message": "Stock changed during checkout. Please try again."}), 409
+    finally:
+        connection.close()
+
+
+@app.get("/api/customers/orders")
+def list_customer_orders():
+    customer_id = require_customer_id()
+    if customer_id is None:
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+
+    connection = get_database()
+    order_rows = connection.execute(
+        """
+        SELECT id, order_number, total_amount, status, delivery_address, created_at
+        FROM customer_orders WHERE customer_id = ? ORDER BY id DESC
+        """,
+        (customer_id,),
+    ).fetchall()
+    orders = []
+    for order in order_rows:
+        item_rows = connection.execute(
+            """
+            SELECT product_id, artisan_name, product_name,
+                   unit_price AS selling_price, quantity, image_url
+            FROM customer_order_items WHERE order_id = ? ORDER BY id
+            """,
+            (order["id"],),
+        ).fetchall()
+        orders.append({
+            "id": order["order_number"],
+            "created_at": order["created_at"],
+            "status": str(order["status"]).replace("_", " ").title(),
+            "total": order["total_amount"],
+            "delivery_address": order["delivery_address"],
+            "items": [dict(item) for item in item_rows],
+        })
+    connection.close()
+    return jsonify({"success": True, "data": orders})
+
+
+def record_admin_action(action, target_type=None, target_id=None):
+    connection = get_database()
+    connection.execute(
+        "INSERT INTO admin_audit_logs (admin_id, action, target_type, target_id, ip_address) VALUES (?, ?, ?, ?, ?)",
+        (g.current_admin["id"], action, target_type, target_id, request.remote_addr),
+    )
+    connection.commit(); connection.close()
+
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if session.get("user_role") != "admin":
+            code = 401 if not session.get("user_role") else 403
+            return jsonify({"success": False, "message": "Admin authentication required"}), code
+        connection = get_database()
+        row = connection.execute(
+            "SELECT id, username, email, name, role FROM admin_users WHERE id = ? AND is_active = 1",
+            (session.get("user_id"),),
+        ).fetchone()
+        connection.close()
+        if row is None:
+            session.clear()
+            return jsonify({"success": False, "message": "Admin session expired"}), 401
+        g.current_admin = dict(row)
+        return view(*args, **kwargs)
+    return wrapped
+
+
+@app.post("/api/admin/auth/login")
+def admin_login():
+    data = request.get_json(silent=True) or {}
+    identifier = str(data.get("email", data.get("identifier", ""))).strip().lower()
+    password = str(data.get("password", ""))
+    connection = get_database()
+    row = connection.execute("SELECT * FROM admin_users WHERE LOWER(email) = ? OR LOWER(username) = ?", (identifier, identifier)).fetchone()
+    if row is None or not row["is_active"] or not check_password_hash(row["password_hash"], password):
+        connection.close()
+        return jsonify({"success": False, "message": "Invalid administrator credentials"}), 401
+    session.clear(); session.permanent = True
+    session.update({"user_id": row["id"], "user_role": "admin"})
+    connection.execute("UPDATE admin_users SET last_login = CURRENT_TIMESTAMP, failed_attempts = 0 WHERE id = ?", (row["id"],))
+    connection.commit(); connection.close()
+    g.current_admin = dict(row)
+    record_admin_action("ADMIN_LOGIN", "admin_user", row["id"])
+    return jsonify({"success": True, "user": {"id": row["id"], "name": row["name"], "email": row["email"], "username": row["username"], "role": "admin"}})
+
+
+@app.get("/api/admin/auth/me")
+@admin_required
+def admin_me():
+    return jsonify({"success": True, "authenticated": True, "user": g.current_admin})
+
+
+@app.post("/api/admin/auth/logout")
+@admin_required
+def admin_logout():
+    record_admin_action("ADMIN_LOGOUT", "admin_user", g.current_admin["id"])
+    session.clear()
+    return jsonify({"success": True, "message": "Logged out"})
+
+
+@app.get("/api/admin/audit-logs")
+@admin_required
+def get_admin_audit_logs():
+    connection = get_database()
+    rows = connection.execute(
+        """
+        SELECT l.*, u.name AS admin_name
+        FROM admin_audit_logs l
+        LEFT JOIN admin_users u ON u.id = l.admin_id
+        ORDER BY l.created_at DESC, l.id DESC
+        LIMIT 250
+        """
+    ).fetchall()
+    connection.close()
+    return jsonify({"success": True, "data": [dict(row) for row in rows]})
+
+
+@app.get("/api/admin/artisan-applications")
+@admin_required
+def get_artisan_applications():
+    connection = get_database()
+    rows = connection.execute(
+        """
+        SELECT id, name, phone, email, address, language, craft_type,
+               location, experience, proof_image_1, proof_image_2,
+               proof_video, verification_status, review_note, created_at
+        FROM artisans
+        ORDER BY CASE verification_status WHEN 'pending' THEN 0 ELSE 1 END,
+                 created_at DESC, id DESC
+        """
+    ).fetchall()
+    connection.close()
+    return jsonify({"success": True, "applications": [dict(row) for row in rows]})
+
+
+@app.patch("/api/admin/artisan-applications/<int:artisan_id>")
+@admin_required
+def decide_artisan_application(artisan_id):
+    data = request.get_json(silent=True) or {}
+    decision = str(data.get("status", "")).strip().lower()
+    if decision not in {"approved", "rejected", "banned"}:
+        return jsonify({"success": False, "message": "Status must be approved, rejected or banned"}), 400
+    connection = get_database()
+    cursor = connection.execute(
+        """
+        UPDATE artisans
+        SET verification_status = ?, review_note = ?, reviewed_by = ?,
+            reviewed_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (decision, str(data.get("note", "")).strip(), g.current_admin["id"], artisan_id),
+    )
+    connection.commit(); connection.close()
+    if cursor.rowcount == 0:
+        return jsonify({"success": False, "message": "Artisan application not found"}), 404
+    record_admin_action(f"ARTISAN_{decision.upper()}", "artisan", artisan_id)
+    return jsonify({"success": True, "status": decision})
+
+
+@app.get("/api/admin/dashboard")
+@admin_required
+def get_admin_dashboard():
+    dashboard_view = str(
+        request.args.get("view", "review")
+    ).strip().lower()
+
+    allowed_views = {
+        "review",
+        "rejected",
+        "total",
+        "auto_approved",
+        "approved",
+        "reported",
+    }
+    if dashboard_view not in allowed_views:
+        dashboard_view = "review"
+
+    connection = get_database()
+
+    stats_row = connection.execute(
+        """
+        SELECT
+            COUNT(*) AS total_products,
+            SUM(
+                CASE
+                    WHEN status = 'approved' AND reviewed_by IS NULL
+                    THEN 1 ELSE 0
+                END
+            ) AS auto_approved,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END)
+                AS approved_products,
+            SUM(
+                CASE
+                    WHEN status IN (
+                        'pending_ai_check',
+                        'admin_review',
+                        'under_review'
+                    )
+                    THEN 1 ELSE 0
+                END
+            ) AS pending_review,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END)
+                AS rejected,
+            SUM(CASE WHEN reported_count > 0 THEN 1 ELSE 0 END)
+                AS reported_products
+        FROM products
+        """
+    ).fetchone()
+
+    if dashboard_view == "total":
+        review_rows = connection.execute(
+            """
+            SELECT products.*, artisans.name AS artisan_name
+            FROM products
+            LEFT JOIN artisans ON artisans.id = products.artisan_id
+            ORDER BY products.created_at DESC, products.id DESC
+            """
+        ).fetchall()
+    elif dashboard_view == "auto_approved":
+        review_rows = connection.execute(
+            """
+            SELECT products.*, artisans.name AS artisan_name
+            FROM products
+            LEFT JOIN artisans ON artisans.id = products.artisan_id
+            WHERE products.status = 'approved'
+              AND products.reviewed_by IS NULL
+            ORDER BY products.created_at DESC, products.id DESC
+            """
+        ).fetchall()
+    elif dashboard_view == "approved":
+        review_rows = connection.execute(
+            """
+            SELECT products.*, artisans.name AS artisan_name
+            FROM products
+            LEFT JOIN artisans ON artisans.id = products.artisan_id
+            WHERE products.status = 'approved'
+            ORDER BY products.updated_at DESC, products.id DESC
+            """
+        ).fetchall()
+    elif dashboard_view == "reported":
+        review_rows = connection.execute(
+            """
+            SELECT products.*, artisans.name AS artisan_name
+            FROM products
+            LEFT JOIN artisans ON artisans.id = products.artisan_id
+            WHERE products.reported_count > 0
+            ORDER BY products.reported_count DESC,
+                     products.updated_at DESC,
+                     products.id DESC
+            """
+        ).fetchall()
+    elif dashboard_view == "rejected":
+        review_rows = connection.execute(
+            """
+            SELECT products.*, artisans.name AS artisan_name
+            FROM products
+            LEFT JOIN artisans ON artisans.id = products.artisan_id
+            WHERE products.status = 'rejected'
+            ORDER BY products.reviewed_at DESC, products.id DESC
+            """
+        ).fetchall()
+    else:
+        review_rows = connection.execute(
+            """
+            SELECT products.*, artisans.name AS artisan_name
+            FROM products
+            LEFT JOIN artisans ON artisans.id = products.artisan_id
+            WHERE products.status IN (
+                'pending_ai_check',
+                'admin_review',
+                'under_review'
+            )
+            OR (
+                products.reported_count > 0
+                AND products.status != 'rejected'
+            )
+            ORDER BY
+                CASE WHEN products.reported_count > 0 THEN 0 ELSE 1 END,
+                products.created_at DESC,
+                products.id DESC
+            """
+        ).fetchall()
+
+    connection.close()
+
+    review_products = []
+    for row in review_rows:
+        product = dict(row)
+        try:
+            product["ai_checks"] = json.loads(
+                product.get("ai_checks_json") or "{}"
+            )
+        except (TypeError, json.JSONDecodeError):
+            product["ai_checks"] = {}
+        review_products.append(product)
+
+    return jsonify(
+        {
+            "success": True,
+            "stats": {
+                "totalProducts": stats_row["total_products"] or 0,
+                "autoApproved": stats_row["auto_approved"] or 0,
+                "approvedProducts": stats_row["approved_products"] or 0,
+                "pendingReview": stats_row["pending_review"] or 0,
+                "rejected": stats_row["rejected"] or 0,
+                "reportedProducts": stats_row["reported_products"] or 0,
+            },
+            "products": review_products,
+            "view": dashboard_view,
+        }
+    )
+
+
+@app.patch("/api/admin/products/<int:product_id>/decision")
+@admin_required
+def update_admin_product_decision(product_id):
+    data = request.get_json(silent=True) or {}
+    requested_status = str(data.get("status", "")).strip().lower()
+
+    admin_id = g.current_admin["id"]
+
+    allowed_statuses = {"approved", "rejected", "under_review"}
+    if requested_status not in allowed_statuses:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Status must be approved, rejected or under_review",
+            }
+        ), 400
+
+    connection = get_database()
+    product = connection.execute(
+        "SELECT id FROM products WHERE id = ?",
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product not found",
+            }
+        ), 404
+
+    decision_note = str(data.get("decisionNote", "")).strip()
+    connection.execute(
+        """
+        UPDATE products
+        SET status = ?,
+            ai_decision_reason = CASE
+                WHEN ? != '' THEN ?
+                ELSE ai_decision_reason
+            END,
+            reviewed_by = ?,
+            reviewed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (
+            requested_status,
+            decision_note,
+            decision_note,
+            admin_id,
+            product_id,
+        ),
+    )
+    connection.commit()
+    connection.close()
+
+    action = {
+        "approved": "PRODUCT_APPROVED",
+        "rejected": "PRODUCT_REJECTED",
+        "under_review": "PRODUCT_RESTORED",
+    }[requested_status]
+    record_admin_action(action, "product", product_id)
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Admin decision saved successfully",
+            "productId": product_id,
+            "status": requested_status,
+        }
+    )
+
+
+@app.post("/api/admin/products/bulk-approve")
+@admin_required
+def bulk_approve_products():
+    data = request.get_json(silent=True) or {}
+    raw_product_ids = data.get("productIds", data.get("product_ids"))
+    admin_id = g.current_admin["id"]
+
+    if not isinstance(raw_product_ids, list):
+        return jsonify(
+            {
+                "success": False,
+                "message": "productIds must be a list",
+            }
+        ), 400
+
+    product_ids = []
+    for value in raw_product_ids[:100]:
+        try:
+            product_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if product_id > 0 and product_id not in product_ids:
+            product_ids.append(product_id)
+
+    if not product_ids:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Select at least one valid product",
+            }
+        ), 400
+
+    placeholders = ", ".join("?" for _ in product_ids)
+    connection = get_database()
+    cursor = connection.execute(
+        f"""
+        UPDATE products
+        SET status = 'approved',
+            reviewed_by = ?,
+            reviewed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id IN ({placeholders})
+        AND status IN (
+            'pending_ai_check',
+            'admin_review',
+            'under_review'
+        )
+        """,
+        (admin_id, *product_ids),
+    )
+    connection.commit()
+    approved_count = cursor.rowcount
+    connection.close()
+    record_admin_action("BULK_APPROVED", "product_batch", None)
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Selected products approved successfully",
+            "approvedCount": approved_count,
+        }
+    )
+
+
+@app.patch("/api/products/<int:product_id>/publish")
+def publish_product(product_id):
+    connection = get_database()
+
+    product = connection.execute(
+        "SELECT id, status FROM products WHERE id = ?",
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        connection.close()
+
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product not found",
+            }
+        ), 404
+
+    current_status = product["status"]
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Product is in the approval workflow",
+            "productId": product_id,
+            "status": current_status,
+        }
+    )
+
+
+@app.patch("/api/products/<int:product_id>/unpublish")
+def unpublish_product(product_id):
+    artisan_id = get_request_artisan_id()
+
+    if artisan_id is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Valid artisan ID is required",
+            }
+        ), 400
+
+    connection = get_database()
+    product = connection.execute(
+        """
+        SELECT id, artisan_id, status
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product not found",
+            }
+        ), 404
+
+    if product["artisan_id"] != artisan_id:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "You cannot change this product",
+            }
+        ), 403
+
+    if product["status"] != "approved":
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Only an approved product can be unpublished",
+            }
+        ), 400
+
+    connection.execute(
+        """
+        UPDATE products
+        SET status = 'unpublished',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (product_id,),
+    )
+    connection.commit()
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Product unpublished successfully",
+            "productId": product_id,
+            "status": "unpublished",
+        }
+    )
+
+
+@app.patch("/api/products/<int:product_id>/republish")
+def republish_product(product_id):
+    artisan_id = get_request_artisan_id()
+
+    if artisan_id is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Valid artisan ID is required",
+            }
+        ), 400
+
+    connection = get_database()
+    product = connection.execute(
+        """
+        SELECT id, artisan_id, status
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product not found",
+            }
+        ), 404
+
+    if product["artisan_id"] != artisan_id:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "You cannot change this product",
+            }
+        ), 403
+
+    if product["status"] != "unpublished":
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Only an unpublished product can be republished",
+            }
+        ), 400
+
+    connection.execute(
+        """
+        UPDATE products
+        SET status = 'approved',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (product_id,),
+    )
+    connection.commit()
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Product republished successfully",
+            "productId": product_id,
+            "status": "approved",
+        }
+    )
+
+
+@app.patch("/api/products/<int:product_id>/stock-price")
+def update_product_stock_price(product_id):
+    artisan_id = get_request_artisan_id()
+
+    if artisan_id is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Artisan login required",
+            }
+        ), 401
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        stock_quantity = int(data.get("stockQuantity"))
+        selling_price = float(data.get("sellingPrice"))
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "success": False,
+                "message": "Valid stock quantity and selling price are required",
+            }
+        ), 400
+
+    if stock_quantity < 0:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Stock quantity cannot be negative",
+            }
+        ), 400
+
+    if selling_price <= 0:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Selling price must be greater than zero",
+            }
+        ), 400
+
+    connection = get_database()
+    product = connection.execute(
+        """
+        SELECT id, artisan_id
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product not found",
+            }
+        ), 404
+
+    if product["artisan_id"] != artisan_id:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "You cannot edit this product",
+            }
+        ), 403
+
+    connection.execute(
+        """
+        UPDATE products
+        SET stock_quantity = ?, selling_price = ?
+        WHERE id = ?
+        """,
+        (stock_quantity, selling_price, product_id),
+    )
+    connection.commit()
+    connection.close()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Stock and selling price updated successfully",
+            "productId": product_id,
+            "stockQuantity": stock_quantity,
+            "sellingPrice": selling_price,
+        }
+    )
+
+
+@app.delete("/api/products/<int:product_id>")
+def delete_product(product_id):
+    artisan_id = get_request_artisan_id()
+
+    if artisan_id is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Valid artisan ID is required",
+            }
+        ), 400
+
+    connection = get_database()
+    product = connection.execute(
+        """
+        SELECT id, artisan_id, image_url
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Product not found",
+            }
+        ), 404
+
+    if product["artisan_id"] != artisan_id:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "You cannot delete this product",
+            }
+        ), 403
+
+    image_url = product["image_url"]
+
+    other_image_reference = None
+
+    if image_url:
+        other_image_reference = connection.execute(
+            """
+            SELECT id
+            FROM products
+            WHERE image_url = ? AND id != ?
+            LIMIT 1
+            """,
+            (image_url, product_id),
+        ).fetchone()
+
+    connection.execute(
+        "DELETE FROM products WHERE id = ?",
+        (product_id,),
+    )
+    connection.commit()
+    connection.close()
+
+    if other_image_reference is None:
+        try:
+            remove_uploaded_image(image_url)
+        except OSError:
+            pass
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Product deleted successfully",
+            "productId": product_id,
+        }
+    )
+
+
+@lru_cache(maxsize=1)
+def get_background_removal_session():
+    from rembg import new_session
+    return new_session("u2net")
+
+
+@app.post("/api/uploads")
+def upload_product_image():
+    if "image" not in request.files:
+        return jsonify(
+            {
+                "success": False,
+                "message": "No image was uploaded",
+            }
+        ), 400
+
+    image = request.files["image"]
+
+    if image.filename == "":
+        return jsonify(
+            {
+                "success": False,
+                "message": "No image was selected",
+            }
+        ), 400
+
+    if not is_allowed_image(image.filename):
+        return jsonify(
+            {
+                "success": False,
+                "message": "Only PNG, JPG, JPEG and WEBP are allowed",
+            }
+        ), 400
+
+    safe_name = secure_filename(image.filename)
+    extension = safe_name.rsplit(".", 1)[1].lower()
+    declared_format = (
+        "jpeg" if extension in {"jpg", "jpeg"} else extension
+    )
+
+    file_bytes = image.read(MAX_IMAGE_SIZE_BYTES + 1)
+
+    if len(file_bytes) > MAX_IMAGE_SIZE_BYTES:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Image size must be 10 MB or less",
+            }
+        ), 413
+
+    if len(file_bytes) < MIN_IMAGE_SIZE_BYTES:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Image file is empty or too small",
+            }
+        ), 400
+
+    detected_format = detect_image_format(file_bytes)
+
+    if detected_format is None:
+        return jsonify(
+            {
+                "success": False,
+                "message": "The uploaded file is not a valid PNG, JPG or WEBP image",
+            }
+        ), 400
+
+    if detected_format != declared_format:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Image extension does not match the actual file type",
+            }
+        ), 400
+
+    # Professional photographers can keep their original image unmodified.
+    preserve_original = request.form.get("preserveOriginal") == "true"
+    # Remove the background locally with the rembg AI model. This needs no API
+    # key. The optional remove.bg integration remains as a fallback.
+    background_removed = False
+    remove_bg_key = os.environ.get("REMOVE_BG_API_KEY", "").strip()
+    background_error = None
+    if not preserve_original:
+        try:
+            from rembg import remove as remove_background
+
+            file_bytes = remove_background(
+                file_bytes, session=get_background_removal_session()
+            )
+            extension = "png"
+            background_removed = True
+        except Exception as error:
+            background_error = type(error).__name__
+            app.logger.exception("Local background removal failed")
+
+    if not preserve_original and not background_removed and remove_bg_key:
+        try:
+            removal = requests.post(
+                "https://api.remove.bg/v1.0/removebg",
+                files={"image_file": (safe_name, file_bytes)},
+                data={"size": "auto"},
+                headers={"X-Api-Key": remove_bg_key},
+                timeout=45,
+            )
+            removal.raise_for_status()
+            file_bytes = removal.content
+            extension = "png"
+            background_removed = True
+        except requests.RequestException as error:
+            background_error = type(error).__name__
+            app.logger.exception("Background removal fallback failed")
+
+    if not preserve_original and not background_removed:
+        return jsonify({
+            "success": False,
+            "message": f"AI image processing failed ({background_error or 'unknown error'}). Check the Flask terminal for details.",
+        }), 503
+
+    if background_removed:
+        try:
+            file_bytes = trim_transparent_image(file_bytes)
+        except (OSError, ValueError) as error:
+            app.logger.exception("Could not frame the background-removed product")
+            return jsonify({
+                "success": False,
+                "message": f"Could not frame the isolated product ({type(error).__name__}).",
+            }), 422
+
+    image_sha256 = hashlib.sha256(file_bytes).hexdigest()
+    connection = get_database()
+    duplicate_products = find_duplicate_products(
+        connection,
+        image_sha256,
+    )
+    connection.close()
+    duplicate_detected = len(duplicate_products) > 0
+
+    unique_name = f"{uuid4().hex}.{extension}"
+    image_path = UPLOAD_FOLDER / unique_name
+
+    with image_path.open("wb") as saved_image:
+        saved_image.write(file_bytes)
+
+    image_url = (
+        f"http://127.0.0.1:5000/uploads/{unique_name}"
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Image uploaded successfully",
+            "imageUrl": image_url,
+            "imageSha256": image_sha256,
+            "duplicateImageDetected": duplicate_detected,
+            "duplicateImageCount": len(duplicate_products),
+            "backgroundRemoved": background_removed,
+        }
+    ), 201
+
+
+@app.get("/uploads/<path:filename>")
+def serve_product_image(filename):
+    return send_from_directory(
+        UPLOAD_FOLDER,
+        filename,
+    )
+@app.post("/api/generate-catalog")
+def generate_catalog():
+    data = request.get_json(silent=True) or {}
+
+    required_fields = [
+        "productName",
+        "category",
+        "description",
+        "materialCost",
+        "labourCost",
+        "imageUrl",
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if data.get(field) in (None, "")
+    ]
+
+    if missing_fields:
+        return jsonify({
+            "success": False,
+            "message": "Required product information is missing",
+            "missingFields": missing_fields,
+        }), 400
+
+    product_name = str(data["productName"]).strip()
+    description = str(data["description"]).strip()
+
+    if not 3 <= len(product_name) <= 120:
+        return jsonify({
+            "success": False,
+            "message": "Product name must be between 3 and 120 characters",
+        }), 400
+
+    if not 20 <= len(description) <= 2000:
+        return jsonify({
+            "success": False,
+            "message": "Product description must be between 20 and 2000 characters",
+        }), 400
+
+    try:
+        material_cost = float(data["materialCost"])
+        labour_cost = float(data["labourCost"])
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Material and labour costs must be valid numbers",
+        }), 400
+
+    if material_cost < 0 or labour_cost < 0:
+        return jsonify({
+            "success": False,
+            "message": "Product costs cannot be negative",
+        }), 400
+
+    image_path = get_uploaded_image_path(data["imageUrl"])
+
+    if image_path is None:
+        return jsonify({
+            "success": False,
+            "message": "Uploaded product image পাওয়া যায়নি",
+        }), 400
+
+    image_sha256 = calculate_file_sha256(image_path)
+    connection = get_database()
+    duplicate_products = find_duplicate_products(
+        connection,
+        image_sha256,
+    )
+    connection.close()
+    duplicate_detected = len(duplicate_products) > 0
+
+    image_data_url = create_image_data_url(
+        data.get("imageUrl", "")
+    )
+
+    if not image_data_url:
+        return jsonify({
+            "success": False,
+            "message": "Uploaded product image পাওয়া যায়নি",
+        }), 400
+
+    n8n_payload = {
+        **data,
+        "imageDataUrl": image_data_url,
+        "imageSha256": image_sha256,
+        "duplicateImageDetected": duplicate_detected,
+        "duplicateImageCount": len(duplicate_products),
+    }
+
+    try:
+        n8n_response = requests.post(
+            N8N_CATALOG_WEBHOOK_URL,
+            json=n8n_payload,
+            timeout=60,
+        )
+
+        n8n_response.raise_for_status()
+
+        return jsonify(n8n_response.json()), 200
+
+    except requests.RequestException as error:
+        return jsonify({
+            "success": False,
+            "message": "AI catalog generation failed",
+            "error": str(error),
+        }), 502
+if __name__ == "__main__":
+    initialize_database()
+
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True,
+    )

@@ -1,0 +1,6 @@
+{
+  "name": "KarigarSetu",
+  "description": "AI-powered artisan marketplace connecting rural and traditional craftspeople with buyers worldwide through voice cataloging and smart verification.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

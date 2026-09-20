@@ -1,0 +1,10 @@
+import React from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react';
+import { getCurrentCustomer } from '../../services/customerAuth';
+
+export const CustomerProfile: React.FC = () => {
+  const customer = getCurrentCustomer();
+  if (!customer) return <Navigate to="/customer/login" replace state={{ from: '/customer/profile' }} />;
+  return <div className="min-h-screen bg-[#f7faf8] px-4 py-8 sm:px-6"><main className="mx-auto max-w-3xl"><Link to="/marketplace" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31]"><ArrowLeft className="h-4 w-4" /> Back to Marketplace</Link><section className="rounded-3xl border border-[#dce8df] bg-white p-6 shadow-sm sm:p-8"><div className="mb-8 flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0c4b31] text-2xl font-black text-white">{customer.name.charAt(0).toUpperCase()}</div><div><p className="text-xs font-extrabold uppercase tracking-wider text-[#e87722]">Customer account</p><h1 className="text-2xl font-black text-[#0c4b31]">{customer.name}</h1></div></div><div className="grid gap-4 sm:grid-cols-2"><div className="rounded-xl bg-[#f7faf8] p-4"><Mail className="mb-2 h-5 w-5 text-[#0c5b3b]" /><p className="text-xs text-gray-500">Email</p><strong className="break-all text-sm">{customer.email || 'Not provided'}</strong></div><div className="rounded-xl bg-[#f7faf8] p-4"><Phone className="mb-2 h-5 w-5 text-[#0c5b3b]" /><p className="text-xs text-gray-500">Mobile</p><strong className="text-sm">{customer.mobile || 'Not provided'}</strong></div><div className="rounded-xl bg-[#f7faf8] p-4 sm:col-span-2"><MapPin className="mb-2 h-5 w-5 text-[#e87722]" /><p className="text-xs text-gray-500">Delivery address</p><strong className="text-sm">{[customer.address, customer.city, customer.district, customer.state, customer.pin_code].filter(Boolean).join(', ') || 'No address saved'}</strong></div></div></section></main></div>;
+};
