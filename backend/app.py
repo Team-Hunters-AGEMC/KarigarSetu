@@ -2563,9 +2563,9 @@ def generate_catalog():
             "message": "AI catalog generation failed",
             "error": str(error),
         }), 502
-if __name__ == "__main__":
-    initialize_database()
+initialize_database()
 
+if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
         port=5000,
