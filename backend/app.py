@@ -46,7 +46,6 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or _secret_path.read_tex
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = True
-app.config["SESSION_COOKIE_SECURE"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
 
 CORS(
@@ -1666,21 +1665,71 @@ def admin_required(view):
 @app.post("/api/admin/auth/login")
 def admin_login():
     data = request.get_json(silent=True) or {}
-    identifier = str(data.get("email", data.get("identifier", ""))).strip().lower()
+    identifier = str(
+        data.get("email", data.get("identifier", ""))
+    ).strip().lower()
     password = str(data.get("password", ""))
-    connection = get_database()
-    row = connection.execute("SELECT * FROM admin_users WHERE LOWER(email) = ? OR LOWER(username) = ?", (identifier, identifier)).fetchone()
-    if row is None or not row["is_active"] or not check_password_hash(row["password_hash"], password):
-        connection.close()
-        return jsonify({"success": False, "message": "Invalid administrator credentials"}), 401
-    session.clear(); session.permanent = True
-    session.update({"user_id": row["id"], "user_role": "admin"})
-    connection.execute("UPDATE admin_users SET last_login = CURRENT_TIMESTAMP, failed_attempts = 0 WHERE id = ?", (row["id"],))
-    connection.commit(); connection.close()
-    g.current_admin = dict(row)
-    record_admin_action("ADMIN_LOGIN", "admin_user", row["id"])
-    return jsonify({"success": True, "user": {"id": row["id"], "name": row["name"], "email": row["email"], "username": row["username"], "role": "admin"}})
 
+    connection = get_database()
+    row = connection.execute(
+        """
+        SELECT * FROM admin_users
+        WHERE LOWER(email) = ? OR LOWER(username) = ?
+        """,
+        (identifier, identifier),
+    ).fetchone()
+
+    if row is None or not row["is_active"] or not check_password_hash(
+        row["password_hash"], password
+    ):
+        connection.close()
+        return jsonify({
+            "success": False,
+            "message": "Invalid administrator credentials",
+        }), 401
+
+    session.clear()
+    session.permanent = True
+    session["user_id"] = row["id"]
+    session["user_role"] = "admin"
+
+    connection.execute(
+        """
+        UPDATE admin_users
+        SET last_login = CURRENT_TIMESTAMP, failed_attempts = 0
+        WHERE id = ?
+        """,
+        (row["id"],),
+    )
+
+    connection.execute(
+        """
+        INSERT INTO admin_audit_logs
+        (admin_id, action, target_type, target_id, ip_address)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            row["id"],
+            "ADMIN_LOGIN",
+            "admin_user",
+            row["id"],
+            request.remote_addr,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "user": {
+            "id": row["id"],
+            "name": row["name"],
+            "email": row["email"],
+            "username": row["username"],
+            "role": "admin",
+        },
+    })
 
 @app.get("/api/admin/auth/me")
 @admin_required
