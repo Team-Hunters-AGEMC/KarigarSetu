@@ -176,7 +176,7 @@ export const adminApi = {
    */
   async getDashboardData(): Promise<{ stats: AdminDashboardStats; adminUser: AdminUser } | null> {
     try {
-      const res = await fetch('/api/admin/dashboard', {
+      const res = await fetch(`${API_BASE}/api/admin/dashboard`, {
         method: 'GET',
         credentials: 'include',
       });
