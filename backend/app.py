@@ -44,7 +44,8 @@ if not os.environ.get("SECRET_KEY") and not _secret_path.exists():
         pass
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or _secret_path.read_text().strip()
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_SECURE"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
 
