@@ -15,6 +15,8 @@ import sqlite3
 import psycopg
 from psycopg.rows import dict_row
 import requests
+import cloudinary
+import cloudinary.uploader
 from io import BytesIO
 from PIL import Image
 
@@ -87,6 +89,9 @@ MIN_IMAGE_SIZE_BYTES = 1024
 
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 
+# Cloudinary automatically reads the CLOUDINARY_URL environment variable.
+cloudinary.config(secure=True)
+
 
 def trim_transparent_image(image_bytes):
     """Tightly frame the visible craft while leaving a small transparent margin."""
@@ -117,13 +122,6 @@ def is_allowed_image(filename):
         and filename.rsplit(".", 1)[1].lower()
         in ALLOWED_IMAGE_EXTENSIONS
     )
-class PostgresCursor:
-    def __init__(self, cursor, lastrowid=None):
-        self.cursor = cursor
-        self.lastrowid = lastrowid
-
-    def __getattr__(self, name):
-        return getattr(self.cursor, name)
 class PostgresCursor:
     def __init__(self, cursor, lastrowid=None):
         self.cursor = cursor
@@ -757,15 +755,29 @@ def create_artisan():
     if video_ext not in ALLOWED_VIDEO_EXTENSIONS:
         return jsonify({"success": False, "message": "ভিডিও MP4, WEBM অথবা MOV হতে হবে"}), 400
 
-    def save_proof(upload, prefix):
-        ext = secure_filename(upload.filename).rsplit(".", 1)[-1].lower()
-        filename = f"{prefix}_{uuid4().hex}.{ext}"
-        upload.save(UPLOAD_FOLDER / filename)
-        return f"/uploads/{filename}"
+    def save_proof(upload, folder, resource_type):
+        if not os.environ.get("CLOUDINARY_URL"):
+            raise RuntimeError("CLOUDINARY_URL is not configured")
 
-    proof_image_1 = save_proof(proof_1, "artisan_proof")
-    proof_image_2 = save_proof(proof_2, "artisan_proof")
-    proof_video_url = save_proof(proof_video, "artisan_video")
+        result = cloudinary.uploader.upload(
+            upload,
+            resource_type=resource_type,
+            folder=folder,
+            use_filename=False,
+            unique_filename=True,
+            overwrite=False,
+        )
+        return result["secure_url"]
+
+    proof_image_1 = save_proof(
+        proof_1, "karigarsetu/artisan-proofs", "image"
+    )
+    proof_image_2 = save_proof(
+        proof_2, "karigarsetu/artisan-proofs", "image"
+    )
+    proof_video_url = save_proof(
+        proof_video, "karigarsetu/artisan-proofs", "video"
+    )
     connection = get_database()
 
     try:
