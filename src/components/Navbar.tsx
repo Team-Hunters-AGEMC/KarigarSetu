@@ -264,6 +264,44 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Buttons: Customer Login, Customer Sign Up, Artisan Login */}
         <div className="hidden sm:flex items-center gap-2 lg:gap-3 shrink-0">
+          {/* Customer actions belong only on the public home page. */}
+          {isHomePage && (customer ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs font-semibold">
+              <User className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <span className="font-bold text-amber-950 max-w-[90px] lg:max-w-[120px] truncate" title={`Customer: ${customer.name}`}>
+                {customer.name.split(' ')[0]}
+              </span>
+              <button
+                type="button"
+                id="nav-customer-logout-btn"
+                onClick={handleCustomerLogout}
+                className="text-red-600 hover:text-red-800 font-bold ml-1 hover:underline flex items-center gap-0.5 text-[11px] cursor-pointer"
+                title="Log Out Customer Account"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Logout</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 lg:gap-2">
+              <Link
+                to="/customer/login"
+                id="nav-customer-login-btn"
+                className="px-3 lg:px-3.5 py-2 text-xs font-bold text-[#e27d35] bg-white border border-[#f5d0b5] hover:bg-[#fff9f5] rounded-xl transition-all shadow-2xs flex items-center gap-1.5"
+              >
+                <User className="w-3.5 h-3.5 text-[#e27d35]" />
+                <span>Customer Login</span>
+              </Link>
+              <Link
+                to="/customer/register"
+                id="nav-customer-register-btn"
+                className="px-3 lg:px-3.5 py-2 text-xs font-bold text-[#0c4b31] bg-[#edf8f2] border border-[#c2e2ce] hover:bg-[#e1f2e7] rounded-xl transition-all shadow-2xs flex items-center gap-1"
+              >
+                <span>Customer Sign Up</span>
+              </Link>
+            </div>
+          ))}
+
           {/* Artisan Account or Artisan Login */}
           {artisan ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#edf8f1] border border-[#c2e2ce] rounded-xl text-xs font-semibold">
@@ -345,8 +383,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* User Account Controls in Mobile */}
           <div className="space-y-2">
-            {/* Customer Section */}
-            {customer ? (
+            {/* Customer actions are available only on the public home page. */}
+            {isHomePage && (customer ? (
               <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-amber-900 flex items-center gap-1">
@@ -387,7 +425,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Customer Sign Up
                 </Link>
               </div>
-            )}
+            ))}
 
             {/* Artisan Section */}
             {artisan ? (
