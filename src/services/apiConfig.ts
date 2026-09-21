@@ -2,13 +2,16 @@ const envApiBase = (import.meta as any).env?.VITE_API_BASE_URL as
   | string
   | undefined;
 
-export const API_BASE =
-  envApiBase?.replace(/\/$/, '') || 'http://127.0.0.1:5000';
+// Render frontend-এর জন্য backend-এর live URL default রাখা হলো।
+export const API_BASE = (
+  envApiBase?.trim() || 'https://karigarsetu-ndzw.onrender.com'
+).replace(/\/$/, '');
 
 export const apiUrl = (path: string): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE}${normalizedPath}`;
 };
+
 const originalFetch = window.fetch.bind(window);
 
 export const installApiFetchInterceptor = (): void => {

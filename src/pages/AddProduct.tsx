@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { getCurrentArtisan } from '../data/seedData';
 import { CraftCategory } from '../types';
+import { API_BASE } from '../services/apiConfig';
 
 const SAMPLE_CRAFT_PHOTOS = [
   {
@@ -221,7 +222,7 @@ export const AddProduct: React.FC = () => {
     try {
       const form = new FormData();
       form.append('image', file);
-      const response = await fetch('/api/uploads', {
+      const response = await fetch(`${API_BASE}/api/uploads`, {
         method: 'POST',
         credentials: 'include',
         body: form,
@@ -279,8 +280,7 @@ export const AddProduct: React.FC = () => {
       return;
     }
 
-    if (!imagePreview.startsWith('http://127.0.0.1:5000/uploads/') &&
-        !imagePreview.startsWith('http://localhost:5000/uploads/')) {
+    if (!imagePreview || imagePreview.includes('images.unsplash.com')) {
       setErrorMessage('AI catalog তৈরির জন্য নিজের পণ্যের ছবি upload করুন। Sample photo শুধু preview-এর জন্য।');
       return;
     }
@@ -290,7 +290,7 @@ export const AddProduct: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/api/generate-catalog', {
+      const response = await fetch(`${API_BASE}/api/generate-catalog`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
