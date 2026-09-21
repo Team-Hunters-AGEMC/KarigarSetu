@@ -224,7 +224,7 @@ export const AddProduct: React.FC = () => {
       // Runs completely in the visitor's browser. This keeps Render Free from
       // loading an ONNX model and avoids worker timeout / memory crashes.
       const processedBlob = await imglyRemoveBackground(file, {
-        model: 'small',
+        model: 'isnet_quint8',
       });
 
       const form = new FormData();
@@ -321,7 +321,11 @@ export const AddProduct: React.FC = () => {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.success || !result.catalog) {
-        throw new Error(result.message || 'AI catalog তৈরি হয়নি। Flask ও n8n workflow চালু আছে কি না দেখুন।');
+        // The backend returns the precise Gemini cause in `error`.
+        // Show it to the artisan instead of masking it with a generic message.
+        throw new Error(
+          result.error || result.message || 'Gemini AI catalog generation failed.',
+        );
       }
 
       const aiCatalog = result.catalog;
