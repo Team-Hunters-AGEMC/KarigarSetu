@@ -479,6 +479,26 @@ def initialize_database():
         """
     )
 
+    # A conversation always belongs to one customer and one artisan.  Product
+    # is optional so an artisan can still answer after a listing is removed.
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS marketplace_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            artisan_id INTEGER NOT NULL,
+            product_id INTEGER,
+            sender_role TEXT NOT NULL,
+            body TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers (id),
+            FOREIGN KEY (artisan_id) REFERENCES artisans (id),
+            FOREIGN KEY (product_id) REFERENCES products (id)
+        )
+        """
+    )
+
     connection.execute(
         """
         CREATE TABLE IF NOT EXISTS admin_users (
@@ -1730,6 +1750,175 @@ def require_customer_id():
     if session.get("user_role") != "customer" or not session.get("user_id"):
         return None
     return int(session["user_id"])
+
+
+def require_message_user():
+    role = session.get("user_role")
+    user_id = session.get("user_id")
+    if role not in {"customer", "artisan"} or not user_id:
+        return None, None
+    return role, int(user_id)
+
+
+def message_payload(row):
+    return {
+        "id": row["id"],
+        "customer_id": row["customer_id"],
+        "artisan_id": row["artisan_id"],
+        "product_id": row["product_id"],
+        "sender_role": row["sender_role"],
+        "body": row["body"],
+        "is_read": bool(row["is_read"]),
+        "created_at": row["created_at"],
+        "customer_name": row["customer_name"],
+        "artisan_name": row["artisan_name"],
+        "product_name": row["product_name"],
+    }
+
+
+@app.get("/api/messages")
+def get_messages():
+    role, user_id = require_message_user()
+    if role is None:
+        return jsonify({"success": False, "message": "Please log in to view messages"}), 401
+
+    try:
+        artisan_id = int(request.args.get("artisan_id", ""))
+        customer_id = int(request.args.get("customer_id", "")) if request.args.get("customer_id") else None
+        product_id = int(request.args.get("product_id", "")) if request.args.get("product_id") else None
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid conversation"}), 400
+
+    if role == "customer":
+        customer_id = user_id
+    elif artisan_id != user_id or not customer_id:
+        return jsonify({"success": False, "message": "This conversation is not available"}), 403
+
+    connection = get_database()
+    try:
+        query = """
+            SELECT m.*, c.name AS customer_name, a.name AS artisan_name,
+                   p.product_name AS product_name
+            FROM marketplace_messages m
+            JOIN customers c ON c.id = m.customer_id
+            JOIN artisans a ON a.id = m.artisan_id
+            LEFT JOIN products p ON p.id = m.product_id
+            WHERE m.customer_id = ? AND m.artisan_id = ?
+        """
+        values = [customer_id, artisan_id]
+        if product_id:
+            query += " AND m.product_id = ?"
+            values.append(product_id)
+        query += " ORDER BY m.created_at ASC, m.id ASC"
+        rows = connection.execute(query, tuple(values)).fetchall()
+        connection.execute(
+            """
+            UPDATE marketplace_messages SET is_read = 1
+            WHERE customer_id = ? AND artisan_id = ? AND sender_role <> ?
+            """,
+            (customer_id, artisan_id, role),
+        )
+        connection.commit()
+        return jsonify({"success": True, "data": [message_payload(row) for row in rows]})
+    finally:
+        connection.close()
+
+
+@app.get("/api/messages/inbox")
+def get_messages_inbox():
+    role, user_id = require_message_user()
+    if role is None:
+        return jsonify({"success": False, "message": "Please log in to view messages"}), 401
+
+    connection = get_database()
+    try:
+        if role == "customer":
+            rows = connection.execute(
+                """
+                SELECT m.*, c.name AS customer_name, a.name AS artisan_name, p.product_name AS product_name
+                FROM marketplace_messages m
+                JOIN customers c ON c.id = m.customer_id
+                JOIN artisans a ON a.id = m.artisan_id
+                LEFT JOIN products p ON p.id = m.product_id
+                WHERE m.customer_id = ? ORDER BY m.created_at DESC, m.id DESC
+                """, (user_id,)
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                """
+                SELECT m.*, c.name AS customer_name, a.name AS artisan_name, p.product_name AS product_name
+                FROM marketplace_messages m
+                JOIN customers c ON c.id = m.customer_id
+                JOIN artisans a ON a.id = m.artisan_id
+                LEFT JOIN products p ON p.id = m.product_id
+                WHERE m.artisan_id = ? ORDER BY m.created_at DESC, m.id DESC
+                """, (user_id,)
+            ).fetchall()
+
+        conversations = {}
+        for row in rows:
+            key = f"{row['customer_id']}:{row['artisan_id']}:{row['product_id'] or 0}"
+            item = conversations.get(key)
+            if item is None:
+                item = message_payload(row)
+                item["unread_count"] = 0
+                conversations[key] = item
+            if row["sender_role"] != role and not row["is_read"]:
+                item["unread_count"] += 1
+        return jsonify({"success": True, "data": list(conversations.values())})
+    finally:
+        connection.close()
+
+
+@app.post("/api/messages")
+def send_message():
+    role, user_id = require_message_user()
+    if role is None:
+        return jsonify({"success": False, "message": "Please log in to send a message"}), 401
+
+    data = request.get_json(silent=True) or {}
+    body = str(data.get("body", "")).strip()
+    if not body or len(body) > 1500:
+        return jsonify({"success": False, "message": "Message must be between 1 and 1500 characters"}), 400
+    try:
+        product_id = int(data["product_id"]) if data.get("product_id") else None
+        if role == "customer":
+            customer_id, artisan_id = user_id, int(data["artisan_id"])
+        else:
+            customer_id, artisan_id = int(data["customer_id"]), user_id
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"success": False, "message": "A valid conversation is required"}), 400
+
+    connection = get_database()
+    try:
+        valid_customer = connection.execute("SELECT id FROM customers WHERE id = ? AND status = 'active'", (customer_id,)).fetchone()
+        valid_artisan = connection.execute("SELECT id FROM artisans WHERE id = ? AND verification_status = 'approved'", (artisan_id,)).fetchone()
+        if valid_customer is None or valid_artisan is None:
+            return jsonify({"success": False, "message": "This buyer or artisan is unavailable"}), 404
+        if product_id:
+            product = connection.execute("SELECT id, artisan_id FROM products WHERE id = ?", (product_id,)).fetchone()
+            if product is None or product["artisan_id"] != artisan_id:
+                return jsonify({"success": False, "message": "Product does not belong to this artisan"}), 400
+        cursor = connection.execute(
+            """
+            INSERT INTO marketplace_messages (customer_id, artisan_id, product_id, sender_role, body)
+            VALUES (?, ?, ?, ?, ?)
+            """, (customer_id, artisan_id, product_id, role, body)
+        )
+        message_id = cursor.lastrowid
+        connection.commit()
+        row = connection.execute(
+            """
+            SELECT m.*, c.name AS customer_name, a.name AS artisan_name, p.product_name AS product_name
+            FROM marketplace_messages m
+            JOIN customers c ON c.id = m.customer_id
+            JOIN artisans a ON a.id = m.artisan_id
+            LEFT JOIN products p ON p.id = m.product_id WHERE m.id = ?
+            """, (message_id,)
+        ).fetchone()
+        return jsonify({"success": True, "data": message_payload(row)}), 201
+    finally:
+        connection.close()
 
 
 @app.post("/api/customers/orders")
