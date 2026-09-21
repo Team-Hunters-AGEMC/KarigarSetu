@@ -554,13 +554,13 @@ def initialize_database():
     # 0.95) were converted to percentages.  Existing 0.95 / 99.05 records
     # become 95 / 5 without changing their approval status.
     connection.execute(
-        """
-        UPDATE products
-        SET ai_confidence_score = ROUND(ai_confidence_score * 100, 2),
-            ai_risk_score = ROUND(100 - (ai_confidence_score * 100), 2)
-        WHERE ai_confidence_score > 0 AND ai_confidence_score <= 1
-        """
-    )
+    """
+    UPDATE products
+    SET ai_confidence_score = ai_confidence_score * 100,
+        ai_risk_score = 100 - (ai_confidence_score * 100)
+    WHERE ai_confidence_score > 0 AND ai_confidence_score <= 1
+    """
+)
     connection.commit()
     connection.close()
 
