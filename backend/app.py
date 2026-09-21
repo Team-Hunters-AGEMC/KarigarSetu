@@ -639,7 +639,9 @@ def prepare_image_for_gemini(image_bytes):
     try:
         with Image.open(BytesIO(image_bytes)) as source:
             source = source.convert("RGB")
-            source.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+            # A smaller image is enough for catalog verification and avoids
+            # long requests on Render's free instance.
+            source.thumbnail((768, 768), Image.Resampling.LANCZOS)
             output = BytesIO()
             source.save(output, format="JPEG", quality=82, optimize=True)
             return output.getvalue(), "image/jpeg"
@@ -747,6 +749,13 @@ unclear, mismatched with the supplied name/description, mass-produced, or has
 other uncertainty, lower the scores and add a short issue. Do not invent
 materials, dimensions, artisan process, or a handmade claim not supported by
 the image and artisan description.
+
+Marketplace eligibility: stuffed toys, generic plush teddy bears, electronics,
+computer accessories, branded consumer products, plastic factory goods and
+other clearly mass-produced products must NOT receive approval-level scores.
+Traditional terracotta/wood/metal/handloom crafts and religious idols may
+receive high scores only when the visible image and supplied description both
+support that conclusion.
 """.strip()
 
     request_body = {
@@ -764,7 +773,7 @@ the image and artisan description.
         "generationConfig": {
             "responseMimeType": "application/json",
             "temperature": 0.35,
-            "maxOutputTokens": 1200,
+            "maxOutputTokens": 800,
         },
     }
     endpoint = (
@@ -772,22 +781,28 @@ the image and artisan description.
         f"{GEMINI_MODEL}:generateContent"
     )
     response = None
-    try:
-        # A 503 is normally a short-lived shared-capacity spike. Retry quickly
-        # so the actual vision model still gets a chance to write the catalog.
-        for attempt in range(3):
+    last_error = None
+    # Retry both temporary HTTP errors and network read timeouts. Previously a
+    # single timeout immediately forced every product into the fallback path.
+    for attempt in range(3):
+        try:
             response = requests.post(
                 endpoint,
                 headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
                 json=request_body,
-                timeout=(5, 20),
+                timeout=(5, 30),
             )
             if response.ok or response.status_code not in (429, 503):
                 break
-            if attempt < 2:
-                time.sleep(attempt + 1)
-    except requests.RequestException as error:
-        app.logger.warning("Gemini unavailable; using catalog fallback: %s", error)
+        except requests.RequestException as error:
+            last_error = error
+            response = None
+
+        if attempt < 2:
+            time.sleep(attempt + 1)
+
+    if response is None:
+        app.logger.warning("Gemini unavailable after retries; using catalog fallback: %s", last_error)
         return build_catalog_fallback(product_data)
     if not response.ok:
         # Gemini can temporarily return 429/503 while its free/shared capacity
@@ -1355,25 +1370,33 @@ def create_product():
     )
     duplicate_detected = len(duplicate_products) > 0
     approval_check = data.get("approvalCheck")
-    if professional_listing:
-        try:
-            ai_result = generate_catalog_with_gemini(data, image_data)
+    # Never trust a score sent by the browser. Re-check the actual uploaded
+    # image on the server for every Smart Catalog and Professional Studio
+    # listing, so a teddy bear cannot inherit a handmade score and a genuine
+    # terracotta idol gets a fresh image-based decision.
+    try:
+        ai_result = generate_catalog_with_gemini(data, image_data)
+        generated_approval_check = ai_result["catalog"].get("approvalCheck")
+        if not isinstance(generated_approval_check, dict):
+            raise ValueError("AI verification score was missing")
+        if (
+            parse_ai_score(generated_approval_check.get("confidenceScore")) is None
+            or parse_ai_score(generated_approval_check.get("handmadeProductProbability")) is None
+        ):
+            raise ValueError("AI verification scores were incomplete")
+        approval_check = generated_approval_check
+
+        # Professional Studio asks the server for the final AI price. Smart
+        # Catalog keeps the price the artisan reviewed before publishing.
+        if professional_listing:
             suggested_price = parse_ai_suggested_price(
                 ai_result["catalog"].get("suggestedPrice")
             )
             if suggested_price is None:
                 raise ValueError("AI suggested price was missing")
-            approval_check = ai_result["catalog"].get("approvalCheck")
-            if not isinstance(approval_check, dict):
-                raise ValueError("AI verification score was missing")
-            if (
-                parse_ai_score(approval_check.get("confidenceScore")) is None
-                or parse_ai_score(approval_check.get("handmadeProductProbability")) is None
-            ):
-                raise ValueError("AI verification scores were incomplete")
-        except ValueError:
-            connection.close()
-            return jsonify({"success": False, "message": "AI verification is unavailable. Please try again later."}), 502
+    except ValueError:
+        connection.close()
+        return jsonify({"success": False, "message": "AI verification is unavailable. Please try again later."}), 502
 
     selling_price = suggested_price
     if professional_listing and data.get("sellingPrice") is not None:
