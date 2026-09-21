@@ -11,12 +11,17 @@ import {
   X, 
   Sparkles, 
   Layers,
-  ShieldCheck 
+  ShieldCheck,
+  ArrowUpRight,
+  Store,
+  Tag,
+  LoaderCircle,
 } from 'lucide-react';
 import { getCurrentCustomer, setCurrentCustomer, logoutCustomer, getCartCount, CustomerUser } from '../../services/customerAuth';
 import { getLoggedInArtisan, logoutArtisan } from '../../data/seedData';
 import { LoginRequiredModal } from './LoginRequiredModal';
 import { CraftCategory, ArtisanProfile } from '../../types';
+import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceApi';
 
 interface MarketplaceNavbarProps {
   searchQuery?: string;
@@ -50,6 +55,9 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [suggestionProducts, setSuggestionProducts] = useState<MarketplaceProduct[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   useEffect(() => {
     const handleCustomerUpdate = () => {
@@ -68,6 +76,35 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
       window.removeEventListener('karigarsetu_artisan_updated', handleArtisanUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      setSuggestionProducts([]);
+      setSuggestionsLoading(false);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      setSuggestionsLoading(true);
+      try {
+        const data = await marketplaceApi.getApprovedProducts({
+          category: 'All',
+          search: query,
+          sort: 'popular',
+          maxPrice: 10000,
+          inStockOnly: false,
+        });
+        setSuggestionProducts(data.slice(0, 5));
+      } catch {
+        setSuggestionProducts([]);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleProtectedAction = (destination: string, contextMessage: string) => {
     if (!customer) {
@@ -88,6 +125,20 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
     logoutArtisan();
     setArtisan(null);
   };
+
+  const selectSuggestion = (value: string) => {
+    onSearchChange?.(value);
+    setShowSuggestions(false);
+  };
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const categorySuggestions = CATEGORY_LIST.filter((item) =>
+    item.id !== 'All' && item.label.toLowerCase().includes(normalizedQuery),
+  ).slice(0, 2);
+  const artisanSuggestions = [...new Set(
+    suggestionProducts.map((product) => product.artisan_name).filter(Boolean),
+  )].slice(0, 2);
+  const hasSuggestions = suggestionProducts.length > 0 || categorySuggestions.length > 0 || artisanSuggestions.length > 0;
 
   return (
     <header className="sticky top-0 z-40 bg-[#fcfaf6]/95 backdrop-blur-md border-b border-[#e2eae4]">
@@ -195,9 +246,85 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             type="text"
             placeholder="Search terracotta, handloom silk, dokra brass, woodcraft..."
             value={searchQuery}
-            onChange={(e) => onSearchChange?.(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onChange={(e) => {
+              onSearchChange?.(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setShowSuggestions(false);
+              if (e.key === 'Enter') setShowSuggestions(false);
+            }}
             className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-white border border-[#cfddd3] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10 transition-all shadow-xs"
           />
+
+          {showSuggestions && searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] overflow-hidden rounded-xl border border-[#d9e5dc] bg-white shadow-xl z-50 text-xs">
+              {suggestionsLoading ? (
+                <div className="flex items-center gap-2 px-4 py-3 text-gray-500">
+                  <LoaderCircle className="w-4 h-4 animate-spin text-[#0c4b31]" />
+                  Searching crafts…
+                </div>
+              ) : hasSuggestions ? (
+                <>
+                  {suggestionProducts.map((product) => (
+                    <button
+                      key={`product-${product.id}`}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectSuggestion(product.product_name)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#f1f8f4] transition-colors border-b border-gray-100"
+                    >
+                      <img
+                        src={product.image_url}
+                        alt=""
+                        className="w-9 h-9 rounded-lg bg-[#edf5ef] object-cover border border-[#e1ebe4]"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-bold text-[#1a2e24]">{product.product_name}</span>
+                        <span className="block truncate text-[10px] text-gray-500">by {product.artisan_name} · {product.category}</span>
+                      </span>
+                      <ArrowUpRight className="w-4 h-4 text-gray-400 shrink-0" />
+                    </button>
+                  ))}
+
+                  {categorySuggestions.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        onSelectCategory?.(category.id);
+                        onSearchChange?.('');
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#f1f8f4] transition-colors border-b border-gray-100"
+                    >
+                      <Tag className="w-4 h-4 text-[#e87722]" />
+                      <span className="flex-1"><b>{category.label}</b><span className="text-gray-500"> in Categories</span></span>
+                      <ArrowUpRight className="w-4 h-4 text-gray-400" />
+                    </button>
+                  ))}
+
+                  {artisanSuggestions.map((artisanName) => (
+                    <button
+                      key={artisanName}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectSuggestion(artisanName)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#f1f8f4] transition-colors"
+                    >
+                      <Store className="w-4 h-4 text-[#0c4b31]" />
+                      <span className="flex-1"><b>{artisanName}</b><span className="text-gray-500"> · Artisan Store</span></span>
+                      <ArrowUpRight className="w-4 h-4 text-gray-400" />
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <div className="px-4 py-3 text-gray-500">No matching crafts found. Press Enter to search all products.</div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Action Controls */}
