@@ -235,12 +235,17 @@ def parse_ai_score(value):
         return None
 
     try:
-        score = float(value)
+        # Gemini commonly returns probabilities such as 0.95.  The admin UI
+        # uses percentages, so normalise a 0-1 probability to 0-100 here.
+        score = float(str(value).strip().rstrip("%"))
     except (TypeError, ValueError):
         return None
 
     if not isfinite(score):
         return None
+
+    if 0 <= score <= 1:
+        score *= 100
 
     return round(max(0, min(100, score)), 2)
 
@@ -315,9 +320,11 @@ def decide_product_approval(approval_check, duplicate_detected):
         status = "admin_review"
         reason = "AI found low handmade-product confidence; admin decision required."
     elif (
-        confidence_score > 80
-        and risk_score < 20
-        and handmade_probability >= 70
+        # Publish only when the image itself gives strong evidence that the
+        # product is handmade and all catalog details match that image.
+        confidence_score >= 85
+        and risk_score <= 15
+        and handmade_probability >= 80
         and name_image_match
         and description_match
         and image_quality in {"clear", "good", "high", "acceptable"}
@@ -542,6 +549,18 @@ def initialize_database():
             )
 
     migrate_product_schema(connection)
+
+    # Repair catalog scores created before probability values (for example
+    # 0.95) were converted to percentages.  Existing 0.95 / 99.05 records
+    # become 95 / 5 without changing their approval status.
+    connection.execute(
+        """
+        UPDATE products
+        SET ai_confidence_score = ROUND(ai_confidence_score * 100, 2),
+            ai_risk_score = ROUND(100 - (ai_confidence_score * 100), 2)
+        WHERE ai_confidence_score > 0 AND ai_confidence_score <= 1
+        """
+    )
     connection.commit()
     connection.close()
 
@@ -706,15 +725,28 @@ Return this exact JSON shape:
   "approvalCheck": {{
     "confidenceScore": 0,
     "handmadeProductProbability": 0,
-    "needsAdminReview": true,
+    "imagePresent": true,
+    "nameImageMatch": true,
+    "descriptionMatch": true,
+    "inappropriateContent": false,
+    "suspiciousContent": false,
+    "imageQuality": "clear",
     "issues": []
   }}
 }}
 
 Use a sensible whole-number INR suggestedPrice based on image quality,
 craftsmanship and costs. It must be at least {int(base_cost)} and no more than
-{int(max(base_cost * 5, base_cost + 500))}. Never approve automatically:
-needsAdminReview must always be true.
+{int(max(base_cost * 5, base_cost + 500))}.
+
+For approvalCheck, inspect the image honestly. confidenceScore and
+handmadeProductProbability MUST be whole-number percentages from 0 to 100
+(never decimal probabilities such as 0.95). Mark a product as handmade only
+when the visible object has credible handmade-craft evidence. If the image is
+unclear, mismatched with the supplied name/description, mass-produced, or has
+other uncertainty, lower the scores and add a short issue. Do not invent
+materials, dimensions, artisan process, or a handmade claim not supported by
+the image and artisan description.
 """.strip()
 
     request_body = {
@@ -787,7 +819,8 @@ needsAdminReview must always be true.
         int(round(float(catalog.get("suggestedPrice", base_cost)))),
     )
     catalog["approvalCheck"] = catalog.get("approvalCheck") if isinstance(catalog.get("approvalCheck"), dict) else {}
-    catalog["approvalCheck"]["needsAdminReview"] = True
+    # The backend, not Gemini, makes the final approved/admin_review decision.
+    catalog["approvalCheck"].pop("needsAdminReview", None)
     return {"success": True, "catalog": catalog}
 
 
