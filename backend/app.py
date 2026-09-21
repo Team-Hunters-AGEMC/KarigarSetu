@@ -390,6 +390,7 @@ def initialize_database():
             selling_price REAL,
             stock_quantity INTEGER NOT NULL DEFAULT 1,
             image_url TEXT,
+            detail_focus_json TEXT,
             status TEXT NOT NULL DEFAULT 'pending_ai_check',
             ai_confidence_score REAL,
             ai_risk_score REAL,
@@ -876,6 +877,7 @@ def migrate_product_schema(connection):
         "selling_price": "REAL",
         "stock_quantity": "INTEGER NOT NULL DEFAULT 1",
         "image_url": "TEXT",
+        "detail_focus_json": "TEXT",
         "ai_confidence_score": "REAL",
         "ai_risk_score": "REAL",
         "ai_checks_json": "TEXT",
@@ -1341,6 +1343,19 @@ def create_product():
 
     image_sha256 = calculate_bytes_sha256(image_data[0])
 
+    raw_detail_focus = data.get("detailFocus")
+    if isinstance(raw_detail_focus, dict):
+        try:
+            detail_focus = {
+                "x": max(5, min(95, float(raw_detail_focus.get("x", 50)))),
+                "y": max(5, min(95, float(raw_detail_focus.get("y", 50)))),
+            }
+        except (TypeError, ValueError):
+            detail_focus = {"x": 50, "y": 50}
+    else:
+        detail_focus = {"x": 50, "y": 50}
+    detail_focus_json = json.dumps(detail_focus)
+
     suggested_price = ai_suggested_price
 
     connection = get_database()
@@ -1426,6 +1441,7 @@ def create_product():
             selling_price,
             stock_quantity,
             image_url,
+            detail_focus_json,
             status,
             image_sha256,
             ai_confidence_score,
@@ -1433,7 +1449,7 @@ def create_product():
             ai_checks_json,
             ai_decision_reason
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             artisan_id,
@@ -1446,6 +1462,7 @@ def create_product():
             selling_price,
             1,
             image_url,
+            detail_focus_json,
             initial_status,
             image_sha256,
             approval_decision["confidence_score"],
@@ -1512,6 +1529,13 @@ def get_products():
 
 def public_product(row):
     product = dict(row)
+    try:
+        detail_focus = json.loads(product.get("detail_focus_json") or "")
+        if not isinstance(detail_focus, dict):
+            raise ValueError("Invalid detail focus")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        detail_focus = {"x": 50, "y": 50}
+
     return {
         "id": product["id"],
         "product_name": product["product_name"],
@@ -1520,6 +1544,7 @@ def public_product(row):
         "selling_price": product["selling_price"] or product["suggested_price"],
         "stock_quantity": product["stock_quantity"],
         "image_url": product["image_url"],
+        "detail_focus": detail_focus,
         "artisan_id": product["artisan_id"],
         "artisan_name": product.get("artisan_name") or "Artisan",
         "artisan_location": product.get("artisan_location") or "",

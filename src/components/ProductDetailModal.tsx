@@ -124,6 +124,31 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </div>
             </div>
 
+            {/* Buyer gallery: first is the full craft, second is the selected craft detail. */}
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveView('studio')}
+                className={`h-16 w-16 overflow-hidden rounded-lg border-2 bg-[#f4f8f5] p-1 ${activeView === 'studio' ? 'border-[#0c4b31]' : 'border-transparent'}`}
+                aria-label="Show full craft"
+              >
+                <img src={product.image_url} alt="Full craft" className="h-full w-full object-contain" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveView('detail')}
+                className={`h-16 w-16 overflow-hidden rounded-lg border-2 bg-[#f4f8f5] p-1 ${activeView === 'detail' ? 'border-[#0c4b31]' : 'border-transparent'}`}
+                aria-label="Show craft detail"
+              >
+                <img
+                  src={product.image_url}
+                  alt="Craft detail"
+                  className="h-full w-full scale-[2.1] object-contain"
+                  style={{ transformOrigin: `${detailFocus.x}% ${detailFocus.y}%` }}
+                />
+              </button>
+            </div>
+
             {/* Lens Switcher */}
             <div className="flex items-center justify-center gap-3">
               <button

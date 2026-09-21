@@ -1,8 +1,6 @@
-import { ProductItem, ArtisanProfile, CraftCategory } from '../types';
+import { ProductItem, CraftCategory } from '../types';
 import { API_BASE } from './apiConfig';
 import { getStoredProducts } from '../data/seedData';
-
-
 
 export interface MarketplaceProduct {
   id: number;
@@ -12,6 +10,7 @@ export interface MarketplaceProduct {
   selling_price: number;
   stock_quantity: number;
   image_url: string;
+  detail_focus?: { x: number; y: number };
   artisan_id: number;
   artisan_name: string;
   artisan_location: string;
@@ -33,7 +32,6 @@ export interface ArtisanPublicData {
   products: MarketplaceProduct[];
 }
 
-// Sanitize product to ensure sensitive fields (material cost, labour cost, risk scores) are never exposed to buyers
 export function sanitizeForMarketplace(p: ProductItem): MarketplaceProduct {
   return {
     id: p.id,
@@ -43,6 +41,7 @@ export function sanitizeForMarketplace(p: ProductItem): MarketplaceProduct {
     selling_price: p.selling_price ?? p.suggested_price,
     stock_quantity: p.stock_quantity ?? 0,
     image_url: p.image_url,
+    detail_focus: (p as ProductItem & { detail_focus?: { x: number; y: number } }).detail_focus,
     artisan_id: p.artisan_id,
     artisan_name: p.artisan_name,
     artisan_location: p.artisan_location,
@@ -54,15 +53,7 @@ export function sanitizeForMarketplace(p: ProductItem): MarketplaceProduct {
 }
 
 export const marketplaceApi = {
-  // Fetch all approved products with optional filters
-  async getApprovedProducts(params?: {
-    category?: string;
-    search?: string;
-    sort?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
-    minPrice?: number;
-    maxPrice?: number;
-    inStockOnly?: boolean;
-  }): Promise<MarketplaceProduct[]> {
+  async getApprovedProducts(params?: { category?: string; search?: string; sort?: 'price_asc' | 'price_desc' | 'newest' | 'popular'; minPrice?: number; maxPrice?: number; inStockOnly?: boolean; }): Promise<MarketplaceProduct[]> {
     try {
       const url = new URL(`${API_BASE}/api/marketplace/products`);
       if (params?.category && params.category !== 'All') url.searchParams.append('category', params.category);
@@ -71,97 +62,48 @@ export const marketplaceApi = {
       if (params?.minPrice !== undefined) url.searchParams.append('min_price', String(params.minPrice));
       if (params?.maxPrice !== undefined) url.searchParams.append('max_price', String(params.maxPrice));
       if (params?.inStockOnly) url.searchParams.append('in_stock', 'true');
-
-      const response = await fetch(url.toString(), {
-        headers: { 'Accept': 'application/json' },
-      });
-
+      const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
       if (response.ok) {
         const result = await response.json();
-        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-          return result.data;
-        }
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) return result.data;
       }
-    } catch {
-      // Show the original example catalog while the backend is unavailable.
-    }
+    } catch { /* Local fallback below. */ }
 
-    // Fallback using synchronized local store
-    let items = getStoredProducts()
-      .filter((p) => p.status === 'approved')
-      .map(sanitizeForMarketplace);
-
-    if (params?.category && params.category !== 'All') {
-      items = items.filter((p) => p.category === params.category);
-    }
-
+    let items = getStoredProducts().filter((p) => p.status === 'approved').map(sanitizeForMarketplace);
+    if (params?.category && params.category !== 'All') items = items.filter((p) => p.category === params.category);
     if (params?.search) {
       const q = params.search.toLowerCase();
-      items = items.filter(
-        (p) =>
-          p.product_name.toLowerCase().includes(q) ||
-          p.artisan_name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.artisan_location.toLowerCase().includes(q) ||
-          p.tags?.some((t) => t.toLowerCase().includes(q))
-      );
+      items = items.filter((p) => p.product_name.toLowerCase().includes(q) || p.artisan_name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.artisan_location.toLowerCase().includes(q) || p.tags?.some((tag) => tag.toLowerCase().includes(q)));
     }
-
-    if (params?.minPrice !== undefined) {
-      items = items.filter((p) => p.selling_price >= params.minPrice!);
-    }
-
-    if (params?.maxPrice !== undefined) {
-      items = items.filter((p) => p.selling_price <= params.maxPrice!);
-    }
-
-    if (params?.inStockOnly) {
-      items = items.filter((p) => p.stock_quantity > 0);
-    }
-
-    if (params?.sort === 'price_asc') {
-      items.sort((a, b) => a.selling_price - b.selling_price);
-    } else if (params?.sort === 'price_desc') {
-      items.sort((a, b) => b.selling_price - a.selling_price);
-    } else if (params?.sort === 'newest') {
-      items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
-
+    if (params?.minPrice !== undefined) items = items.filter((p) => p.selling_price >= params.minPrice!);
+    if (params?.maxPrice !== undefined) items = items.filter((p) => p.selling_price <= params.maxPrice!);
+    if (params?.inStockOnly) items = items.filter((p) => p.stock_quantity > 0);
+    if (params?.sort === 'price_asc') items.sort((a, b) => a.selling_price - b.selling_price);
+    else if (params?.sort === 'price_desc') items.sort((a, b) => b.selling_price - a.selling_price);
+    else if (params?.sort === 'newest') items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return items;
   },
 
-  // Get details for a single approved product
   async getProductDetails(productId: number): Promise<MarketplaceProduct | null> {
     try {
       const response = await fetch(`${API_BASE}/api/marketplace/products/${productId}`);
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data) {
-          return result.data;
-        }
+        if (result.success && result.data) return result.data;
       }
-    } catch {
-      // Fallback
-    }
-
-    const example = getStoredProducts().find(p => p.id === Number(productId) && p.status === 'approved');
+    } catch { /* Local fallback below. */ }
+    const example = getStoredProducts().find((p) => p.id === Number(productId) && p.status === 'approved');
     return example ? sanitizeForMarketplace(example) : null;
   },
 
-  // Get public artisan profile and their approved crafts
   async getArtisanPublicProfile(artisanId: number): Promise<ArtisanPublicData | null> {
     try {
       const response = await fetch(`${API_BASE}/api/marketplace/artisans/${artisanId}`);
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data) {
-          return result.data;
-        }
+        if (result.success && result.data) return result.data;
       }
-    } catch {
-      // Fallback
-    }
-
+    } catch { /* No local artisan-profile fallback. */ }
     return null;
   },
 };

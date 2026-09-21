@@ -31,6 +31,7 @@ export const ProductDetailsPage: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [loginModalMessage, setLoginModalMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'story' | 'craft' | 'shipping'>('story');
+  const [activeImage, setActiveImage] = useState<'studio' | 'detail'>('studio');
 
   useEffect(() => {
     async function loadData() {
@@ -39,6 +40,7 @@ export const ProductDetailsPage: React.FC = () => {
       try {
         const item = await marketplaceApi.getProductDetails(Number(productId));
         setProduct(item);
+        setActiveImage('studio');
         setSelectedQuantity(1);
 
         if (item) {
@@ -170,6 +172,7 @@ export const ProductDetailsPage: React.FC = () => {
   }
 
   const isOutOfStock = product.stock_quantity <= 0;
+  const detailFocus = product.detail_focus || { x: 50, y: 50 };
 
   return (
     <div className="min-h-screen bg-[#fcfaf6] text-[#1a2e24]">
@@ -197,13 +200,27 @@ export const ProductDetailsPage: React.FC = () => {
               <img
                 src={product.image_url}
                 alt={product.product_name}
-                className="w-full h-full object-contain hover:scale-105 transition-transform duration-500"
+                className={`w-full h-full object-contain transition-transform duration-500 ${
+                  activeImage === 'detail' ? 'scale-[2.1]' : 'hover:scale-105'
+                }`}
+                style={activeImage === 'detail' ? { transformOrigin: `${detailFocus.x}% ${detailFocus.y}%` } : undefined}
               />
               
               <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-extrabold text-[#0c4b31] shadow-xs flex items-center gap-1.5 border border-[#cee0d4]">
                 <Sparkles className="w-3.5 h-3.5 text-[#e27d35]" />
                 <span>Verified Authentic Handcrafted</span>
               </div>
+            </div>
+
+            <div className="flex gap-3" aria-label="Product image gallery">
+              <button type="button" onClick={() => setActiveImage('studio')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition ${activeImage === 'studio' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show full product image">
+                <img src={product.image_url} alt="Full product view" className="h-full w-full object-contain" />
+                <span className="absolute bottom-0 inset-x-0 bg-black/55 py-0.5 text-[9px] font-bold text-white">Full view</span>
+              </button>
+              <button type="button" onClick={() => setActiveImage('detail')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition ${activeImage === 'detail' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show craftsmanship detail">
+                <img src={product.image_url} alt="Craftsmanship detail" className="h-full w-full scale-[2.1] object-contain" style={{ transformOrigin: `${detailFocus.x}% ${detailFocus.y}%` }} />
+                <span className="absolute bottom-0 inset-x-0 bg-black/55 py-0.5 text-[9px] font-bold text-white">Detail zoom</span>
+              </button>
             </div>
 
             {/* Quick Guarantees Strip */}
