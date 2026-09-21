@@ -629,6 +629,38 @@ def prepare_image_for_gemini(image_bytes):
         return image_bytes, None
 
 
+def build_catalog_fallback(product_data):
+    """Keep the public demo usable if Gemini's upstream service is unavailable."""
+    material_cost = max(0, float(product_data["materialCost"]))
+    labour_cost = max(0, float(product_data["labourCost"]))
+    base_cost = max(1, material_cost + labour_cost)
+    suggested_price = max(int(base_cost), int(round(base_cost * 1.35 / 10.0) * 10))
+    category = re.sub(r"[^A-Za-z0-9 &/-]", "", str(product_data.get("category", "handcrafted craft"))).strip()
+    category = category or "handcrafted craft"
+    title = str(product_data.get("productName", "Handcrafted Product")).strip() or "Handcrafted Product"
+
+    return {
+        "success": True,
+        "catalog": {
+            "professionalTitle": title,
+            "catalogDescription": (
+                f"A carefully handcrafted {category.lower()} piece, created with attention "
+                "to detail and artisan-led finishing. Its material and labour costs have been "
+                "considered to provide a fair, practical suggested market price."
+            ),
+            "shortDescription": f"Handcrafted {category.lower()} made by an independent artisan.",
+            "suggestedPrice": suggested_price,
+            "approvalCheck": {
+                "confidenceScore": 0,
+                "handmadeProductProbability": 0,
+                "needsAdminReview": True,
+                "issues": ["Gemini was temporarily unavailable; send this product for admin review."],
+            },
+            "catalogSource": "fallback",
+        },
+    }
+
+
 def generate_catalog_with_gemini(product_data, image_data):
     """Generate the catalog directly from Gemini for the public Render app."""
     if not GEMINI_API_KEY:
@@ -706,7 +738,8 @@ needsAdminReview must always be true.
             timeout=(5, 80),
         )
     except requests.RequestException as error:
-        raise ValueError(f"Gemini network request failed: {error}") from error
+        app.logger.warning("Gemini unavailable; using catalog fallback: %s", error)
+        return build_catalog_fallback(product_data)
     if not response.ok:
         raise ValueError(f"Gemini request failed ({response.status_code}): {response.text[:300]}")
 
