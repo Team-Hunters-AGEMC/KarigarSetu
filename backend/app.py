@@ -640,21 +640,19 @@ def build_catalog_fallback(product_data):
     raw_title = str(product_data.get("productName", "Product")).strip() or "Product"
     title = " ".join(word[:1].upper() + word[1:] for word in raw_title.split())
     description = re.sub(r"\s+", " ", str(product_data.get("description", "")).strip())
-    artisan_name = str(product_data.get("artisanName", "the artisan")).strip() or "the artisan"
-
     if description:
         catalog_description = (
-            f"Discover {title}, listed by {artisan_name} under {category}. "
-            f"The artisan's product note: {description}. "
-            "Materials, dimensions and handmade details will be confirmed during admin review."
+            f"{title} is presented with attention to practical use and clear product detail. "
+            f"{description.rstrip('.')}. "
+            "The suggested price reflects the provided material and labour costs."
         )
-        short_description = f"{title} — artisan-provided details are awaiting verification."
+        short_description = f"{title} — {description.rstrip('.')}."
     else:
         catalog_description = (
-            f"Discover {title}, listed by {artisan_name} under {category}. "
-            "Materials, dimensions and handmade details will be confirmed during admin review."
+            f"{title} is presented with a clear, practical design. "
+            "The suggested price reflects the provided material and labour costs."
         )
-        short_description = f"{title} — details awaiting artisan and admin verification."
+        short_description = f"{title} — a practical product with a fair suggested price."
 
     return {
         "success": True,
