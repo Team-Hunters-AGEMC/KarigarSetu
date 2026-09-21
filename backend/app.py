@@ -68,10 +68,10 @@ CORS(
 )
 
 DATABASE_PATH = Path(__file__).with_name("karigarsetu.db")
-N8N_CATALOG_WEBHOOK_URL = os.environ.get(
-    "N8N_CATALOG_WEBHOOK_URL",
-    "http://127.0.0.1:5678/webhook/karigarsetu-catalog",
-)
+# The public Render backend calls Gemini directly.  Do not use a localhost n8n
+# webhook here: Render cannot reach a workflow running on a developer's PC.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
 UPLOAD_FOLDER = Path(__file__).with_name("uploads")
 
 ALLOWED_IMAGE_EXTENSIONS = {
@@ -611,6 +611,101 @@ def calculate_bytes_sha256(file_bytes):
     return hashlib.sha256(file_bytes).hexdigest()
 
 
+def generate_catalog_with_gemini(product_data, image_data):
+    """Generate the catalog directly from Gemini for the public Render app."""
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not configured on the backend")
+
+    image_bytes, mime_type = image_data
+    material_cost = float(product_data["materialCost"])
+    labour_cost = float(product_data["labourCost"])
+    base_cost = max(1, material_cost + labour_cost)
+    prompt = f"""
+You are an expert Indian handmade-craft catalog writer. Analyse the supplied
+product image together with the artisan information below. Return ONLY valid
+JSON, with no markdown and no explanation.
+
+Product name supplied by artisan: {product_data['productName']}
+Craft category: {product_data['category']}
+Artisan description: {product_data['description']}
+Material cost (INR): {material_cost}
+Labour cost (INR): {labour_cost}
+Artisan location: {product_data.get('artisanLocation', '')}
+
+Return this exact JSON shape:
+{{
+  "professionalTitle": "short professional English title",
+  "catalogDescription": "English catalog description of at least 60 characters",
+  "shortDescription": "one concise English sentence",
+  "suggestedPrice": 0,
+  "approvalCheck": {{
+    "confidenceScore": 0,
+    "handmadeProductProbability": 0,
+    "needsAdminReview": true,
+    "issues": []
+  }}
+}}
+
+Use a sensible whole-number INR suggestedPrice based on image quality,
+craftsmanship and costs. It must be at least {int(base_cost)} and no more than
+{int(max(base_cost * 5, base_cost + 500))}. Never approve automatically:
+needsAdminReview must always be true.
+""".strip()
+
+    request_body = {
+        "contents": [{
+            "parts": [
+                {"text": prompt},
+                {
+                    "inlineData": {
+                        "mimeType": mime_type,
+                        "data": base64.b64encode(image_bytes).decode("ascii"),
+                    }
+                },
+            ]
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "temperature": 0.35,
+            "maxOutputTokens": 1200,
+        },
+    }
+    endpoint = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{GEMINI_MODEL}:generateContent"
+    )
+    response = requests.post(
+        endpoint,
+        headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
+        json=request_body,
+        timeout=60,
+    )
+    if not response.ok:
+        raise ValueError(f"Gemini request failed ({response.status_code}): {response.text[:300]}")
+
+    try:
+        response_data = response.json()
+        raw_text = response_data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        catalog = json.loads(raw_text)
+    except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as error:
+        raise ValueError("Gemini returned an invalid catalog response") from error
+
+    if not isinstance(catalog, dict) or not isinstance(catalog.get("professionalTitle"), str):
+        raise ValueError("Gemini catalog response was incomplete")
+    if not isinstance(catalog.get("catalogDescription"), str) or len(catalog["catalogDescription"].strip()) < 40:
+        raise ValueError("Gemini did not return a complete English catalog description")
+
+    catalog["suggestedPrice"] = max(
+        int(base_cost),
+        int(round(float(catalog.get("suggestedPrice", base_cost)))),
+    )
+    catalog["approvalCheck"] = catalog.get("approvalCheck") if isinstance(catalog.get("approvalCheck"), dict) else {}
+    catalog["approvalCheck"]["needsAdminReview"] = True
+    return {"success": True, "catalog": catalog}
+
+
 def calculate_file_sha256(image_path):
     digest = hashlib.sha256()
 
@@ -1143,33 +1238,8 @@ def create_product():
     duplicate_detected = len(duplicate_products) > 0
     approval_check = data.get("approvalCheck")
     if professional_listing:
-        # The server gets the verification from n8n; browser-provided scores
-        # cannot be used to approve a manually written listing.
-        image_data_url = create_image_data_url(image_url)
-        if not image_data_url:
-            connection.close()
-            return jsonify({"success": False, "message": "Product image could not be checked by AI."}), 502
         try:
-            ai_response = requests.post(
-                N8N_CATALOG_WEBHOOK_URL,
-                json={
-                    "productName": product_name,
-                    "category": category,
-                    "description": description,
-                    "materialCost": material_cost,
-                    "labourCost": labour_cost,
-                    "imageUrl": image_url,
-                    "imageDataUrl": image_data_url,
-                    "imageSha256": image_sha256,
-                    "duplicateImageDetected": duplicate_detected,
-                    "duplicateImageCount": len(duplicate_products),
-                },
-                timeout=60,
-            )
-            ai_response.raise_for_status()
-            ai_result = ai_response.json()
-            if not ai_result.get("success") or not isinstance(ai_result.get("catalog"), dict):
-                raise ValueError("AI verification response was incomplete")
+            ai_result = generate_catalog_with_gemini(data, image_data)
             suggested_price = parse_ai_suggested_price(
                 ai_result["catalog"].get("suggestedPrice")
             )
@@ -1183,7 +1253,7 @@ def create_product():
                 or parse_ai_score(approval_check.get("handmadeProductProbability")) is None
             ):
                 raise ValueError("AI verification scores were incomplete")
-        except (requests.RequestException, ValueError):
+        except ValueError:
             connection.close()
             return jsonify({"success": False, "message": "AI verification is unavailable. Please try again later."}), 502
 
@@ -2670,40 +2740,21 @@ def generate_catalog():
     connection.close()
     duplicate_detected = len(duplicate_products) > 0
 
-    image_data_url = create_image_data_url(
-        data.get("imageUrl", "")
-    )
-
-    if not image_data_url:
-        return jsonify({
-            "success": False,
-            "message": "Uploaded product image পাওয়া যায়নি",
-        }), 400
-
-    n8n_payload = {
-        **data,
-        "imageDataUrl": image_data_url,
-        "imageSha256": image_sha256,
-        "duplicateImageDetected": duplicate_detected,
-        "duplicateImageCount": len(duplicate_products),
-    }
-
     try:
-        n8n_response = requests.post(
-            N8N_CATALOG_WEBHOOK_URL,
-            json=n8n_payload,
-            timeout=60,
+        gemini_result = generate_catalog_with_gemini(
+            {
+                **data,
+                "imageSha256": image_sha256,
+                "duplicateImageDetected": duplicate_detected,
+                "duplicateImageCount": len(duplicate_products),
+            },
+            image_data,
         )
-
-        n8n_response.raise_for_status()
-
-        return jsonify(n8n_response.json()), 200
-
-
-    except requests.RequestException as error:
+        return jsonify(gemini_result), 200
+    except ValueError as error:
         return jsonify({
             "success": False,
-            "message": "AI catalog generation failed",
+            "message": "Gemini AI catalog generation failed",
             "error": str(error),
         }), 502
 initialize_database()
