@@ -630,25 +630,37 @@ def prepare_image_for_gemini(image_bytes):
 
 
 def build_catalog_fallback(product_data):
-    """Keep the public demo usable if Gemini's upstream service is unavailable."""
+    """Keep the public demo usable without inventing product facts."""
     material_cost = max(0, float(product_data["materialCost"]))
     labour_cost = max(0, float(product_data["labourCost"]))
     base_cost = max(1, material_cost + labour_cost)
     suggested_price = max(int(base_cost), int(round(base_cost * 1.35 / 10.0) * 10))
-    category = re.sub(r"[^A-Za-z0-9 &/-]", "", str(product_data.get("category", "handcrafted craft"))).strip()
-    category = category or "handcrafted craft"
-    title = str(product_data.get("productName", "Handcrafted Product")).strip() or "Handcrafted Product"
+    category = str(product_data.get("category", "Product")).strip() or "Product"
+    raw_title = str(product_data.get("productName", "Product")).strip() or "Product"
+    title = " ".join(word[:1].upper() + word[1:] for word in raw_title.split())
+    description = re.sub(r"\s+", " ", str(product_data.get("description", "")).strip())
+    artisan_name = str(product_data.get("artisanName", "the artisan")).strip() or "the artisan"
+
+    if description:
+        catalog_description = (
+            f"Discover {title}, listed by {artisan_name} under {category}. "
+            f"The artisan's product note: {description}. "
+            "Materials, dimensions and handmade details will be confirmed during admin review."
+        )
+        short_description = f"{title} — artisan-provided details are awaiting verification."
+    else:
+        catalog_description = (
+            f"Discover {title}, listed by {artisan_name} under {category}. "
+            "Materials, dimensions and handmade details will be confirmed during admin review."
+        )
+        short_description = f"{title} — details awaiting artisan and admin verification."
 
     return {
         "success": True,
         "catalog": {
             "professionalTitle": title,
-            "catalogDescription": (
-                f"A carefully handcrafted {category.lower()} piece, created with attention "
-                "to detail and artisan-led finishing. Its material and labour costs have been "
-                "considered to provide a fair, practical suggested market price."
-            ),
-            "shortDescription": f"Handcrafted {category.lower()} made by an independent artisan.",
+            "catalogDescription": catalog_description,
+            "shortDescription": short_description,
             "suggestedPrice": suggested_price,
             "approvalCheck": {
                 "confidenceScore": 0,
