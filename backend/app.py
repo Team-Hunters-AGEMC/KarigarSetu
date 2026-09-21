@@ -12,6 +12,7 @@ import os
 import re
 import secrets
 import sqlite3
+import time
 import psycopg
 from psycopg.rows import dict_row
 import requests
@@ -740,15 +741,21 @@ needsAdminReview must always be true.
         "https://generativelanguage.googleapis.com/v1beta/models/"
         f"{GEMINI_MODEL}:generateContent"
     )
+    response = None
     try:
-        response = requests.post(
-            endpoint,
-            headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
-            json=request_body,
-            # Gunicorn is configured for 120 seconds on Render. Gemini can be
-            # slower on a cold/free request, so allow a real response here.
-            timeout=(5, 80),
-        )
+        # A 503 is normally a short-lived shared-capacity spike. Retry quickly
+        # so the actual vision model still gets a chance to write the catalog.
+        for attempt in range(3):
+            response = requests.post(
+                endpoint,
+                headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
+                json=request_body,
+                timeout=(5, 20),
+            )
+            if response.ok or response.status_code not in (429, 503):
+                break
+            if attempt < 2:
+                time.sleep(attempt + 1)
     except requests.RequestException as error:
         app.logger.warning("Gemini unavailable; using catalog fallback: %s", error)
         return build_catalog_fallback(product_data)
