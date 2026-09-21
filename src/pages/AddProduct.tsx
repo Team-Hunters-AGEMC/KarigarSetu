@@ -231,9 +231,6 @@ export const AddProduct: React.FC = () => {
       if (!response.ok || !result.success || !result.imageUrl) {
         throw new Error(result.message || 'Could not process the uploaded photo.');
       }
-      if (!result.backgroundRemoved) {
-        throw new Error('Background removal did not finish. Please try another photo.');
-      }
       setImagePreview(result.imageUrl);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not process the uploaded photo.');

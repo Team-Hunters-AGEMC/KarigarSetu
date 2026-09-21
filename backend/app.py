@@ -2439,14 +2439,13 @@ def delete_product(product_id):
     )
 
 
-@lru_cache(maxsize=1)
-def get_background_removal_session():
-    from rembg import new_session
-    return new_session("u2net")
-
-
 @app.post("/api/uploads")
 def upload_product_image():
+    """Upload the original craft image directly to Cloudinary.
+
+    Do not run rembg/onnx on Render's Free instance: loading that model exceeds
+    its memory limit and kills the Gunicorn worker.
+    """
     if "image" not in request.files:
         return jsonify(
             {
@@ -2515,59 +2514,6 @@ def upload_product_image():
             }
         ), 400
 
-    # Professional photographers can keep their original image unmodified.
-    preserve_original = request.form.get("preserveOriginal") == "true"
-    # Remove the background locally with the rembg AI model. This needs no API
-    # key. The optional remove.bg integration remains as a fallback.
-    background_removed = False
-    remove_bg_key = os.environ.get("REMOVE_BG_API_KEY", "").strip()
-    background_error = None
-    if not preserve_original:
-        try:
-            from rembg import remove as remove_background
-
-            file_bytes = remove_background(
-                file_bytes, session=get_background_removal_session()
-            )
-            extension = "png"
-            background_removed = True
-        except Exception as error:
-            background_error = type(error).__name__
-            app.logger.exception("Local background removal failed")
-
-    if not preserve_original and not background_removed and remove_bg_key:
-        try:
-            removal = requests.post(
-                "https://api.remove.bg/v1.0/removebg",
-                files={"image_file": (safe_name, file_bytes)},
-                data={"size": "auto"},
-                headers={"X-Api-Key": remove_bg_key},
-                timeout=45,
-            )
-            removal.raise_for_status()
-            file_bytes = removal.content
-            extension = "png"
-            background_removed = True
-        except requests.RequestException as error:
-            background_error = type(error).__name__
-            app.logger.exception("Background removal fallback failed")
-
-    if not preserve_original and not background_removed:
-        return jsonify({
-            "success": False,
-            "message": f"AI image processing failed ({background_error or 'unknown error'}). Check the Flask terminal for details.",
-        }), 503
-
-    if background_removed:
-        try:
-            file_bytes = trim_transparent_image(file_bytes)
-        except (OSError, ValueError) as error:
-            app.logger.exception("Could not frame the background-removed product")
-            return jsonify({
-                "success": False,
-                "message": f"Could not frame the isolated product ({type(error).__name__}).",
-            }), 422
-
     image_sha256 = hashlib.sha256(file_bytes).hexdigest()
     connection = get_database()
     duplicate_products = find_duplicate_products(
@@ -2577,15 +2523,28 @@ def upload_product_image():
     connection.close()
     duplicate_detected = len(duplicate_products) > 0
 
-    unique_name = f"{uuid4().hex}.{extension}"
-    image_path = UPLOAD_FOLDER / unique_name
+    if not os.environ.get("CLOUDINARY_URL"):
+        return jsonify({
+            "success": False,
+            "message": "Cloudinary storage is not configured on the server.",
+        }), 503
 
-    with image_path.open("wb") as saved_image:
-        saved_image.write(file_bytes)
-
-    image_url = (
-        f"http://127.0.0.1:5000/uploads/{unique_name}"
-    )
+    try:
+        upload_result = cloudinary.uploader.upload(
+            BytesIO(file_bytes),
+            resource_type="image",
+            folder="karigarsetu/product-images",
+            use_filename=False,
+            unique_filename=True,
+            overwrite=False,
+        )
+        image_url = upload_result["secure_url"]
+    except Exception as error:
+        app.logger.exception("Cloudinary product image upload failed")
+        return jsonify({
+            "success": False,
+            "message": f"Image storage failed ({type(error).__name__}). Please try again.",
+        }), 502
 
     return jsonify(
         {
@@ -2595,7 +2554,7 @@ def upload_product_image():
             "imageSha256": image_sha256,
             "duplicateImageDetected": duplicate_detected,
             "duplicateImageCount": len(duplicate_products),
-            "backgroundRemoved": background_removed,
+            "backgroundRemoved": False,
         }
     ), 201
 
