@@ -46,9 +46,9 @@ const SAMPLE_CRAFT_PHOTOS = [
   }
 ];
 
-// Background-removal keeps the source photo's transparent margins.  Trim those
-// margins before upload so the craft is centred and fills the preview naturally.
-const cropTransparentPadding = async (blob: Blob): Promise<Blob> => {
+// Keep only the largest opaque foreground shape. This removes separate small
+// objects and rembg leftovers, then crops the main craft with a little space.
+const cropLargestForegroundObject = async (blob: Blob): Promise<Blob> => {
   const source = await createImageBitmap(blob);
   const canvas = document.createElement('canvas');
   canvas.width = source.width;
@@ -58,32 +58,57 @@ const cropTransparentPadding = async (blob: Blob): Promise<Blob> => {
 
   context.drawImage(source, 0, 0);
   const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
-  let left = width;
-  let top = height;
-  let right = -1;
-  let bottom = -1;
+  const alphaThreshold = 96;
+  const visited = new Uint8Array(width * height);
+  let largest: { size: number; left: number; top: number; right: number; bottom: number } | null = null;
 
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      if (data[(y * width + x) * 4 + 3] > 12) {
-        left = Math.min(left, x);
-        top = Math.min(top, y);
-        right = Math.max(right, x);
-        bottom = Math.max(bottom, y);
+  for (let start = 0; start < width * height; start += 1) {
+    if (visited[start] || data[start * 4 + 3] < alphaThreshold) continue;
+
+    const queue = [start];
+    visited[start] = 1;
+    let cursor = 0;
+    let size = 0;
+    let left = width;
+    let top = height;
+    let right = 0;
+    let bottom = 0;
+
+    while (cursor < queue.length) {
+      const pixel = queue[cursor++];
+      const x = pixel % width;
+      const y = Math.floor(pixel / width);
+      size += 1;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+
+      const neighbours = [pixel - 1, pixel + 1, pixel - width, pixel + width];
+      for (const next of neighbours) {
+        if (next < 0 || next >= width * height || visited[next]) continue;
+        const nextX = next % width;
+        // Prevent wraparound from the start/end of a canvas row.
+        if (Math.abs(nextX - x) > 1) continue;
+        if (data[next * 4 + 3] < alphaThreshold) continue;
+        visited[next] = 1;
+        queue.push(next);
       }
     }
+
+    if (!largest || size > largest.size) largest = { size, left, top, right, bottom };
   }
 
   source.close();
-  if (right < left || bottom < top) return blob;
+  if (!largest) return blob;
 
-  const craftWidth = right - left + 1;
-  const craftHeight = bottom - top + 1;
+  const craftWidth = largest.right - largest.left + 1;
+  const craftHeight = largest.bottom - largest.top + 1;
   const padding = Math.max(16, Math.round(Math.max(craftWidth, craftHeight) * 0.10));
-  const cropLeft = Math.max(0, left - padding);
-  const cropTop = Math.max(0, top - padding);
-  const cropRight = Math.min(width, right + padding + 1);
-  const cropBottom = Math.min(height, bottom + padding + 1);
+  const cropLeft = Math.max(0, largest.left - padding);
+  const cropTop = Math.max(0, largest.top - padding);
+  const cropRight = Math.min(width, largest.right + padding + 1);
+  const cropBottom = Math.min(height, largest.bottom + padding + 1);
 
   const cropped = document.createElement('canvas');
   cropped.width = cropRight - cropLeft;
@@ -272,7 +297,7 @@ export const AddProduct: React.FC = () => {
       const processedBlob = await imglyRemoveBackground(file, {
         model: 'isnet_quint8',
       });
-      const centeredBlob = await cropTransparentPadding(processedBlob);
+      const centeredBlob = await cropLargestForegroundObject(processedBlob);
 
       const form = new FormData();
       form.append(
