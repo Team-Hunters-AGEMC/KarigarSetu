@@ -614,12 +614,31 @@ def calculate_bytes_sha256(file_bytes):
     return hashlib.sha256(file_bytes).hexdigest()
 
 
+def prepare_image_for_gemini(image_bytes):
+    """Keep the Gemini inline image small enough for a fast Render request."""
+    try:
+        with Image.open(BytesIO(image_bytes)) as source:
+            source = source.convert("RGB")
+            source.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+            output = BytesIO()
+            source.save(output, format="JPEG", quality=82, optimize=True)
+            return output.getvalue(), "image/jpeg"
+    except (OSError, ValueError):
+        # The upload was already validated. Use its original bytes only if PIL
+        # cannot re-encode it.
+        return image_bytes, None
+
+
 def generate_catalog_with_gemini(product_data, image_data):
     """Generate the catalog directly from Gemini for the public Render app."""
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not configured on the backend")
 
     image_bytes, mime_type = image_data
+    optimized_bytes, optimized_mime_type = prepare_image_for_gemini(image_bytes)
+    image_bytes = optimized_bytes
+    if optimized_mime_type:
+        mime_type = optimized_mime_type
     material_cost = float(product_data["materialCost"])
     labour_cost = float(product_data["labourCost"])
     base_cost = max(1, material_cost + labour_cost)
@@ -682,9 +701,9 @@ needsAdminReview must always be true.
             endpoint,
             headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
             json=request_body,
-            # A long upstream wait lets Gunicorn kill the worker, which the
-            # browser only reports as "Failed to fetch". Fail cleanly instead.
-            timeout=(5, 18),
+            # Gunicorn is configured for 120 seconds on Render. Gemini can be
+            # slower on a cold/free request, so allow a real response here.
+            timeout=(5, 80),
         )
     except requests.RequestException as error:
         raise ValueError(f"Gemini network request failed: {error}") from error
