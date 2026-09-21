@@ -71,7 +71,9 @@ DATABASE_PATH = Path(__file__).with_name("karigarsetu.db")
 # The public Render backend calls Gemini directly.  Do not use a localhost n8n
 # webhook here: Render cannot reach a workflow running on a developer's PC.
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
+# Keep this default aligned with the currently available model. Render's
+# GEMINI_MODEL environment variable can still override it.
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash").strip()
 UPLOAD_FOLDER = Path(__file__).with_name("uploads")
 
 ALLOWED_IMAGE_EXTENSIONS = {
@@ -586,7 +588,8 @@ def get_uploaded_image_bytes(image_url):
         return None
 
     try:
-        response = requests.get(image_url, timeout=25)
+        # Keep the whole request well inside Render Free's Gunicorn timeout.
+        response = requests.get(image_url, timeout=(5, 10))
         response.raise_for_status()
         file_bytes = response.content
     except requests.RequestException:
@@ -674,12 +677,17 @@ needsAdminReview must always be true.
         "https://generativelanguage.googleapis.com/v1beta/models/"
         f"{GEMINI_MODEL}:generateContent"
     )
-    response = requests.post(
-        endpoint,
-        headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
-        json=request_body,
-        timeout=60,
-    )
+    try:
+        response = requests.post(
+            endpoint,
+            headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
+            json=request_body,
+            # A long upstream wait lets Gunicorn kill the worker, which the
+            # browser only reports as "Failed to fetch". Fail cleanly instead.
+            timeout=(5, 18),
+        )
+    except requests.RequestException as error:
+        raise ValueError(f"Gemini network request failed: {error}") from error
     if not response.ok:
         raise ValueError(f"Gemini request failed ({response.status_code}): {response.text[:300]}")
 
@@ -2752,6 +2760,7 @@ def generate_catalog():
         )
         return jsonify(gemini_result), 200
     except ValueError as error:
+        app.logger.error("Gemini catalog generation failed: %s", error)
         return jsonify({
             "success": False,
             "message": "Gemini AI catalog generation failed",

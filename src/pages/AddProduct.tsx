@@ -46,6 +46,52 @@ const SAMPLE_CRAFT_PHOTOS = [
   }
 ];
 
+// Background-removal keeps the source photo's transparent margins.  Trim those
+// margins before upload so the craft is centred and fills the preview naturally.
+const cropTransparentPadding = async (blob: Blob): Promise<Blob> => {
+  const source = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = source.width;
+  canvas.height = source.height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return blob;
+
+  context.drawImage(source, 0, 0);
+  const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
+  let left = width;
+  let top = height;
+  let right = -1;
+  let bottom = -1;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (data[(y * width + x) * 4 + 3] > 12) {
+        left = Math.min(left, x);
+        top = Math.min(top, y);
+        right = Math.max(right, x);
+        bottom = Math.max(bottom, y);
+      }
+    }
+  }
+
+  source.close();
+  if (right < left || bottom < top) return blob;
+
+  const craftWidth = right - left + 1;
+  const craftHeight = bottom - top + 1;
+  const padding = Math.max(16, Math.round(Math.max(craftWidth, craftHeight) * 0.10));
+  const cropLeft = Math.max(0, left - padding);
+  const cropTop = Math.max(0, top - padding);
+  const cropRight = Math.min(width, right + padding + 1);
+  const cropBottom = Math.min(height, bottom + padding + 1);
+
+  const cropped = document.createElement('canvas');
+  cropped.width = cropRight - cropLeft;
+  cropped.height = cropBottom - cropTop;
+  cropped.getContext('2d')?.drawImage(canvas, cropLeft, cropTop, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+  return new Promise((resolve) => cropped.toBlob((result) => resolve(result || blob), 'image/png'));
+};
+
 export const AddProduct: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -226,11 +272,12 @@ export const AddProduct: React.FC = () => {
       const processedBlob = await imglyRemoveBackground(file, {
         model: 'isnet_quint8',
       });
+      const centeredBlob = await cropTransparentPadding(processedBlob);
 
       const form = new FormData();
       form.append(
         'image',
-        new File([processedBlob], `${file.name.replace(/\.[^/.]+$/, '')}-isolated.png`, {
+        new File([centeredBlob], `${file.name.replace(/\.[^/.]+$/, '')}-isolated.png`, {
           type: 'image/png',
         }),
       );
@@ -434,7 +481,7 @@ export const AddProduct: React.FC = () => {
                   <img
                     src={imagePreview}
                     alt="Craft preview"
-                    className="max-h-full max-w-full object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
+                    className="h-full w-full object-contain object-center p-2 drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold rounded-xl backdrop-blur-xs">
                     Click to replace photo
