@@ -15,7 +15,8 @@ import {
   TrendingUp,
   MapPin,
   LogOut,
-  UserCheck
+  UserCheck,
+  MessageSquare
 } from 'lucide-react';
 import { 
   getCurrentArtisan, 
@@ -494,6 +495,16 @@ export const ArtisanDashboard: React.FC = () => {
         </div>
 
       </main>
+      {isLoggedIn && (
+        <Link
+          to="/artisan/messages"
+          aria-label="Open buyer messages"
+          title="Buyer Messages"
+          className="fixed bottom-6 right-6 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#0c4b31] text-white shadow-xl shadow-[#0c4b31]/35 transition-transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-[#bce0c9] sm:bottom-8 sm:right-8"
+        >
+          <MessageSquare className="h-6 w-6" />
+        </Link>
+      )}
     </div>
   );
 };
