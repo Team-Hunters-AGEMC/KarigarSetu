@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../services/apiConfig';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   ArrowLeft, 
@@ -20,6 +20,7 @@ import { getCurrentArtisan } from '../data/seedData';
 
 export const ProductPreview: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const artisan = getCurrentArtisan();
 
   const [productData, setProductData] = useState<any>(null);
@@ -30,9 +31,25 @@ export const ProductPreview: React.FC = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishMessage, setPublishMessage] = useState('');
+  const [publishConfidence, setPublishConfidence] = useState<number | null>(null);
   const [publishError, setPublishError] = useState('');
 
   useEffect(() => {
+    const isPublishedResult = new URLSearchParams(location.search).get('published') === '1';
+    if (isPublishedResult) {
+      try {
+        const receipt = JSON.parse(sessionStorage.getItem('karigarsetu_publish_receipt') || '{}');
+        if (receipt.message) {
+          setPublishMessage(receipt.message);
+          setPublishConfidence(typeof receipt.confidenceScore === 'number' ? receipt.confidenceScore : null);
+          setPublishSuccess(true);
+          return;
+        }
+      } catch {
+        // If the receipt is unavailable, fall through to the normal preview.
+      }
+    }
+
     try {
       const saved = JSON.parse(sessionStorage.getItem('productData') || '{}');
       const savedImage = sessionStorage.getItem('productImage') || saved.imageUrl;
@@ -45,7 +62,7 @@ export const ProductPreview: React.FC = () => {
     } catch (e) {
       console.warn('Preview parse error', e);
     }
-  }, [artisan, navigate]);
+  }, [artisan, location.search, navigate]);
 
   const handleDetailAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isSelectingDetail || !productImage) return;
@@ -99,12 +116,23 @@ export const ProductPreview: React.FC = () => {
         throw new Error(result.message || 'Product could not be submitted.');
       }
 
-      setPublishMessage(result.status === 'approved'
+      const message = result.status === 'approved'
         ? 'AI approved your product. It is now live in the marketplace.'
-        : 'AI sent this product to Admin Review. It will appear in the marketplace after Admin approval.');
-      setPublishSuccess(true);
+        : 'AI sent this product to Admin Review. It will appear in the marketplace after Admin approval.';
+      const confidenceScore = typeof result.aiConfidenceScore === 'number'
+        ? result.aiConfidenceScore
+        : null;
+
+      // Keep a small receipt so the result page still appears even after this
+      // component remounts during navigation.
+      sessionStorage.setItem('karigarsetu_publish_receipt', JSON.stringify({
+        status: result.status,
+        message,
+        confidenceScore,
+      }));
       sessionStorage.removeItem('productData');
       sessionStorage.removeItem('productImage');
+      navigate('/artisan/product-preview?published=1', { replace: true });
     } catch (error) {
       setPublishError(error instanceof TypeError
         ? 'Backend-এর সঙ্গে সংযোগ করা যাচ্ছে না। Flask server চলছে কি না দেখুন। আপনার product draft সংরক্ষিত আছে।'
@@ -134,10 +162,15 @@ export const ProductPreview: React.FC = () => {
           <h1 className="text-3xl font-extrabold text-[#0c4b31]">
             {publishMessage.startsWith('AI approved') ? 'AI Approved!' : 'Sent for Admin Review'}
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-gray-600">{publishMessage}</p>
+          <p className="mt-4 text-sm leading-relaxed text-gray-600">
+            {publishConfidence !== null && `AI confidence: ${publishConfidence}%. `}{publishMessage}
+          </p>
           <button
             type="button"
-            onClick={() => navigate('/artisan/dashboard', { replace: true })}
+            onClick={() => {
+              sessionStorage.removeItem('karigarsetu_publish_receipt');
+              navigate('/artisan/dashboard', { replace: true });
+            }}
             className="mt-8 w-full rounded-xl bg-[#0c4b31] px-5 py-4 text-sm font-extrabold text-white shadow-md transition-colors hover:bg-[#073623]"
           >
             Back to Your Dashboard →
