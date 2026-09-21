@@ -741,7 +741,15 @@ needsAdminReview must always be true.
         app.logger.warning("Gemini unavailable; using catalog fallback: %s", error)
         return build_catalog_fallback(product_data)
     if not response.ok:
-        raise ValueError(f"Gemini request failed ({response.status_code}): {response.text[:300]}")
+        # Gemini can temporarily return 429/503 while its free/shared capacity
+        # is busy.  Keep the catalog flow usable instead of returning a 502 to
+        # the artisan; the successful response shape remains identical.
+        app.logger.warning(
+            "Gemini returned HTTP %s; using catalog fallback: %s",
+            response.status_code,
+            response.text[:300],
+        )
+        return build_catalog_fallback(product_data)
 
     try:
         response_data = response.json()
