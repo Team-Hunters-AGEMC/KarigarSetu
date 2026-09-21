@@ -17,6 +17,7 @@ import {
 import { getCurrentArtisan } from '../data/seedData';
 import { CraftCategory } from '../types';
 import { API_BASE } from '../services/apiConfig';
+import { removeBackground as imglyRemoveBackground } from '@imgly/background-removal';
 
 const SAMPLE_CRAFT_PHOTOS = [
   {
@@ -220,8 +221,19 @@ export const AddProduct: React.FC = () => {
     setImagePreview('');
 
     try {
+      // Runs completely in the visitor's browser. This keeps Render Free from
+      // loading an ONNX model and avoids worker timeout / memory crashes.
+      const processedBlob = await imglyRemoveBackground(file, {
+        model: 'small',
+      });
+
       const form = new FormData();
-      form.append('image', file);
+      form.append(
+        'image',
+        new File([processedBlob], `${file.name.replace(/\.[^/.]+$/, '')}-isolated.png`, {
+          type: 'image/png',
+        }),
+      );
       const response = await fetch(`${API_BASE}/api/uploads`, {
         method: 'POST',
         credentials: 'include',
@@ -229,11 +241,15 @@ export const AddProduct: React.FC = () => {
       });
       const result = await response.json();
       if (!response.ok || !result.success || !result.imageUrl) {
-        throw new Error(result.message || 'Could not process the uploaded photo.');
+        throw new Error(result.message || 'Could not upload the isolated photo.');
       }
       setImagePreview(result.imageUrl);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not process the uploaded photo.');
+      setErrorMessage(
+        error instanceof Error
+          ? `Background removal failed: ${error.message}`
+          : 'Background removal failed. Please try another photo.',
+      );
     } finally {
       setIsEnhancingImage(false);
       e.target.value = '';
@@ -439,7 +455,7 @@ export const AddProduct: React.FC = () => {
               {isEnhancingImage && (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center text-xs font-bold text-[#0c4b31] gap-2">
                   <Sparkles className="w-5 h-5 animate-spin text-[#e27d35]" />
-                  <span>Isolating craft backdrop...</span>
+                  <span>Removing background… first photo may take a moment.</span>
                 </div>
               )}
             </label>
