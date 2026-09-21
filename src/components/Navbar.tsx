@@ -322,7 +322,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           ) : (
             <Link
-              to="/artisan/register"
+              to="/artisan/register?mode=login"
               id="nav-register-btn"
               className="px-3.5 lg:px-4 py-2 text-xs font-bold text-white bg-[#0c4b31] hover:bg-[#073623] rounded-xl transition-all shadow-md shadow-[#0c4b31]/20 flex items-center gap-1.5"
             >
