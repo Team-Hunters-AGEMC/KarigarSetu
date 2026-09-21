@@ -573,6 +573,44 @@ def get_uploaded_image_path(image_url):
     return image_path if image_path.is_file() else None
 
 
+def get_uploaded_image_bytes(image_url):
+    """Return bytes for a legacy local upload or a Cloudinary product image."""
+    image_path = get_uploaded_image_path(image_url)
+    if image_path is not None:
+        mime_type = mimetypes.guess_type(image_path.name)[0] or "image/png"
+        return image_path.read_bytes(), mime_type
+
+    parsed_url = urlparse(str(image_url or ""))
+    cloudinary_host = parsed_url.hostname or ""
+    if parsed_url.scheme != "https" or not cloudinary_host.endswith("cloudinary.com"):
+        return None
+
+    try:
+        response = requests.get(image_url, timeout=25)
+        response.raise_for_status()
+        file_bytes = response.content
+    except requests.RequestException:
+        return None
+
+    if not file_bytes or len(file_bytes) > MAX_IMAGE_SIZE_BYTES:
+        return None
+
+    image_format = detect_image_format(file_bytes)
+    if image_format is None:
+        return None
+
+    mime_type = {
+        "png": "image/png",
+        "jpeg": "image/jpeg",
+        "webp": "image/webp",
+    }[image_format]
+    return file_bytes, mime_type
+
+
+def calculate_bytes_sha256(file_bytes):
+    return hashlib.sha256(file_bytes).hexdigest()
+
+
 def calculate_file_sha256(image_path):
     digest = hashlib.sha256()
 
@@ -690,18 +728,12 @@ def migrate_product_schema(connection):
 
 def create_image_data_url(image_url):
     """Convert one of our uploaded images into a Gemini-ready data URL."""
-    image_path = get_uploaded_image_path(image_url)
-
-    if image_path is None:
+    image_data = get_uploaded_image_bytes(image_url)
+    if image_data is None:
         return ""
 
-    mime_type = (
-        mimetypes.guess_type(image_path.name)[0]
-        or "image/png"
-    )
-    encoded_image = base64.b64encode(
-        image_path.read_bytes()
-    ).decode("ascii")
+    file_bytes, mime_type = image_data
+    encoded_image = base64.b64encode(file_bytes).decode("ascii")
 
     return f"data:{mime_type};base64,{encoded_image}"
 
@@ -1069,9 +1101,9 @@ def create_product():
         ), 400
 
     image_url = str(data["imageUrl"]).strip()
-    image_path = get_uploaded_image_path(image_url)
+    image_data = get_uploaded_image_bytes(image_url)
 
-    if image_path is None:
+    if image_data is None:
         return jsonify(
             {
                 "success": False,
@@ -1079,7 +1111,7 @@ def create_product():
             }
         ), 400
 
-    image_sha256 = calculate_file_sha256(image_path)
+    image_sha256 = calculate_bytes_sha256(image_data[0])
 
     suggested_price = ai_suggested_price
 
@@ -2621,15 +2653,15 @@ def generate_catalog():
             "message": "Product costs cannot be negative",
         }), 400
 
-    image_path = get_uploaded_image_path(data["imageUrl"])
+    image_data = get_uploaded_image_bytes(data["imageUrl"])
 
-    if image_path is None:
+    if image_data is None:
         return jsonify({
             "success": False,
             "message": "Uploaded product image পাওয়া যায়নি",
         }), 400
 
-    image_sha256 = calculate_file_sha256(image_path)
+    image_sha256 = calculate_bytes_sha256(image_data[0])
     connection = get_database()
     duplicate_products = find_duplicate_products(
         connection,
