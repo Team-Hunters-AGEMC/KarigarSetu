@@ -71,6 +71,14 @@ const VIEW_METADATA: Record<Exclude<AdminViewType, 'audit_logs'>, { eyebrow: str
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  // Cloudinary returns complete https:// URLs.  Keep local/legacy upload paths
+  // compatible without adding API_BASE in front of an already complete URL.
+  const assetUrl = (url?: string) => {
+    if (!url) return '';
+    return url.startsWith('http://') || url.startsWith('https://')
+      ? url
+      : `${API_BASE}${url}`;
+  };
   const [adminProfile, setAdminProfile] = useState<AdminUser | null>(null);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
@@ -147,7 +155,7 @@ export const AdminDashboard: React.FC = () => {
     note = '',
   ) => {
     try {
-      const response = await fetch(`/api/admin/artisan-applications/${id}`, {
+      const response = await fetch(`${API_BASE}/api/admin/artisan-applications/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -473,9 +481,9 @@ export const AdminDashboard: React.FC = () => {
                                 </div>
 
                                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                  <a target="_blank" rel="noreferrer" href={`${API_BASE}${app.proof_image_1}`}><img className="h-40 w-full rounded-lg border bg-white object-contain p-1" src={`${API_BASE}${app.proof_image_1}`} alt={`${app.name} craft proof 1`} /></a>
-                                  <a target="_blank" rel="noreferrer" href={`${API_BASE}${app.proof_image_2}`}><img className="h-40 w-full rounded-lg border bg-white object-contain p-1" src={`${API_BASE}${app.proof_image_2}`} alt={`${app.name} craft proof 2`} /></a>
-                                  <video className="h-40 w-full rounded-lg bg-black object-contain" controls src={`${API_BASE}${app.proof_video}`} />
+                                  <a target="_blank" rel="noreferrer" href={assetUrl(app.proof_image_1)}><img className="h-40 w-full rounded-lg border bg-white object-contain p-1" src={assetUrl(app.proof_image_1)} alt={`${app.name} craft proof 1`} /></a>
+                                  <a target="_blank" rel="noreferrer" href={assetUrl(app.proof_image_2)}><img className="h-40 w-full rounded-lg border bg-white object-contain p-1" src={assetUrl(app.proof_image_2)} alt={`${app.name} craft proof 2`} /></a>
+                                  <video className="h-40 w-full rounded-lg bg-black object-contain" controls src={assetUrl(app.proof_video)} />
                                 </div>
 
                                 {app.review_note && <p className="mt-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-600"><strong>Admin note:</strong> {app.review_note}</p>}
