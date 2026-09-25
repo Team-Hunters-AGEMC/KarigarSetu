@@ -102,6 +102,10 @@ export const ProductPreview: React.FC = () => {
           materialCost: Number(productData.materialCost),
           labourCost: Number(productData.labourCost),
           suggestedPrice: Number(productData.aiCatalog?.suggestedPrice ?? productData.suggestedPrice),
+          length: productData.length !== undefined && productData.length !== null && productData.length !== '' ? Number(productData.length) : null,
+          width: productData.width !== undefined && productData.width !== null && productData.width !== '' ? Number(productData.width) : null,
+          height: productData.height !== undefined && productData.height !== null && productData.height !== '' ? Number(productData.height) : null,
+          dimensionUnit: productData.dimensionUnit || productData.dimension_unit || 'cm',
           imageUrl: productImage,
           approvalCheck: productData.aiCatalog?.approvalCheck,
           detailFocus,
@@ -344,6 +348,19 @@ export const ProductPreview: React.FC = () => {
                   <span className="text-gray-500 font-medium">{t.artisan.craftCategoryLabel}:</span>
                   <strong className="text-gray-900 font-bold">{productData?.category}</strong>
                 </div>
+
+                {(productData?.length || productData?.width || productData?.height) && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500 font-medium">{t.artisan.dimensionsTitle}:</span>
+                    <strong className="text-gray-900 font-bold">
+                      {[
+                        productData.length ? `${t.artisan.lengthLabel}: ${productData.length}` : null,
+                        productData.width ? `${t.artisan.widthLabel}: ${productData.width}` : null,
+                        productData.height ? `${t.artisan.heightLabel}: ${productData.height}` : null,
+                      ].filter(Boolean).join(' × ')} {productData.dimensionUnit || productData.dimension_unit || 'cm'}
+                    </strong>
+                  </div>
+                )}
 
                 <div className="py-2 border-b border-gray-100 space-y-1">
                   <span className="text-gray-500 font-medium block">{t.artisan.marketingCaption}</span>

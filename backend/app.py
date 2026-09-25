@@ -398,6 +398,10 @@ def initialize_database():
             ai_decision_reason TEXT,
             image_sha256 TEXT,
             image_phash TEXT,
+            length REAL,
+            width REAL,
+            height REAL,
+            dimension_unit TEXT DEFAULT 'cm',
             reported_count INTEGER NOT NULL DEFAULT 0,
             reviewed_by INTEGER,
             reviewed_at TEXT,
@@ -930,6 +934,10 @@ def migrate_product_schema(connection):
         "ai_decision_reason": "TEXT",
         "image_sha256": "TEXT",
         "image_phash": "TEXT",
+        "length": "REAL",
+        "width": "REAL",
+        "height": "REAL",
+        "dimension_unit": "TEXT DEFAULT 'cm'",
         "reported_count": "INTEGER NOT NULL DEFAULT 0",
         "reviewed_by": "INTEGER",
         "reviewed_at": "TEXT",
@@ -1466,6 +1474,22 @@ def create_product():
             connection.close()
             return jsonify({"success": False, "message": "Enter a valid selling price greater than zero."}), 400
 
+    def parse_optional_dimension(value):
+        if value is None or value == "":
+            return None
+        try:
+            num = float(value)
+            return num if num >= 0 else None
+        except (ValueError, TypeError):
+            return None
+
+    length = parse_optional_dimension(data.get("length"))
+    width = parse_optional_dimension(data.get("width"))
+    height = parse_optional_dimension(data.get("height"))
+    dimension_unit = str(data.get("dimensionUnit") or data.get("dimension_unit") or "cm").strip()
+    if dimension_unit not in {"cm", "in", "mm"}:
+        dimension_unit = "cm"
+
     approval_decision = decide_product_approval(approval_check, duplicate_detected)
     initial_status = approval_decision["status"]
     initial_decision_reason = approval_decision["reason"]
@@ -1493,9 +1517,13 @@ def create_product():
             ai_confidence_score,
             ai_risk_score,
             ai_checks_json,
-            ai_decision_reason
+            ai_decision_reason,
+            length,
+            width,
+            height,
+            dimension_unit
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             artisan_id,
@@ -1515,6 +1543,10 @@ def create_product():
             approval_decision["risk_score"],
             ai_checks_json,
             initial_decision_reason,
+            length,
+            width,
+            height,
+            dimension_unit,
         ),
     )
 
@@ -1595,6 +1627,10 @@ def public_product(row):
         "artisan_name": product.get("artisan_name") or "Artisan",
         "artisan_location": product.get("artisan_location") or "",
         "created_at": product["created_at"],
+        "length": product.get("length"),
+        "width": product.get("width"),
+        "height": product.get("height"),
+        "dimension_unit": product.get("dimension_unit") or "cm",
     }
 
 

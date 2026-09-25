@@ -79,6 +79,10 @@ export interface ProductItem {
   tags?: string[];
   cultural_significance?: string;
   voice_transcript?: string;
+  length?: number | string | null;
+  width?: number | string | null;
+  height?: number | string | null;
+  dimension_unit?: string | null;
 }
 
 export type CustomRequestStatus = 'pending' | 'quoted' | 'accepted' | 'rejected' | 'ordered';

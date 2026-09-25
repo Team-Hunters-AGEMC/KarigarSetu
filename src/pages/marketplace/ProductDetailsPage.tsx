@@ -473,6 +473,15 @@ export const ProductDetailsPage: React.FC = () => {
                   <li>Origin: {product.artisan_location}</li>
                   <li>Master Artisan: {product.artisan_name}</li>
                   <li>Handmade Verification Status: Passed KarigarSetu Authenticity Check</li>
+                  {(product.length || product.width || product.height) && (
+                    <li>
+                      {t.artisan.dimensionsTitle}: {[
+                        product.length ? `${t.artisan.lengthLabel} ${product.length}` : null,
+                        product.width ? `${t.artisan.widthLabel} ${product.width}` : null,
+                        product.height ? `${t.artisan.heightLabel} ${product.height}` : null,
+                      ].filter(Boolean).join(' × ')} {product.dimension_unit || 'cm'}
+                    </li>
+                  )}
                 </ul>
               </div>
             )}

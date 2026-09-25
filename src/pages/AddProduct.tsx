@@ -132,6 +132,10 @@ export const AddProduct: React.FC = () => {
   const [description, setDescription] = useState('');
   const [materialCost, setMaterialCost] = useState<number | ''>('');
   const [labourCost, setLabourCost] = useState<number | ''>('');
+  const [length, setLength] = useState<number | ''>('');
+  const [width, setWidth] = useState<number | ''>('');
+  const [height, setHeight] = useState<number | ''>('');
+  const [dimensionUnit, setDimensionUnit] = useState<string>('cm');
   const [imagePreview, setImagePreview] = useState<string>('');
   const [voiceLanguage, setVoiceLanguage] = useState<string>('bn-IN');
   const [isListening, setIsListening] = useState(false);
@@ -154,6 +158,10 @@ export const AddProduct: React.FC = () => {
         if (saved.description) setDescription(saved.description);
         if (saved.materialCost !== undefined) setMaterialCost(saved.materialCost);
         if (saved.labourCost !== undefined) setLabourCost(saved.labourCost);
+        if (saved.length !== undefined && saved.length !== null) setLength(saved.length);
+        if (saved.width !== undefined && saved.width !== null) setWidth(saved.width);
+        if (saved.height !== undefined && saved.height !== null) setHeight(saved.height);
+        if (saved.dimensionUnit || saved.dimension_unit) setDimensionUnit(saved.dimensionUnit || saved.dimension_unit);
         if (savedImage) setImagePreview(savedImage);
       } catch (e) {
         console.warn('Draft read error', e);
@@ -167,6 +175,10 @@ export const AddProduct: React.FC = () => {
       setDescription('');
       setMaterialCost('');
       setLabourCost('');
+      setLength('');
+      setWidth('');
+      setHeight('');
+      setDimensionUnit('cm');
       setImagePreview('');
       setVoiceStatus('');
       setErrorMessage('');
@@ -421,6 +433,11 @@ export const AddProduct: React.FC = () => {
         description: aiCatalog.catalogDescription || description.trim(),
         materialCost: mat,
         labourCost: lab,
+        length: length !== '' ? Number(length) : null,
+        width: width !== '' ? Number(width) : null,
+        height: height !== '' ? Number(height) : null,
+        dimensionUnit,
+        dimension_unit: dimensionUnit,
         suggestedPrice,
         sellingPrice: suggestedPrice,
         stockQuantity: 5,
@@ -732,6 +749,82 @@ export const AddProduct: React.FC = () => {
                   <strong className="text-lg font-extrabold text-[#0c4b31]">
                     ₹{Math.round(((Number(materialCost) || 0) + (Number(labourCost) || 0)) * 1.35) || '—'}
                   </strong>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#fafcfa] border border-[#dce6df] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#0c4b31]" />
+                    {t.artisan.dimensionsTitle}
+                    <span className="text-[11px] font-normal text-gray-400">({t.artisan.optionalLabel})</span>
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {(['cm', 'in', 'mm'] as const).map((unit) => (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => setDimensionUnit(unit)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                          dimensionUnit === unit
+                            ? 'bg-[#0c4b31] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {unit}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label htmlFor="product-length" className="block text-[11px] font-semibold text-gray-600 mb-1">
+                      {t.artisan.lengthLabel} ({dimensionUnit})
+                    </label>
+                    <input
+                      id="product-length"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder={`e.g. 15`}
+                      value={length}
+                      onChange={(e) => setLength(e.target.value ? Number(e.target.value) : '')}
+                      className="w-full px-3 py-2 text-sm bg-white border border-[#cedbd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="product-width" className="block text-[11px] font-semibold text-gray-600 mb-1">
+                      {t.artisan.widthLabel} ({dimensionUnit})
+                    </label>
+                    <input
+                      id="product-width"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder={`e.g. 10`}
+                      value={width}
+                      onChange={(e) => setWidth(e.target.value ? Number(e.target.value) : '')}
+                      className="w-full px-3 py-2 text-sm bg-white border border-[#cedbd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="product-height" className="block text-[11px] font-semibold text-gray-600 mb-1">
+                      {t.artisan.heightLabel} ({dimensionUnit})
+                    </label>
+                    <input
+                      id="product-height"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder={`e.g. 25`}
+                      value={height}
+                      onChange={(e) => setHeight(e.target.value ? Number(e.target.value) : '')}
+                      className="w-full px-3 py-2 text-sm bg-white border border-[#cedbd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10"
+                    />
+                  </div>
                 </div>
               </div>
 

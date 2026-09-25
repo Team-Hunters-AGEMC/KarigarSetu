@@ -24,6 +24,10 @@ export const ProfessionalStudio: React.FC = () => {
   const [description, setDescription] = useState('');
   const [materialCost, setMaterialCost] = useState('');
   const [labourCost, setLabourCost] = useState('');
+  const [length, setLength] = useState('');
+  const [width, setWidth] = useState('');
+  const [height, setHeight] = useState('');
+  const [dimensionUnit, setDimensionUnit] = useState('cm');
   const [price, setPrice] = useState('');
   const [aiPrice, setAiPrice] = useState<number | null>(null);
   const [uploadedImage, setUploadedImage] = useState('');
@@ -138,6 +142,11 @@ export const ProfessionalStudio: React.FC = () => {
           description: description.trim(),
           materialCost: Number(materialCost),
           labourCost: Number(labourCost),
+          length: length.trim() !== '' ? Number(length) : null,
+          width: width.trim() !== '' ? Number(width) : null,
+          height: height.trim() !== '' ? Number(height) : null,
+          dimensionUnit,
+          dimension_unit: dimensionUnit,
           suggestedPrice: aiPrice,
           sellingPrice: Number(price),
           imageUrl,
@@ -195,6 +204,68 @@ export const ProfessionalStudio: React.FC = () => {
             <label className="block text-sm font-bold">{t.artisan.productNameEnglishLabel}<input required minLength={3} maxLength={120} value={name} onChange={(e) => { setName(e.target.value); setAiPrice(null); }} className={`mt-2 ${fieldClass}`} placeholder={t.artisan.productNameEnglishPlaceholder} /></label>
             <label className="block text-sm font-bold">{t.artisan.craftCategoryManualLabel}<select required value={category} onChange={(e) => { setCategory(e.target.value as CraftCategory); setAiPrice(null); }} className={`mt-2 ${fieldClass}`}><option value="">{t.artisan.selectCategoryPlaceholder}</option>{categories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
             <label className="block text-sm font-bold">{t.artisan.descriptionProcessEnglishLabel}<textarea required minLength={20} maxLength={2000} rows={6} value={description} onChange={(e) => { setDescription(e.target.value); setAiPrice(null); }} className={`mt-2 ${fieldClass}`} placeholder={t.artisan.descriptionProcessEnglishPlaceholder} /></label>
+            <div className="rounded-xl border border-[#cedbd2] bg-[#fafcfa] p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-[#163e2e] flex items-center gap-1.5">
+                  {t.artisan.dimensionsTitle}
+                  <span className="text-xs font-normal text-gray-500">({t.artisan.optionalLabel})</span>
+                </span>
+                <div className="flex items-center gap-1">
+                  {(['cm', 'in', 'mm'] as const).map((unit) => (
+                    <button
+                      key={unit}
+                      type="button"
+                      onClick={() => setDimensionUnit(unit)}
+                      className={`px-2 py-0.5 rounded text-xs font-bold transition-colors ${
+                        dimensionUnit === unit
+                          ? 'bg-[#0c4b31] text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {unit}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <label className="block text-xs font-bold text-gray-700">
+                  {t.artisan.lengthLabel} ({dimensionUnit})
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 15"
+                    value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                    className={`mt-1.5 ${fieldClass}`}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-gray-700">
+                  {t.artisan.widthLabel} ({dimensionUnit})
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 10"
+                    value={width}
+                    onChange={(e) => setWidth(e.target.value)}
+                    className={`mt-1.5 ${fieldClass}`}
+                  />
+                </label>
+                <label className="block text-xs font-bold text-gray-700">
+                  {t.artisan.heightLabel} ({dimensionUnit})
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 25"
+                    value={height}
+                    onChange={(e) => setHeight(e.target.value)}
+                    className={`mt-1.5 ${fieldClass}`}
+                  />
+                </label>
+              </div>
+            </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="block text-sm font-bold">{t.artisan.rawMaterialCostLabel}<input required type="number" min="0" step="0.01" value={materialCost} onChange={(e) => { setMaterialCost(e.target.value); setAiPrice(null); }} className={`mt-2 ${fieldClass}`} /></label>
               <label className="block text-sm font-bold">{t.artisan.labourCostLabel}<input required type="number" min="0" step="0.01" value={labourCost} onChange={(e) => { setLabourCost(e.target.value); setAiPrice(null); }} className={`mt-2 ${fieldClass}`} /></label>
