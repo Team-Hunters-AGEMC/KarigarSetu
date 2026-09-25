@@ -1828,9 +1828,12 @@ def require_customer_id():
 def require_message_user():
     role = session.get("user_role")
     user_id = session.get("user_id")
-    if role not in {"customer", "artisan"} or not user_id:
-        return None, None
-    return role, int(user_id)
+    if role in {"customer", "artisan"} and user_id:
+        return role, int(user_id)
+    cid = require_customer_id()
+    if cid:
+        return "customer", int(cid)
+    return None, None
 
 
 def message_payload(row):

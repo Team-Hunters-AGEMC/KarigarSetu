@@ -395,7 +395,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
                       )}
 
                       <Link
-                        to={`/customer/messages?artisan_id=${req.artisan_id}${req.product_id ? `&product_id=${req.product_id}` : ''}`}
+                        to={`/customer/messages?artisan_id=${req.artisan_id}${req.product_id ? `&product_id=${req.product_id}` : ''}${req.artisan_name ? `&artisan_name=${encodeURIComponent(req.artisan_name)}` : ''}`}
                         className="w-full py-2 px-3 rounded-xl bg-white border border-[#c6ded0] hover:bg-[#eef8f2] text-[#0c4b31] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
