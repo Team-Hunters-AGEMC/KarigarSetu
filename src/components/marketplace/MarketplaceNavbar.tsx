@@ -393,6 +393,14 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                     Customer Profile
                   </Link>
                   <Link
+                    to="/customer/custom-requests"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium flex items-center justify-between"
+                  >
+                    <span>Custom Requests</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  </Link>
+                  <Link
                     to="/customer/orders"
                     onClick={() => setShowProfileMenu(false)}
                     className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
@@ -470,6 +478,17 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             >
               Home Page
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleProtectedAction('/customer/custom-requests', 'Please log in or create a customer account to view custom requests.');
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg text-gray-800 font-bold hover:bg-[#edf8f1] flex items-center justify-between"
+            >
+              <span>Custom Requests</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            </button>
             <button
               type="button"
               onClick={() => {

@@ -501,6 +501,32 @@ def initialize_database():
 
     connection.execute(
         """
+        CREATE TABLE IF NOT EXISTS custom_product_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            artisan_id INTEGER NOT NULL,
+            product_id INTEGER,
+            customization_details TEXT NOT NULL,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            preferred_color TEXT,
+            preferred_size TEXT,
+            reference_image_url TEXT,
+            additional_note TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            quoted_price REAL,
+            artisan_message TEXT,
+            quoted_at TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers (id),
+            FOREIGN KEY (artisan_id) REFERENCES artisans (id),
+            FOREIGN KEY (product_id) REFERENCES products (id)
+        )
+        """
+    )
+
+    connection.execute(
+        """
         CREATE TABLE IF NOT EXISTS admin_users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -1921,6 +1947,376 @@ def send_message():
         connection.close()
 
 
+def custom_request_payload(row):
+    return {
+        "id": row["id"],
+        "customer_id": row["customer_id"],
+        "artisan_id": row["artisan_id"],
+        "product_id": row["product_id"],
+        "customization_details": row["customization_details"],
+        "quantity": row["quantity"],
+        "preferred_color": row["preferred_color"],
+        "preferred_size": row["preferred_size"],
+        "reference_image_url": row["reference_image_url"],
+        "additional_note": row["additional_note"],
+        "status": row["status"],
+        "quoted_price": row["quoted_price"],
+        "artisan_message": row["artisan_message"],
+        "quoted_at": row["quoted_at"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "customer_name": row.get("customer_name") if "customer_name" in row.keys() else None,
+        "customer_mobile": row.get("customer_mobile") if "customer_mobile" in row.keys() else None,
+        "customer_email": row.get("customer_email") if "customer_email" in row.keys() else None,
+        "artisan_name": row.get("artisan_name") if "artisan_name" in row.keys() else None,
+        "artisan_location": row.get("artisan_location") if "artisan_location" in row.keys() else None,
+        "product_name": row.get("product_name") if "product_name" in row.keys() else None,
+        "product_image_url": row.get("product_image_url") if "product_image_url" in row.keys() else None,
+    }
+
+
+@app.post("/api/custom-requests")
+def create_custom_request():
+    customer_id = require_customer_id()
+    if customer_id is None:
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    customization_details = str(data.get("customization_details", "")).strip()
+    if not customization_details:
+        return jsonify({"success": False, "message": "Customization details are required"}), 400
+
+    try:
+        artisan_id = int(data.get("artisan_id", 0))
+        product_id = int(data.get("product_id")) if data.get("product_id") else None
+        quantity = int(data.get("quantity", 1))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid artisan, product or quantity"}), 400
+
+    if artisan_id <= 0:
+        return jsonify({"success": False, "message": "Artisan ID is required"}), 400
+
+    if quantity <= 0:
+        return jsonify({"success": False, "message": "Quantity must be at least 1"}), 400
+
+    preferred_color = str(data.get("preferred_color", "")).strip() or None
+    preferred_size = str(data.get("preferred_size", "")).strip() or None
+    reference_image_url = str(data.get("reference_image_url", "")).strip() or None
+    additional_note = str(data.get("additional_note", "")).strip() or None
+
+    connection = get_database()
+    try:
+        artisan = connection.execute(
+            "SELECT id, name FROM artisans WHERE id = ?",
+            (artisan_id,),
+        ).fetchone()
+        if artisan is None:
+            return jsonify({"success": False, "message": "Artisan not found"}), 404
+
+        if product_id:
+            prod = connection.execute(
+                "SELECT id, artisan_id FROM products WHERE id = ?",
+                (product_id,),
+            ).fetchone()
+            if prod is None or prod["artisan_id"] != artisan_id:
+                return jsonify({"success": False, "message": "Product does not belong to this artisan"}), 400
+
+        cursor = connection.execute(
+            """
+            INSERT INTO custom_product_requests (
+                customer_id, artisan_id, product_id,
+                customization_details, quantity, preferred_color,
+                preferred_size, reference_image_url, additional_note,
+                status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+            """,
+            (
+                customer_id, artisan_id, product_id,
+                customization_details, quantity, preferred_color,
+                preferred_size, reference_image_url, additional_note,
+            ),
+        )
+        request_id = cursor.lastrowid
+        connection.commit()
+
+        row = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.id = ?
+            """,
+            (request_id,),
+        ).fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Custom product request submitted successfully",
+            "data": custom_request_payload(row),
+        }), 201
+    finally:
+        connection.close()
+
+
+@app.get("/api/customer/custom-requests")
+def list_customer_custom_requests():
+    customer_id = require_customer_id()
+    if customer_id is None:
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+
+    connection = get_database()
+    try:
+        rows = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.customer_id = ?
+            ORDER BY r.id DESC
+            """,
+            (customer_id,),
+        ).fetchall()
+        return jsonify({"success": True, "data": [custom_request_payload(row) for row in rows]})
+    finally:
+        connection.close()
+
+
+@app.get("/api/customer/custom-requests/<int:request_id>")
+def get_customer_custom_request(request_id):
+    customer_id = require_customer_id()
+    if customer_id is None:
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+
+    connection = get_database()
+    try:
+        row = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.id = ? AND r.customer_id = ?
+            """,
+            (request_id, customer_id),
+        ).fetchone()
+        if row is None:
+            return jsonify({"success": False, "message": "Custom request not found"}), 404
+        return jsonify({"success": True, "data": custom_request_payload(row)})
+    finally:
+        connection.close()
+
+
+@app.get("/api/artisan/custom-requests")
+def list_artisan_custom_requests():
+    if session.get("user_role") != "artisan" or not session.get("user_id"):
+        return jsonify({"success": False, "message": "Artisan authentication required"}), 401
+    artisan_id = int(session["user_id"])
+
+    connection = get_database()
+    try:
+        rows = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.artisan_id = ?
+            ORDER BY r.id DESC
+            """,
+            (artisan_id,),
+        ).fetchall()
+        return jsonify({"success": True, "data": [custom_request_payload(row) for row in rows]})
+    finally:
+        connection.close()
+
+
+@app.post("/api/artisan/custom-requests/<int:request_id>/quote")
+def quote_custom_request(request_id):
+    if session.get("user_role") != "artisan" or not session.get("user_id"):
+        return jsonify({"success": False, "message": "Artisan authentication required"}), 401
+    artisan_id = int(session["user_id"])
+
+    data = request.get_json(silent=True) or {}
+    try:
+        quoted_price = float(data.get("quoted_price", 0))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Valid quoted price is required"}), 400
+
+    if quoted_price <= 0:
+        return jsonify({"success": False, "message": "Quoted price must be greater than 0"}), 400
+
+    artisan_message = str(data.get("artisan_message", "")).strip() or None
+
+    connection = get_database()
+    try:
+        req = connection.execute(
+            "SELECT * FROM custom_product_requests WHERE id = ?",
+            (request_id,),
+        ).fetchone()
+        if req is None or req["artisan_id"] != artisan_id:
+            return jsonify({"success": False, "message": "Custom request not found for this artisan"}), 404
+
+        if req["status"] in {"accepted", "rejected", "ordered"}:
+            return jsonify({"success": False, "message": f"Cannot quote request with status '{req['status']}'"}), 400
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        connection.execute(
+            """
+            UPDATE custom_product_requests
+            SET status = 'quoted', quoted_price = ?, artisan_message = ?, quoted_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (round(quoted_price, 2), artisan_message, now_str, now_str, request_id),
+        )
+        connection.commit()
+
+        row = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.id = ?
+            """,
+            (request_id,),
+        ).fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Quote sent successfully",
+            "data": custom_request_payload(row),
+        })
+    finally:
+        connection.close()
+
+
+@app.post("/api/artisan/custom-requests/<int:request_id>/reject")
+def reject_custom_request(request_id):
+    if session.get("user_role") != "artisan" or not session.get("user_id"):
+        return jsonify({"success": False, "message": "Artisan authentication required"}), 401
+    artisan_id = int(session["user_id"])
+
+    data = request.get_json(silent=True) or {}
+    artisan_message = str(data.get("artisan_message", "")).strip() or None
+
+    connection = get_database()
+    try:
+        req = connection.execute(
+            "SELECT * FROM custom_product_requests WHERE id = ?",
+            (request_id,),
+        ).fetchone()
+        if req is None or req["artisan_id"] != artisan_id:
+            return jsonify({"success": False, "message": "Custom request not found for this artisan"}), 404
+
+        if req["status"] in {"accepted", "ordered"}:
+            return jsonify({"success": False, "message": f"Cannot reject request with status '{req['status']}'"}), 400
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        connection.execute(
+            """
+            UPDATE custom_product_requests
+            SET status = 'rejected', artisan_message = COALESCE(?, artisan_message), updated_at = ?
+            WHERE id = ?
+            """,
+            (artisan_message, now_str, request_id),
+        )
+        connection.commit()
+
+        row = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.id = ?
+            """,
+            (request_id,),
+        ).fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Custom request rejected",
+            "data": custom_request_payload(row),
+        })
+    finally:
+        connection.close()
+
+
+@app.post("/api/customer/custom-requests/<int:request_id>/accept")
+def accept_custom_request(request_id):
+    customer_id = require_customer_id()
+    if customer_id is None:
+        return jsonify({"success": False, "message": "Customer authentication required"}), 401
+
+    connection = get_database()
+    try:
+        req = connection.execute(
+            "SELECT * FROM custom_product_requests WHERE id = ?",
+            (request_id,),
+        ).fetchone()
+        if req is None or req["customer_id"] != customer_id:
+            return jsonify({"success": False, "message": "Custom request not found"}), 404
+
+        if req["status"] != "quoted":
+            return jsonify({"success": False, "message": "Only quoted requests can be accepted"}), 400
+
+        if not req["quoted_price"] or req["quoted_price"] <= 0:
+            return jsonify({"success": False, "message": "No valid quoted price available"}), 400
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        connection.execute(
+            """
+            UPDATE custom_product_requests
+            SET status = 'accepted', updated_at = ?
+            WHERE id = ?
+            """,
+            (now_str, request_id),
+        )
+        connection.commit()
+
+        row = connection.execute(
+            """
+            SELECT r.*, c.name AS customer_name, c.mobile AS customer_mobile, c.email AS customer_email,
+                   a.name AS artisan_name, a.location AS artisan_location,
+                   p.product_name AS product_name, p.image_url AS product_image_url
+            FROM custom_product_requests r
+            JOIN customers c ON c.id = r.customer_id
+            JOIN artisans a ON a.id = r.artisan_id
+            LEFT JOIN products p ON p.id = r.product_id
+            WHERE r.id = ?
+            """,
+            (request_id,),
+        ).fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Quote accepted! You can now proceed to checkout.",
+            "data": custom_request_payload(row),
+        })
+    finally:
+        connection.close()
+
+
 @app.post("/api/customers/orders")
 def create_customer_order():
     customer_id = require_customer_id()
@@ -1928,25 +2324,10 @@ def create_customer_order():
         return jsonify({"success": False, "message": "Customer authentication required"}), 401
 
     data = request.get_json(silent=True) or {}
-    raw_items = data.get("items")
-    if not isinstance(raw_items, list) or not raw_items:
-        return jsonify({"success": False, "message": "Your cart is empty"}), 400
-
-    requested = {}
-    try:
-        for item in raw_items:
-            product_id = int(item.get("product_id"))
-            quantity = int(item.get("quantity"))
-            if product_id <= 0 or quantity <= 0:
-                raise ValueError
-            requested[product_id] = requested.get(product_id, 0) + quantity
-    except (AttributeError, TypeError, ValueError):
-        return jsonify({"success": False, "message": "Every order item needs a valid product and quantity"}), 400
+    custom_request_id = data.get("custom_request_id")
 
     connection = get_database()
     try:
-        # BEGIN IMMEDIATE serializes stock checks and decrements so two checkouts
-        # cannot both purchase the same final unit.
         connection.execute("BEGIN IMMEDIATE")
         customer = connection.execute(
             "SELECT * FROM customers WHERE id = ? AND status = 'active'",
@@ -1955,6 +2336,123 @@ def create_customer_order():
         if customer is None:
             connection.rollback()
             return jsonify({"success": False, "message": "Customer account is not active"}), 403
+
+        # Case 1: Custom Request Order Checkout
+        if custom_request_id:
+            try:
+                custom_req_id = int(custom_request_id)
+            except (TypeError, ValueError):
+                connection.rollback()
+                return jsonify({"success": False, "message": "Invalid custom request ID"}), 400
+
+            req = connection.execute(
+                """
+                SELECT r.*, a.name AS artisan_name, p.product_name AS base_product_name, p.image_url AS base_image_url
+                FROM custom_product_requests r
+                JOIN artisans a ON a.id = r.artisan_id
+                LEFT JOIN products p ON p.id = r.product_id
+                WHERE r.id = ? AND r.customer_id = ?
+                """,
+                (custom_req_id, customer_id),
+            ).fetchone()
+
+            if req is None:
+                connection.rollback()
+                return jsonify({"success": False, "message": "Custom request not found"}), 404
+
+            if req["status"] not in {"quoted", "accepted"}:
+                connection.rollback()
+                return jsonify({"success": False, "message": f"Custom request cannot be checked out with status '{req['status']}'"}), 400
+
+            unit_price = float(req["quoted_price"] or 0)
+            if unit_price <= 0:
+                connection.rollback()
+                return jsonify({"success": False, "message": "No valid quoted price on custom request"}), 400
+
+            quantity = max(1, int(req["quantity"] or 1))
+            total_amount = round(unit_price * quantity, 2)
+
+            submitted_address = data.get("delivery_address")
+            if isinstance(submitted_address, dict):
+                address_parts = [
+                    str(submitted_address.get(key, "")).strip()
+                    for key in ("address", "city", "district", "state", "pin_code")
+                ]
+                delivery_address = ", ".join(filter(None, address_parts))
+            else:
+                delivery_address = ", ".join(filter(None, [
+                    customer["address"], customer["city"], customer["district"],
+                    customer["state"], customer["pin_code"],
+                ]))
+
+            if len(delivery_address) < 10:
+                connection.rollback()
+                return jsonify({"success": False, "message": "A complete delivery address is required"}), 400
+
+            order_number = f"KS-CUST-{datetime.now().strftime('%y%m%d%H%M%S')}-{secrets.token_hex(2).upper()}"
+            cursor = connection.execute(
+                """
+                INSERT INTO customer_orders (
+                    order_number, customer_id, total_amount, status, delivery_address
+                ) VALUES (?, ?, ?, 'confirmed', ?)
+                """,
+                (order_number, customer_id, total_amount, delivery_address),
+            )
+            order_id = cursor.lastrowid
+
+            custom_prod_name = f"Custom Craft: {req['base_product_name'] or 'Handmade Custom Order'}"
+            custom_image = req["reference_image_url"] or req["base_image_url"] or ""
+
+            # Insert order item (product_id can be base product ID or NULL)
+            connection.execute(
+                """
+                INSERT INTO customer_order_items (
+                    order_id, product_id, artisan_id, artisan_name,
+                    product_name, unit_price, quantity, image_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    order_id, req["product_id"] or 0, req["artisan_id"],
+                    req["artisan_name"], custom_prod_name,
+                    unit_price, quantity, custom_image,
+                ),
+            )
+
+            # Mark custom request as ordered
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            connection.execute(
+                """
+                UPDATE custom_product_requests
+                SET status = 'ordered', updated_at = ?
+                WHERE id = ?
+                """,
+                (now_str, custom_req_id),
+            )
+
+            connection.commit()
+            return jsonify({
+                "success": True,
+                "message": "Custom order confirmed successfully",
+                "data": {"id": order_number, "total": total_amount, "status": "Confirmed"},
+            }), 201
+
+        # Case 2: Standard Catalog Products Checkout
+        raw_items = data.get("items")
+        if not isinstance(raw_items, list) or not raw_items:
+            connection.rollback()
+            return jsonify({"success": False, "message": "Your cart is empty"}), 400
+
+        requested = {}
+        try:
+            for item in raw_items:
+                product_id = int(item.get("product_id"))
+                quantity = int(item.get("quantity"))
+                if product_id <= 0 or quantity <= 0:
+                    raise ValueError
+                requested[product_id] = requested.get(product_id, 0) + quantity
+        except (AttributeError, TypeError, ValueError):
+            connection.rollback()
+            return jsonify({"success": False, "message": "Every order item needs a valid product and quantity"}), 400
 
         products = []
         total_amount = 0.0

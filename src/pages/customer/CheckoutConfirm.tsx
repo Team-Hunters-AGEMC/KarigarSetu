@@ -16,8 +16,9 @@ export const CheckoutConfirm: React.FC = () => {
   const customer: any = getCurrentCustomer();
   const checkout = readCheckout(location.state);
   const product = checkout?.product;
-  const stock = Math.max(0, Number(product?.stock_quantity || 0));
-  const [quantity, setQuantity] = useState(Math.min(stock, Math.max(1, Number(checkout?.quantity || 1))));
+  const isCustomOrder = Boolean(checkout?.custom_request_id);
+  const stock = isCustomOrder ? Math.max(1, Number(checkout?.quantity || 1)) : Math.max(0, Number(product?.stock_quantity || 0));
+  const [quantity, setQuantity] = useState(isCustomOrder ? Number(checkout?.quantity || 1) : Math.min(stock, Math.max(1, Number(checkout?.quantity || 1))));
   const [editingAddress, setEditingAddress] = useState(false);
   const [address, setAddress] = useState<Address>({
     address: customer?.address || '', city: customer?.city || '', district: customer?.district || '',
@@ -36,8 +37,8 @@ export const CheckoutConfirm: React.FC = () => {
   };
 
   const continueToPayment = () => {
-    if (stock === 0 || quantity > stock) return;
-    const next = { product, quantity, address, total };
+    if (!isCustomOrder && (stock === 0 || quantity > stock)) return;
+    const next = { product, quantity, address, total, custom_request_id: checkout?.custom_request_id };
     sessionStorage.setItem('karigarsetu_buy_now', JSON.stringify(next));
     navigate('/customer/payment', { state: next });
   };

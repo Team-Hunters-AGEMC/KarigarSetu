@@ -8,9 +8,11 @@ import { ArtisanPublicProfilePage } from './pages/marketplace/ArtisanPublicProfi
 import { CustomerLogin } from './pages/customer/CustomerLogin';
 import { CustomerRegister } from './pages/customer/CustomerRegister';
 import { CustomerOrders } from './pages/customer/CustomerOrders';
-import { CustomerCart } from './pages/customer/CustomerCart';
 import { CustomerProfile } from './pages/customer/CustomerProfile';
+import { CustomerCart } from './pages/customer/CustomerCart';
 import { CustomerMessages } from './pages/customer/CustomerMessages';
+import { CustomRequestFormPage } from './pages/customer/CustomRequestFormPage';
+import { CustomerCustomRequestsPage } from './pages/customer/CustomerCustomRequestsPage';
 import { CheckoutConfirm } from './pages/customer/CheckoutConfirm';
 import { PaymentDetails } from './pages/customer/PaymentDetails';
 import { ArtisanRegistration } from './pages/ArtisanRegistration';
@@ -85,6 +87,8 @@ function MainLayout({
           <Route path="/customer/cart" element={<CustomerCart />} />
           <Route path="/customer/profile" element={<CustomerProfile />} />
           <Route path="/customer/messages" element={<CustomerMessages />} />
+          <Route path="/customer/custom-request" element={<CustomRequestFormPage />} />
+          <Route path="/customer/custom-requests" element={<CustomerCustomRequestsPage />} />
           <Route path="/customer/checkout" element={<CheckoutConfirm />} />
           <Route path="/customer/payment" element={<PaymentDetails />} />
 

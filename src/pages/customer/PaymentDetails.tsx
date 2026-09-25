@@ -23,14 +23,20 @@ export const PaymentDetails: React.FC = () => {
   const placeOrder = async () => {
     setPlacing(true); setError('');
     try {
+      const payload: any = {
+        delivery_address: checkout.address,
+        payment_method: method,
+      };
+      if (checkout.custom_request_id) {
+        payload.custom_request_id = checkout.custom_request_id;
+      } else {
+        payload.items = [{ product_id: checkout.product.id, quantity: checkout.quantity }];
+      }
+
       const response = await fetch('/api/customers/orders', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          items: [{ product_id: checkout.product.id, quantity: checkout.quantity }],
-          delivery_address: checkout.address,
-          payment_method: method,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.success) throw new Error(data?.message || 'Order could not be placed');

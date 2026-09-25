@@ -80,3 +80,31 @@ export interface ProductItem {
   cultural_significance?: string;
   voice_transcript?: string;
 }
+
+export type CustomRequestStatus = 'pending' | 'quoted' | 'accepted' | 'rejected' | 'ordered';
+
+export interface CustomProductRequest {
+  id: number;
+  customer_id: number;
+  artisan_id: number;
+  product_id?: number | null;
+  customization_details: string;
+  quantity: number;
+  preferred_color?: string | null;
+  preferred_size?: string | null;
+  reference_image_url?: string | null;
+  additional_note?: string | null;
+  status: CustomRequestStatus;
+  quoted_price?: number | null;
+  artisan_message?: string | null;
+  quoted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  customer_name?: string | null;
+  customer_mobile?: string | null;
+  customer_email?: string | null;
+  artisan_name?: string | null;
+  artisan_location?: string | null;
+  product_name?: string | null;
+  product_image_url?: string | null;
+}
