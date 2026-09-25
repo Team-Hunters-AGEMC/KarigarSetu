@@ -81,39 +81,79 @@ export const CustomerCart: React.FC = () => {
           <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
             <section className="space-y-3">
               {items.map((item) => (
-                <article key={item.product_id} className="flex flex-col gap-4 rounded-2xl border border-[#dce8df] bg-white p-4 shadow-sm sm:flex-row">
-                  <Link
-                    to={`/marketplace/products/${item.product_id}`}
-                    className="group relative block h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#eef5f0]"
-                    title={item.product_name}
-                  >
+                <article
+                  key={item.product_id}
+                  onClick={() => navigate(`/marketplace/products/${item.product_id}`)}
+                  className="group flex flex-col gap-4 rounded-2xl border border-[#dce8df] bg-white p-4 shadow-sm transition-all duration-150 hover:border-[#8eb8a0] hover:shadow-md cursor-pointer sm:flex-row"
+                >
+                  <div className="relative block h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#eef5f0]">
                     <img
                       src={item.image_url || ''}
                       alt={item.product_name}
                       className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
                     />
-                  </Link>
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-[#e87722]">{item.artisan_name || 'Verified artisan'}</p>
-                    <Link
-                      to={`/marketplace/products/${item.product_id}`}
-                      className="group inline-block max-w-full"
-                      title={item.product_name}
-                    >
-                      <h2 className="truncate font-extrabold text-[#0c4b31] transition-colors duration-150 hover:text-[#083623] hover:underline">
-                        {item.product_name}
-                      </h2>
-                    </Link>
+                    <h2 className="truncate font-extrabold text-[#0c4b31] transition-colors duration-150 group-hover:text-[#083623] group-hover:underline">
+                      {item.product_name}
+                    </h2>
                     <p className="mt-2 text-lg font-black">₹{Number(item.selling_price).toLocaleString('en-IN')}</p>
                     <p className={`mt-1 text-xs font-bold ${Number(item.stock_quantity) > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
                       {Number(item.stock_quantity) > 0 ? `${item.stock_quantity} in stock` : t.marketplace.outOfStock}
                     </p>
                   </div>
-                  <div className="flex min-w-44 flex-col gap-3 sm:items-end sm:justify-between">
-                    <div className="flex items-center rounded-xl border"><button type="button" disabled={item.quantity <= 1} onClick={() => changeQuantity(item.product_id, -1)} className="p-2 disabled:opacity-30 cursor-pointer"><Minus className="h-3 w-3" /></button><span className="min-w-8 text-center text-sm font-bold">{item.quantity}</span><button type="button" disabled={Number(item.stock_quantity) <= 0 || item.quantity >= Number(item.stock_quantity)} onClick={() => changeQuantity(item.product_id, 1)} className="p-2 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"><Plus className="h-3 w-3" /></button></div>
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex min-w-44 flex-col gap-3 sm:items-end sm:justify-between"
+                  >
+                    <div className="flex items-center rounded-xl border bg-white">
+                      <button
+                        type="button"
+                        disabled={item.quantity <= 1}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeQuantity(item.product_id, -1);
+                        }}
+                        className="p-2 disabled:opacity-30 cursor-pointer hover:bg-gray-50 rounded-l-xl transition-colors"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="min-w-8 text-center text-sm font-bold select-none">{item.quantity}</span>
+                      <button
+                        type="button"
+                        disabled={Number(item.stock_quantity) <= 0 || item.quantity >= Number(item.stock_quantity)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeQuantity(item.product_id, 1);
+                        }}
+                        className="p-2 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer hover:bg-gray-50 rounded-r-xl transition-colors"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
                     <div className="grid w-full grid-cols-2 gap-2">
-                      <button type="button" onClick={() => removeItem(item.product_id)} className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 px-3 py-2.5 text-xs font-extrabold text-red-600 hover:bg-red-50 cursor-pointer"><Trash2 className="h-4 w-4" /> {t.cart.remove}</button>
-                      <button type="button" disabled={Number(item.stock_quantity) <= 0 || item.quantity > Number(item.stock_quantity)} onClick={() => buyNow(item)} className="flex items-center justify-center gap-1.5 rounded-xl bg-[#0c5b3b] px-3 py-2.5 text-xs font-extrabold text-white hover:bg-[#08452d] disabled:cursor-not-allowed disabled:bg-gray-400 cursor-pointer"><Zap className="h-4 w-4" /> {t.marketplace.buyNow}</button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeItem(item.product_id);
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 px-3 py-2.5 text-xs font-extrabold text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" /> {t.cart.remove}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={Number(item.stock_quantity) <= 0 || item.quantity > Number(item.stock_quantity)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          buyNow(item);
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-xl bg-[#0c5b3b] px-3 py-2.5 text-xs font-extrabold text-white hover:bg-[#08452d] disabled:cursor-not-allowed disabled:bg-gray-400 cursor-pointer transition-colors"
+                      >
+                        <Zap className="h-4 w-4" /> {t.marketplace.buyNow}
+                      </button>
                     </div>
                   </div>
                 </article>
