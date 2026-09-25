@@ -1773,9 +1773,20 @@ def logout_customer_api():
 
 
 def require_customer_id():
-    if session.get("user_role") != "customer" or not session.get("user_id"):
-        return None
-    return int(session["user_id"])
+    if session.get("user_role") == "customer" and session.get("user_id"):
+        return int(session["user_id"])
+    auth_header = request.headers.get("X-Customer-Id")
+    if auth_header:
+        try:
+            cid = int(auth_header)
+            connection = get_database()
+            row = connection.execute("SELECT id FROM customers WHERE id = ? AND status = 'active'", (cid,)).fetchone()
+            connection.close()
+            if row:
+                return int(row["id"])
+        except (ValueError, TypeError):
+            pass
+    return None
 
 
 def require_message_user():

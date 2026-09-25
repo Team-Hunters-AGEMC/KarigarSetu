@@ -1,5 +1,6 @@
 import { API_BASE } from './apiConfig';
 import { CustomProductRequest } from '../types';
+import { getCurrentCustomer } from './customerAuth';
 
 export interface CreateCustomRequestData {
   artisan_id: number;
@@ -12,15 +13,26 @@ export interface CreateCustomRequestData {
   additional_note?: string;
 }
 
+const getCustomerHeaders = (extraHeaders: Record<string, string> = {}): Record<string, string> => {
+  const customer = getCurrentCustomer();
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    ...extraHeaders,
+  };
+  if (customer?.id) {
+    headers['X-Customer-Id'] = String(customer.id);
+  }
+  return headers;
+};
+
 export const customRequestsApi = {
   async createCustomRequest(data: CreateCustomRequestData): Promise<CustomProductRequest> {
     const response = await fetch(`${API_BASE}/api/custom-requests`, {
       method: 'POST',
       credentials: 'include',
-      headers: {
+      headers: getCustomerHeaders({
         'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      }),
       body: JSON.stringify(data),
     });
     const result = await response.json();
@@ -33,7 +45,7 @@ export const customRequestsApi = {
   async getCustomerCustomRequests(): Promise<CustomProductRequest[]> {
     const response = await fetch(`${API_BASE}/api/customer/custom-requests`, {
       credentials: 'include',
-      headers: { Accept: 'application/json' },
+      headers: getCustomerHeaders(),
     });
     const result = await response.json();
     if (!response.ok || !result.success) {
@@ -45,7 +57,7 @@ export const customRequestsApi = {
   async getCustomerCustomRequestDetails(requestId: number): Promise<CustomProductRequest> {
     const response = await fetch(`${API_BASE}/api/customer/custom-requests/${requestId}`, {
       credentials: 'include',
-      headers: { Accept: 'application/json' },
+      headers: getCustomerHeaders(),
     });
     const result = await response.json();
     if (!response.ok || !result.success) {
@@ -58,7 +70,7 @@ export const customRequestsApi = {
     const response = await fetch(`${API_BASE}/api/customer/custom-requests/${requestId}/accept`, {
       method: 'POST',
       credentials: 'include',
-      headers: { Accept: 'application/json' },
+      headers: getCustomerHeaders(),
     });
     const result = await response.json();
     if (!response.ok || !result.success) {
