@@ -1,11 +1,14 @@
 import React from 'react';
 import { ArrowLeft, Camera, Sparkles, WandSparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const cardClass =
   'group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-9';
 
 export const AddCraftChoice: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <main className="min-h-screen bg-[#fcfaf6] px-4 py-10 text-[#163e2e]">
       <div className="mx-auto max-w-5xl">
@@ -13,18 +16,18 @@ export const AddCraftChoice: React.FC = () => {
           to="/artisan/dashboard"
           className="inline-flex items-center gap-2 font-bold text-[#0c4b31]"
         >
-          <ArrowLeft className="h-4 w-4" /> Artisan Studio
+          <ArrowLeft className="h-4 w-4" /> {t.artisan.dashboardTitle}
         </Link>
 
         <header className="mx-auto mb-10 mt-8 max-w-2xl text-center">
           <span className="rounded-full bg-[#e3f4ea] px-4 py-1.5 text-xs font-extrabold uppercase tracking-wider text-[#0c4b31]">
-            Add a new craft
+            {t.artisan.addProductBtn}
           </span>
           <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
-            How would you like to list it?
+            {t.artisan.addCraftChoiceTitle}
           </h1>
           <p className="mt-4 text-gray-600">
-            Choose the guided AI experience or enter your catalog details yourself.
+            {t.artisan.addCraftChoiceSubtitle}
           </p>
         </header>
 
@@ -38,14 +41,14 @@ export const AddCraftChoice: React.FC = () => {
               <WandSparkles className="h-8 w-8" />
             </div>
             <span className="relative text-xs font-extrabold uppercase tracking-widest text-[#318153]">
-              AI guided
+              {t.artisan.aiGuidedBadge}
             </span>
-            <h2 className="relative mt-2 text-2xl font-extrabold">Smart Catalog Studio</h2>
+            <h2 className="relative mt-2 text-2xl font-extrabold">{t.artisan.smartStudio}</h2>
             <p className="relative mt-3 flex-1 leading-7 text-gray-600">
-              Upload a photo and let AI help create the title, description, presentation and fair price suggestion.
+              {t.artisan.smartStudioDesc}
             </p>
             <span className="relative mt-7 inline-flex items-center gap-2 font-extrabold text-[#0c4b31]">
-              Start with AI <Sparkles className="h-4 w-4" />
+              {t.artisan.startWithAi} <Sparkles className="h-4 w-4" />
             </span>
           </Link>
 
@@ -58,14 +61,14 @@ export const AddCraftChoice: React.FC = () => {
               <Camera className="h-8 w-8" />
             </div>
             <span className="relative text-xs font-extrabold uppercase tracking-widest text-[#a56819]">
-              Manual catalog
+              {t.artisan.manualCatalogBadge}
             </span>
-            <h2 className="relative mt-2 text-2xl font-extrabold">Professional Studio</h2>
+            <h2 className="relative mt-2 text-2xl font-extrabold">{t.artisan.proStudio}</h2>
             <p className="relative mt-3 flex-1 leading-7 text-gray-600">
-              Keep your original product photo and write the complete catalog yourself. AI only suggests a fair price.
+              {t.artisan.proStudioDesc}
             </p>
             <span className="relative mt-7 inline-flex items-center gap-2 font-extrabold text-[#8d5b16]">
-              Open Professional Studio <Camera className="h-4 w-4" />
+              {t.artisan.openProStudio} <Camera className="h-4 w-4" />
             </span>
           </Link>
         </section>

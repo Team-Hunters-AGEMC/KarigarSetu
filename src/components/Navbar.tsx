@@ -5,7 +5,6 @@ import {
   Store, 
   UserCheck, 
   PlusCircle, 
-  Globe, 
   ChevronDown, 
   Layers, 
   Menu, 
@@ -14,15 +13,16 @@ import {
   User 
 } from 'lucide-react';
 import { 
-  getCurrentArtisan, 
   getLoggedInArtisan, 
   getStoredArtisans, 
   setCurrentArtisan, 
   logoutArtisan, 
-  INITIAL_ARTISANS 
 } from '../data/seedData';
 import { getCurrentCustomer, logoutCustomer, CustomerUser } from '../services/customerAuth';
 import { ArtisanProfile, SupportedLanguage } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
+import { LanguageSelector } from '../i18n/LanguageSelector';
+
 const karigarSetuLogo = new URL(
   '../assets/karigarsetu-logo.png',
   import.meta.url
@@ -33,20 +33,8 @@ interface NavbarProps {
   onLangChange?: (lang: SupportedLanguage) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ 
-  currentLang = 'en-IN', 
-  onLangChange 
-}) => {
-  const navTextByLanguage = {
-    'en-IN': { tagline: 'Voice-First Cataloging in বাংলা, हिन्दी & English for Indian Artisans', buyer: 'Buyer', logout: 'Logout', artisan: 'Artisan', signedOut: 'Signed Out' },
-    'bn-IN': { tagline: 'ভারতীয় কারিগরদের জন্য বাংলা, हिन्दी ও English-এ ভয়েস-ফার্স্ট ক্যাটালগ', buyer: 'ক্রেতা', logout: 'লগআউট', artisan: 'কারিগর', signedOut: 'সাইন আউট' },
-    'hi-IN': { tagline: 'भारतीय कारीगरों के लिए বাংলা, हिन्दी और English में वॉइस-फर्स्ट कैटलॉग', buyer: 'खरीदार', logout: 'लॉगआउट', artisan: 'कारीगर', signedOut: 'साइन आउट' },
-  } as const;
-  const navText = currentLang === 'bn-IN'
-    ? navTextByLanguage['bn-IN']
-    : currentLang === 'hi-IN'
-      ? navTextByLanguage['hi-IN']
-      : navTextByLanguage['en-IN'];
+export const Navbar: React.FC<NavbarProps> = () => {
+  const { t } = useLanguage();
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const isArtisanRoute = location.pathname.startsWith('/artisan');
@@ -105,32 +93,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
             <span className="hidden sm:inline text-[#a9c9b9]">|</span>
             <span className="hidden sm:inline text-[#d5e7dd]">
-              {navText.tagline}
+              {t.nav.tagline}
             </span>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-medium">
-            {/* Language indicator */}
-            <div className="flex items-center gap-1.5 text-[#e6f3eb]">
-              <Globe className="w-3.5 h-3.5 text-[#f9bc60]" />
-              <select
-                id="language-select"
-                aria-label="Select preferred language"
-                value={currentLang}
-                onChange={(e) => onLangChange?.(e.target.value as SupportedLanguage)}
-                className="bg-transparent text-xs text-white border-none outline-none cursor-pointer pr-1 font-medium"
-              >
-                <option value="bn-IN" className="bg-[#0c4b31] text-white">বাংলা (Bengali)</option>
-                <option value="hi-IN" className="bg-[#0c4b31] text-white">हिन्दी (Hindi)</option>
-                <option value="en-IN" className="bg-[#0c4b31] text-white">English</option>
-              </select>
-            </div>
+            {/* Global Language Selector */}
+            <LanguageSelector id="navbar-language-select" />
 
             {/* Customer Status in Ribbon (if logged in) */}
             {customer && (
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#10422c] border border-emerald-700/50 text-[#e6f3eb]">
                 <User className="w-3 h-3 text-[#f9bc60]" />
-                <span className="truncate max-w-[100px]">{navText.buyer}: <strong className="text-white">{customer.name.split(' ')[0]}</strong></span>
+                <span className="truncate max-w-[100px]">{t.nav.buyer}: <strong className="text-white">{customer.name.split(' ')[0]}</strong></span>
                 <button
                   type="button"
                   id="ribbon-customer-logout-btn"
@@ -139,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   title="Customer Logout"
                 >
                   <LogOut className="w-2.5 h-2.5" />
-                  <span>{navText.logout}</span>
+                  <span>{t.nav.customerLogout || t.nav.artisanLogout}</span>
                 </button>
               </div>
             )}
@@ -155,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${artisan ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                 <span>
-                  {navText.artisan}: <strong className="text-white font-semibold">{artisan ? artisan.name.split(' ')[0] : `(${navText.signedOut})`}</strong>
+                  {t.nav.artisan}: <strong className="text-white font-semibold">{artisan ? artisan.name.split(' ')[0] : `(${t.nav.signedOut})`}</strong>
                 </span>
                 <ChevronDown className="w-3 h-3 text-[#d2e4db]" />
               </button>
@@ -179,7 +154,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         title="Log out from Artisan Studio"
                       >
                         <LogOut className="w-3 h-3" />
-                        <span>Logout</span>
+                        <span>{t.nav.artisanLogout}</span>
                       </button>
                     </div>
                   ) : (
@@ -243,7 +218,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Store className="w-4 h-4" />
-              <span>Marketplace</span>
+              <span>{t.nav.marketplace}</span>
             </Link>
 
             <Link
@@ -256,9 +231,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Layers className="w-4 h-4" />
-              <span>Artisan Studio</span>
+              <span>{t.nav.artisanPortal}</span>
             </Link>
-
           </nav>
         )}
 
@@ -279,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Log Out Customer Account"
               >
                 <LogOut className="w-3 h-3" />
-                <span>Logout</span>
+                <span>{t.nav.customerLogout || t.nav.artisanLogout}</span>
               </button>
             </div>
           ) : (
@@ -290,14 +264,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="px-3 lg:px-3.5 py-2 text-xs font-bold text-[#e27d35] bg-white border border-[#f5d0b5] hover:bg-[#fff9f5] rounded-xl transition-all shadow-2xs flex items-center gap-1.5"
               >
                 <User className="w-3.5 h-3.5 text-[#e27d35]" />
-                <span>Customer Login</span>
+                <span>{t.nav.customerLogin}</span>
               </Link>
               <Link
                 to="/customer/register"
                 id="nav-customer-register-btn"
                 className="px-3 lg:px-3.5 py-2 text-xs font-bold text-[#0c4b31] bg-[#edf8f2] border border-[#c2e2ce] hover:bg-[#e1f2e7] rounded-xl transition-all shadow-2xs flex items-center gap-1"
               >
-                <span>Customer Sign Up</span>
+                <span>{t.nav.customerSignUp}</span>
               </Link>
             </div>
           ))}
@@ -317,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Log Out Artisan Account"
               >
                 <LogOut className="w-3 h-3" />
-                <span>Logout</span>
+                <span>{t.nav.artisanLogout}</span>
               </button>
             </div>
           ) : (
@@ -327,7 +301,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="px-3.5 lg:px-4 py-2 text-xs font-bold text-white bg-[#0c4b31] hover:bg-[#073623] rounded-xl transition-all shadow-md shadow-[#0c4b31]/20 flex items-center gap-1.5"
             >
               <UserCheck className="w-4 h-4 text-[#ffd186]" />
-              <span>Artisan Login</span>
+              <span>{t.nav.artisanLogin}</span>
             </Link>
           )}
 
@@ -339,7 +313,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="px-3.5 lg:px-4 py-2 text-xs font-bold text-white bg-[#0c4b31] hover:bg-[#073623] rounded-xl transition-all shadow-md shadow-[#0c4b31]/20 flex items-center gap-1.5"
             >
               <PlusCircle className="w-4 h-4 text-[#ffd186]" />
-              <span>+ List Craft</span>
+              <span>+ {t.artisan?.addProduct || 'Add Product'}</span>
             </Link>
           )}
         </div>
@@ -369,14 +343,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-sm font-bold text-[#0c4b31] hover:bg-[#edf7f1]"
               >
-                Marketplace
+                {t.nav.marketplace}
               </Link>
               <Link
                 to="/artisan/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-sm font-bold text-[#0c4b31] hover:bg-[#edf7f1]"
               >
-                Artisan Studio {artisan ? `(${artisan.name.split(' ')[0]})` : ''}
+                {t.nav.artisanPortal} {artisan ? `(${artisan.name.split(' ')[0]})` : ''}
               </Link>
             </div>
           )}
@@ -389,7 +363,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div>
                   <p className="text-xs font-bold text-amber-900 flex items-center gap-1">
                     <User className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Customer: {customer.name}</span>
+                    <span>{t.nav.buyer}: {customer.name}</span>
                   </p>
                   <p className="text-[10px] text-amber-700">{customer.email || customer.mobile}</p>
                 </div>
@@ -403,7 +377,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3 h-3" />
-                  <span>Logout</span>
+                  <span>{t.nav.customerLogout || t.nav.artisanLogout}</span>
                 </button>
               </div>
             ) : (
@@ -414,7 +388,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setMobileMenuOpen(false)}
                   className="block text-center py-2.5 px-2 text-xs font-bold text-[#e27d35] bg-[#fff8f2] border border-[#f5d0b5] rounded-xl"
                 >
-                  Customer Login
+                  {t.nav.customerLogin}
                 </Link>
                 <Link
                   to="/customer/register"
@@ -422,7 +396,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setMobileMenuOpen(false)}
                   className="block text-center py-2.5 px-2 text-xs font-bold text-[#0c4b31] bg-[#edf8f2] border border-[#c2e2ce] rounded-xl"
                 >
-                  Customer Sign Up
+                  {t.nav.customerSignUp}
                 </Link>
               </div>
             ))}
@@ -433,7 +407,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div>
                   <p className="text-xs font-bold text-emerald-950 flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>Artisan: {artisan.name}</span>
+                    <span>{t.nav.artisan}: {artisan.name}</span>
                   </p>
                   <p className="text-[10px] text-emerald-700">{artisan.craftType} • {artisan.location.split(',')[0]}</p>
                 </div>
@@ -447,7 +421,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3 h-3" />
-                  <span>Logout</span>
+                  <span>{t.nav.artisanLogout}</span>
                 </button>
               </div>
             ) : (
@@ -458,17 +432,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 text-xs font-bold text-white bg-[#0c4b31] hover:bg-[#073623] rounded-xl"
                 >
-                  Artisan Login
+                  {t.nav.artisanLogin}
                 </Link>
-                {false && (
-                  <Link
-                    to="/artisan/add-product"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex-1 text-center py-2.5 text-xs font-bold text-[#ffd186] bg-[#0c4b31] rounded-xl"
-                  >
-                    + List Craft
-                  </Link>
-                )}
               </div>
             )}
           </div>

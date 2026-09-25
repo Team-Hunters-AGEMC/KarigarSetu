@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Eye, MapPin, Sparkles, CheckCircle2 } from 'lucide-react';
 import { MarketplaceProduct } from '../../services/marketplaceApi';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface ProductCardProps {
   product: MarketplaceProduct;
@@ -9,6 +10,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+  const { t } = useLanguage();
   const isOutOfStock = (product.stock_quantity ?? 0) <= 0;
 
   return (
@@ -31,19 +33,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
         {/* Category Pill */}
         <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-extrabold text-[#0c4b31] shadow-xs flex items-center gap-1 border border-[#cde0d4]">
           <Sparkles className="w-3 h-3 text-[#e27d35]" />
-          <span>{product.category}</span>
+          <span>{t.categories[product.category as keyof typeof t.categories] || product.category}</span>
         </div>
 
         {/* Stock Badge */}
         <div className="absolute top-3 right-3">
           {isOutOfStock ? (
             <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-red-100 text-red-700">
-              Out of Stock
+              {t.marketplace.outOfStock}
             </span>
           ) : (
             <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              In Stock ({product.stock_quantity})
+              {t.marketplace.inStock} ({product.stock_quantity})
             </span>
           )}
         </div>
@@ -63,14 +65,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
             <span className="text-gray-400 font-normal truncate max-w-[120px]">{product.artisan_location}</span>
           </Link>
 
-          {/* Product Title */}
+          {/* Product Title (User generated - keep raw) */}
           <Link to={`/marketplace/products/${product.id}`} className="block mt-1 group-hover:text-[#0c4b31]">
             <h3 className="text-sm sm:text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
               {product.product_name}
             </h3>
           </Link>
 
-          {/* Short description */}
+          {/* Short description (User generated - keep raw) */}
           <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
             {product.description}
           </p>
@@ -103,7 +105,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
               className="py-2.5 px-3 rounded-xl bg-[#f4f8f5] hover:bg-[#e6f1ea] text-[#0c4b31] text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Details</span>
+              <span>{t.marketplace.viewCraft}</span>
             </Link>
 
             <button
@@ -114,7 +116,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
               className="py-2.5 px-3 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ShoppingBag className="w-3.5 h-3.5 text-[#ffd186]" />
-              <span>Add to Cart</span>
+              <span>{t.marketplace.addToCart}</span>
             </button>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Sparkles, PackageSearch } from 'lucide-react';
+import { PackageSearch } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import { MarketplaceProduct } from '../../services/marketplaceApi';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface ProductGridProps {
   products: MarketplaceProduct[];
@@ -16,6 +17,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onAddToCart,
   onResetFilters,
 }) => {
+  const { t } = useLanguage();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
@@ -42,19 +45,19 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         </div>
         <div className="space-y-1">
           <h3 className="text-base sm:text-lg font-extrabold text-gray-900">
-            No Approved Crafts Found
+            {t.marketplace.noProductsFound}
           </h3>
           <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
-            Try adjusting your search keywords, expanding your price range, or clearing category filters.
+            {t.marketplace.noProductsHint}
           </p>
         </div>
         {onResetFilters && (
           <button
             type="button"
             onClick={onResetFilters}
-            className="px-4 py-2 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold transition-all shadow-xs"
+            className="px-4 py-2 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
           >
-            Clear All Filters
+            {t.marketplace.clearFilters}
           </button>
         )}
       </div>

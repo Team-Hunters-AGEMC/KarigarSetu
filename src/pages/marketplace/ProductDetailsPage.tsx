@@ -10,17 +10,16 @@ import {
   ShieldCheck, 
   Truck, 
   CheckCircle2, 
-  Clock, 
   UserCheck, 
-  Layers,
-  Heart
 } from 'lucide-react';
 import { MarketplaceNavbar } from '../../components/marketplace/MarketplaceNavbar';
 import { LoginRequiredModal } from '../../components/marketplace/LoginRequiredModal';
 import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceApi';
 import { getCurrentCustomer } from '../../services/customerAuth';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export const ProductDetailsPage: React.FC = () => {
+  const { t } = useLanguage();
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
 
@@ -113,7 +112,6 @@ export const ProductDetailsPage: React.FC = () => {
       };
 
       // Keep the direct-checkout item available after refresh/back navigation.
-      // Buy Now does not add the item to the normal shopping cart.
       sessionStorage.setItem(
         'karigarsetu_buy_now',
         JSON.stringify(checkoutData)
@@ -164,7 +162,7 @@ export const ProductDetailsPage: React.FC = () => {
             to="/marketplace"
             className="inline-block px-5 py-2.5 rounded-xl bg-[#0c4b31] text-white text-xs font-bold"
           >
-            ← Return to Marketplace
+            ← {t.nav.backToMarketplace}
           </Link>
         </div>
       </div>
@@ -183,10 +181,10 @@ export const ProductDetailsPage: React.FC = () => {
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <Link to="/marketplace" className="hover:text-[#0c4b31] flex items-center gap-1 font-semibold">
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Marketplace</span>
+            <span>{t.nav.marketplace}</span>
           </Link>
           <span>/</span>
-          <span className="font-semibold text-gray-700">{product.category}</span>
+          <span className="font-semibold text-gray-700">{t.categories[product.category as keyof typeof t.categories] || product.category}</span>
           <span>/</span>
           <span className="text-gray-900 font-bold truncate max-w-xs">{product.product_name}</span>
         </div>
@@ -208,16 +206,16 @@ export const ProductDetailsPage: React.FC = () => {
               
               <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-extrabold text-[#0c4b31] shadow-xs flex items-center gap-1.5 border border-[#cee0d4]">
                 <Sparkles className="w-3.5 h-3.5 text-[#e27d35]" />
-                <span>Verified Authentic Handcrafted</span>
+                <span>{t.productDetails.verifiedHandmade}</span>
               </div>
             </div>
 
             <div className="flex gap-3" aria-label="Product image gallery">
-              <button type="button" onClick={() => setActiveImage('studio')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition ${activeImage === 'studio' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show full product image">
+              <button type="button" onClick={() => setActiveImage('studio')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition cursor-pointer ${activeImage === 'studio' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show full product image">
                 <img src={product.image_url} alt="Full product view" className="h-full w-full object-contain" />
                 <span className="absolute bottom-0 inset-x-0 bg-black/55 py-0.5 text-[9px] font-bold text-white">Full view</span>
               </button>
-              <button type="button" onClick={() => setActiveImage('detail')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition ${activeImage === 'detail' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show craftsmanship detail">
+              <button type="button" onClick={() => setActiveImage('detail')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition cursor-pointer ${activeImage === 'detail' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show craftsmanship detail">
                 <img src={product.image_url} alt="Craftsmanship detail" className="h-full w-full scale-[2.1] object-contain" style={{ transformOrigin: `${detailFocus.x}% ${detailFocus.y}%` }} />
                 <span className="absolute bottom-0 inset-x-0 bg-black/55 py-0.5 text-[9px] font-bold text-white">Detail zoom</span>
               </button>
@@ -251,11 +249,11 @@ export const ProductDetailsPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-extrabold text-[#e27d35] tracking-wider uppercase">
-                    {product.category}
+                    {t.categories[product.category as keyof typeof t.categories] || product.category}
                   </span>
                   <span className="text-gray-300">•</span>
                   <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                    In Stock ({product.stock_quantity} available)
+                    {isOutOfStock ? t.marketplace.outOfStock : `${t.marketplace.inStock} (${product.stock_quantity} ${t.productDetails.stockLeft})`}
                   </span>
                 </div>
 
@@ -271,7 +269,7 @@ export const ProductDetailsPage: React.FC = () => {
                     {product.artisan_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <span className="text-[10px] text-gray-400 font-semibold block uppercase">Handcrafted By</span>
+                    <span className="text-[10px] text-gray-400 font-semibold block uppercase">{t.productDetails.aboutArtisan}</span>
                     <Link
                       to={`/marketplace/artisans/${product.artisan_id}`}
                       id="product-artisan-profile-link"
@@ -291,20 +289,20 @@ export const ProductDetailsPage: React.FC = () => {
                   to={`/marketplace/artisans/${product.artisan_id}`}
                   className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#0c4b31] bg-white border border-[#b8d4c2] hover:bg-[#edf6f0] transition-colors"
                 >
-                  View Profile
+                  {t.marketplace.viewProfile}
                 </Link>
               </div>
 
               {/* Price Display */}
               <div className="p-4 rounded-2xl bg-[#f4f9f5] border border-[#cee0d3] flex items-baseline justify-between">
                 <div>
-                  <span className="text-xs text-gray-500 font-medium block">Direct Artisan Price</span>
+                  <span className="text-xs text-gray-500 font-medium block">{t.productDetails.finalFairPrice}</span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl sm:text-4xl font-extrabold text-[#0c4b31]">
                       ₹{product.selling_price}
                     </span>
                     <span className="text-xs text-emerald-800 font-bold bg-[#e3f4ea] px-2 py-0.5 rounded">
-                      Fair Living Wage Verified
+                      {t.productDetails.directArtisanImpact}
                     </span>
                   </div>
                 </div>
@@ -318,7 +316,7 @@ export const ProductDetailsPage: React.FC = () => {
               {/* Quantity Selector */}
               {!isOutOfStock && (
                 <div className="flex items-center gap-3 pt-1">
-                  <span className="text-xs font-bold text-gray-700">Quantity:</span>
+                  <span className="text-xs font-bold text-gray-700">{t.productDetails.quantity}:</span>
                   <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
                     <button
                       type="button"
@@ -354,7 +352,7 @@ export const ProductDetailsPage: React.FC = () => {
                   className="py-3.5 px-4 rounded-xl bg-white border-2 border-[#0c4b31] hover:bg-[#edf8f1] text-[#0c4b31] font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Cart</span>
+                  <span>{t.productDetails.addToCart}</span>
                 </button>
 
                 <button
@@ -369,7 +367,7 @@ export const ProductDetailsPage: React.FC = () => {
                   className="py-3.5 px-4 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-[#0c4b31]/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40"
                 >
                   <Zap className="w-4 h-4 text-[#ffd186]" />
-                  <span>Buy Now</span>
+                  <span>{t.productDetails.buyNow}</span>
                 </button>
               </div>
 
@@ -382,7 +380,7 @@ export const ProductDetailsPage: React.FC = () => {
                   className="py-2.5 px-3 rounded-xl bg-[#f8faf8] hover:bg-[#ebf4ee] border border-[#d2e2d7] text-[#0c4b31] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <MessageSquare className="w-4 h-4 text-[#0c4b31]" />
-                  <span>Message Artisan</span>
+                  <span>{t.productDetails.messageArtisan}</span>
                 </button>
 
                 <button
@@ -392,7 +390,7 @@ export const ProductDetailsPage: React.FC = () => {
                   className="py-2.5 px-3 rounded-xl bg-[#fff8ee] hover:bg-[#ffefd8] border border-[#f5dcba] text-[#854511] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4 text-[#e27d35]" />
-                  <span>Request Custom Product</span>
+                  <span>{t.productDetails.requestCustomization}</span>
                 </button>
               </div>
 
@@ -412,7 +410,7 @@ export const ProductDetailsPage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
-              Craft Story & Description
+              {t.productDetails.craftStory}
             </button>
             <button
               type="button"
@@ -423,7 +421,7 @@ export const ProductDetailsPage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
-              Heritage & Materials
+              {t.productDetails.specifications}
             </button>
             <button
               type="button"
@@ -434,7 +432,7 @@ export const ProductDetailsPage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
-              Packaging & Care
+              {t.productDetails.deliveryInfo}
             </button>
           </div>
 
@@ -501,7 +499,7 @@ export const ProductDetailsPage: React.FC = () => {
                   More From {product.artisan_name}
                 </span>
                 <h2 className="text-xl font-extrabold text-[#0c4b31]">
-                  Explore Other Masterpieces
+                  {t.productDetails.artisanOtherCrafts}
                 </h2>
               </div>
               <Link

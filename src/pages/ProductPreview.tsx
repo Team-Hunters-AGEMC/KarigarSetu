@@ -14,11 +14,13 @@ import {
   FileText 
 } from 'lucide-react';
 import { getCurrentArtisan } from '../data/seedData';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // All artisan requests share the Vite origin and its Flask proxy, including cookies.
 
 
 export const ProductPreview: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const artisan = getCurrentArtisan();
@@ -157,10 +159,10 @@ export const ProductPreview: React.FC = () => {
             <CheckCircle2 className="h-11 w-11" />
           </div>
           <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-700">
-            Submission Complete
+            {t.artisan.submissionComplete}
           </p>
           <h1 className="text-3xl font-extrabold text-[#0c4b31]">
-            {publishMessage.startsWith('AI approved') ? 'AI Approved!' : 'Sent for Admin Review'}
+            {publishMessage.startsWith('AI approved') ? t.artisan.aiApprovedTitle : t.artisan.sentForAdminReviewTitle}
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-gray-600">
             {publishConfidence !== null && `AI confidence: ${publishConfidence}%. `}{publishMessage}
@@ -173,7 +175,7 @@ export const ProductPreview: React.FC = () => {
             }}
             className="mt-8 w-full rounded-xl bg-[#0c4b31] px-5 py-4 text-sm font-extrabold text-white shadow-md transition-colors hover:bg-[#073623]"
           >
-            Back to Your Dashboard →
+            {t.artisan.backToDashboardBtn}
           </button>
         </div>
       </div>
@@ -193,25 +195,25 @@ export const ProductPreview: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0c4b31] hover:text-[#e27d35] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>← Edit Product Information</span>
+            <span>{t.artisan.editProductInfo}</span>
           </Link>
 
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-[#0c4b31] text-white flex items-center justify-center text-xs font-bold">✦</span>
-            <span className="text-xs font-extrabold text-[#0c4b31]">KarigarSetu AI Studio</span>
+            <span className="text-xs font-extrabold text-[#0c4b31]">{t.artisan.dashboardTitle}</span>
           </div>
         </div>
 
         {/* Intro */}
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#e3f4ea] text-[#0c4b31] border border-[#bfe2ce] uppercase tracking-wider">
-            Step 2 of 3: Smart Catalog Review
+            {t.artisan.step2Of3}
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0c4b31] tracking-tight mt-3">
-            Review Your Generated Smart Catalog
+            {t.artisan.reviewSmartCatalogTitle}
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-2">
-            Inspect the high-resolution craft zoom, AI living wage calculation, and export description before publishing to buyers.
+            {t.artisan.reviewSmartCatalogSubtitle}
           </p>
         </div>
 
@@ -248,13 +250,13 @@ export const ProductPreview: React.FC = () => {
               {/* Status Badge */}
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-extrabold text-[#0c4b31] shadow-xs flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#e27d35]" />
-                {activeImageView === 'studio' ? '✦ Professional Studio View' : '✦ 2.1× Craft Detail Zoom'}
+                {activeImageView === 'studio' ? t.artisan.proStudioView : t.artisan.craftDetailZoom}
               </div>
 
               {/* Selection Guide Prompt */}
               {isSelectingDetail && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#0c4b31] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                  Click on the image to set craft focal point / কারুকার্যে ক্লিক করুন
+                  {t.artisan.clickToSetFocus}
                 </div>
               )}
             </div>
@@ -268,7 +270,7 @@ export const ProductPreview: React.FC = () => {
                 className="px-3 py-1.5 rounded-lg bg-[#e3f4ea] hover:bg-[#d5eee0] text-[#0c4b31] text-xs font-bold flex items-center gap-1.5 transition-colors"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>Select Craft Detail Area</span>
+                <span>{t.artisan.selectCraftDetailArea}</span>
               </button>
 
               <div className="flex items-center gap-2">
@@ -280,7 +282,7 @@ export const ProductPreview: React.FC = () => {
                     activeImageView === 'studio' ? 'bg-[#0c4b31] text-white' : 'bg-gray-100 text-gray-700'
                   }`}
                 >
-                  Studio View
+                  {t.artisan.studioViewBtn}
                 </button>
                 <button
                   type="button"
@@ -290,7 +292,7 @@ export const ProductPreview: React.FC = () => {
                     activeImageView === 'detail' ? 'bg-[#0c4b31] text-white' : 'bg-gray-100 text-gray-700'
                   }`}
                 >
-                  Detail Zoom
+                  {t.artisan.detailZoomBtn}
                 </button>
               </div>
             </div>
@@ -308,7 +310,7 @@ export const ProductPreview: React.FC = () => {
               </p>
               
               <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Recommended Living Wage Price:</span>
+                <span className="text-xs text-gray-500 font-medium">{t.artisan.recommendedLivingWagePrice}</span>
                 <strong className="text-2xl font-extrabold text-[#0c4b31]">₹{suggestedPrice}</strong>
               </div>
             </div>
@@ -320,31 +322,31 @@ export const ProductPreview: React.FC = () => {
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                   <span className="text-[11px] font-extrabold text-[#e27d35] tracking-wider uppercase">
-                    AI Verified Breakdown
+                    {t.artisan.aiVerifiedBreakdown}
                   </span>
                   <h3 className="text-lg font-extrabold text-[#0c4b31]">
-                    Catalog Specifications
+                    {t.artisan.catalogSpecifications}
                   </h3>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#e3f4ea] text-[#0c4b31] flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" /> Ready to Publish
+                  <Check className="w-3.5 h-3.5" /> {t.artisan.readyToPublishBadge}
                 </span>
               </div>
 
               {/* Breakdown Fields */}
               <div className="space-y-3 text-xs">
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-500 font-medium">Product Title:</span>
+                  <span className="text-gray-500 font-medium">{t.artisan.productNameLabel}:</span>
                   <strong className="text-gray-900 font-bold max-w-[60%] text-right">{displayTitle}</strong>
                 </div>
 
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-500 font-medium">Craft Category:</span>
+                  <span className="text-gray-500 font-medium">{t.artisan.craftCategoryLabel}:</span>
                   <strong className="text-gray-900 font-bold">{productData?.category}</strong>
                 </div>
 
                 <div className="py-2 border-b border-gray-100 space-y-1">
-                  <span className="text-gray-500 font-medium block">Marketing Caption:</span>
+                  <span className="text-gray-500 font-medium block">{t.artisan.marketingCaption}</span>
                   <p className="text-gray-800 font-medium italic bg-[#f9faf8] p-2.5 rounded-lg border border-gray-200">
                     &quot;{aiCatalog.marketingCaption || `Authentic handmade ${productData?.category} directly from artisan ${artisan.name}.`}&quot;
                   </p>
@@ -352,7 +354,7 @@ export const ProductPreview: React.FC = () => {
 
                 {/* Keywords */}
                 <div className="py-2 space-y-1.5">
-                  <span className="text-gray-500 font-medium block">Catalog Tags:</span>
+                  <span className="text-gray-500 font-medium block">{t.artisan.catalogTags}</span>
                   <div className="flex flex-wrap gap-1.5">
                     {(aiCatalog.keywords || ['Terracotta', 'Handmade', 'GI-Tagged', 'DirectFromVillage']).map((tag: string, idx: number) => (
                       <span key={idx} className="px-2 py-0.5 rounded-md bg-[#edf8f1] text-[#0c4b31] font-semibold text-[11px]">
@@ -367,27 +369,26 @@ export const ProductPreview: React.FC = () => {
               <div className="p-4 rounded-xl bg-[#f4f9f5] border border-[#cedfd3] space-y-2.5">
                 <h4 className="text-xs font-extrabold text-[#0c4b31] flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4 text-[#e27d35]" />
-                  Fair Living Wage Recommendation
+                  {t.artisan.fairLivingWageRec}
                 </h4>
 
                 <div className="flex items-center justify-between text-xs text-gray-600">
-                  <span>Raw Material Cost:</span>
+                  <span>{t.artisan.rawMaterialCost}</span>
                   <strong className="text-gray-900">₹{materialCost}</strong>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-gray-600">
-                  <span>Artisan Labour & Time Hours:</span>
+                  <span>{t.artisan.artisanLabourTime}</span>
                   <strong className="text-gray-900">₹{labourCost}</strong>
                 </div>
 
                 <div className="pt-2 border-t border-[#b8dfc7] flex items-center justify-between text-sm font-extrabold text-[#0c4b31]">
-                  <span>AI Suggested Fair Price:</span>
+                  <span>{t.artisan.aiSuggestedFairPrice}</span>
                   <strong className="text-lg text-emerald-800">₹{suggestedPrice}</strong>
                 </div>
 
                 <p className="text-[11px] text-gray-500 leading-normal pt-1">
-                  AI dynamically calculated this price based on your material inputs and regional artisan benchmarks. 
-                  You can adjust the final selling price anytime in your studio dashboard.
+                  {t.artisan.fairPriceExplanation}
                 </p>
               </div>
 
@@ -404,7 +405,7 @@ export const ProductPreview: React.FC = () => {
                   state={{ editMode: true }}
                   className="py-3.5 px-4 rounded-xl bg-white border border-[#b2cfbd] hover:bg-[#f3f9f5] text-[#0c4b31] font-bold text-xs sm:text-sm text-center transition-colors"
                 >
-                  Edit Information
+                  {t.artisan.edit}
                 </Link>
 
                 <button
@@ -414,7 +415,7 @@ export const ProductPreview: React.FC = () => {
                   disabled={isPublishing}
                   className="py-3.5 px-4 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-[#0c4b31]/20 hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <span>{isPublishing ? 'Publishing...' : 'Publish to Marketplace →'}</span>
+                  <span>{isPublishing ? t.artisan.publishingBtn : t.artisan.publishToMarketplaceBtn}</span>
                 </button>
               </div>
             </div>

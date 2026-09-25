@@ -6,21 +6,21 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle, 
-  Layers, 
-  MessageSquare, 
   ShoppingBag, 
   Store, 
-  FileText,
-  AlertCircle,
-  Loader2,
-  ChevronRight
+  AlertCircle, 
+  Loader2, 
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import { MarketplaceNavbar } from '../../components/marketplace/MarketplaceNavbar';
 import { getCurrentCustomer } from '../../services/customerAuth';
 import { customRequestsApi } from '../../services/customRequestsApi';
 import { CustomProductRequest } from '../../types';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export const CustomerCustomRequestsPage: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<CustomProductRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,35 +99,35 @@ export const CustomerCustomRequestsPage: React.FC = () => {
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
             <Clock className="w-3.5 h-3.5" />
-            <span>Awaiting Artisan Quote</span>
+            <span>{t.customRequests.statusPending}</span>
           </span>
         );
       case 'quoted':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            <span>Quote Received</span>
+            <span>{t.customRequests.statusQuoted}</span>
           </span>
         );
       case 'accepted':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Quote Accepted</span>
+            <span>{t.customRequests.statusAccepted}</span>
           </span>
         );
       case 'ordered':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-800 text-xs font-bold">
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>Custom Order Placed</span>
+            <span>{t.customRequests.statusOrdered}</span>
           </span>
         );
       case 'rejected':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-800 text-xs font-bold">
             <XCircle className="w-3.5 h-3.5" />
-            <span>Declined by Artisan</span>
+            <span>{t.customRequests.statusDeclined}</span>
           </span>
         );
     }
@@ -143,25 +143,25 @@ export const CustomerCustomRequestsPage: React.FC = () => {
           <div>
             <Link
               to="/marketplace"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0c4b31] hover:underline mb-2"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0c4b31] hover:underline mb-2 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Marketplace</span>
+              <span>{t.nav.backToMarketplace}</span>
             </Link>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0c4b31] tracking-tight">
-              My Custom Product Requests
+              {t.customRequests.title}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500">
-              Track status, review artisan quotes, and accept custom handcrafted orders.
+              {t.customRequests.subtitle}
             </p>
           </div>
 
           <Link
             to="/marketplace"
-            className="px-4 py-2.5 rounded-xl bg-[#0c4b31] text-white text-xs font-bold hover:bg-[#073623] transition-colors shadow-xs flex items-center gap-2 self-start sm:self-auto"
+            className="px-4 py-2.5 rounded-xl bg-[#0c4b31] text-white text-xs font-bold hover:bg-[#073623] transition-colors shadow-xs flex items-center gap-2 self-start sm:self-auto cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-[#ffd186]" />
-            <span>Browse Crafts for Custom Order</span>
+            <span>{t.customRequests.browseCrafts}</span>
           </Link>
         </div>
 
@@ -190,7 +190,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
             <button
               type="button"
               onClick={loadRequests}
-              className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700"
+              className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 cursor-pointer"
             >
               Retry
             </button>
@@ -198,15 +198,15 @@ export const CustomerCustomRequestsPage: React.FC = () => {
         ) : requests.length === 0 ? (
           <div className="bg-white rounded-3xl border border-[#dce8df] p-12 text-center shadow-sm space-y-4">
             <Sparkles className="w-12 h-12 text-[#d96b14] mx-auto opacity-75" />
-            <h3 className="text-lg font-extrabold text-[#0c4b31]">No Custom Requests Yet</h3>
+            <h3 className="text-lg font-extrabold text-[#0c4b31]">{t.customRequests.emptyTitle}</h3>
             <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
-              Find any handcrafted item on the marketplace and click &quot;Request Custom Product&quot; to order tailored sizes, colors, or motifs directly from master artisans.
+              {t.customRequests.emptyHint}
             </p>
             <Link
               to="/marketplace"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold shadow-md shadow-[#0c4b31]/20 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold shadow-md shadow-[#0c4b31]/20 transition-all cursor-pointer"
             >
-              <span>Explore Marketplace</span>
+              <span>{t.cart.startShopping}</span>
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -222,7 +222,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-bold text-gray-400">
-                        Request #{req.id}
+                        {t.customRequests.requestNumber}{req.id}
                       </span>
                       <span>•</span>
                       <span className="text-[11px] text-gray-500">
@@ -287,7 +287,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
                   <div className="lg:col-span-5 space-y-2">
                     <div className="p-3.5 rounded-2xl bg-[#fafcfa] border border-[#e2ece5] space-y-1.5">
                       <span className="text-[10px] font-extrabold text-[#0c4b31] uppercase tracking-wider block">
-                        Customization Specifications
+                        {t.customRequests.customizationDetails}
                       </span>
                       <p className="text-xs text-gray-700 leading-relaxed font-medium">
                         {req.customization_details}
@@ -321,7 +321,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
                     {req.status === 'quoted' || req.status === 'accepted' || req.status === 'ordered' ? (
                       <div className="space-y-1">
                         <span className="text-[10px] font-bold text-gray-400 uppercase">
-                          Artisan Quoted Price
+                          {t.customRequests.artisanQuotedPrice}
                         </span>
                         <div className="text-2xl font-extrabold text-[#0c4b31]">
                           ₹{Number(req.quoted_price).toLocaleString('en-IN')}
@@ -376,7 +376,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
                           ) : (
                             <>
                               <CheckCircle2 className="w-4 h-4 text-[#ffd186]" />
-                              <span>Accept Quote & Checkout</span>
+                              <span>{t.customRequests.acceptQuote}</span>
                             </>
                           )}
                         </button>
@@ -390,16 +390,16 @@ export const CustomerCustomRequestsPage: React.FC = () => {
                           className="w-full py-2.5 px-3 rounded-xl bg-[#ffd522] hover:bg-[#facb10] text-[#17281f] text-xs font-extrabold shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                         >
                           <ShoppingBag className="w-4 h-4" />
-                          <span>Complete Checkout (₹{req.quoted_price})</span>
+                          <span>{t.checkout.payment} (₹{req.quoted_price})</span>
                         </button>
                       )}
 
                       <Link
                         to={`/customer/messages?artisan_id=${req.artisan_id}${req.product_id ? `&product_id=${req.product_id}` : ''}`}
-                        className="w-full py-2 px-3 rounded-xl bg-white border border-[#c6ded0] hover:bg-[#eef8f2] text-[#0c4b31] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                        className="w-full py-2 px-3 rounded-xl bg-white border border-[#c6ded0] hover:bg-[#eef8f2] text-[#0c4b31] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Chat with Artisan</span>
+                        <span>{t.customRequests.chatWithArtisan}</span>
                       </Link>
                     </div>
                   </div>

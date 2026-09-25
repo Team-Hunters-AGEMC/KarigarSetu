@@ -11,17 +11,18 @@ import {
   X, 
   Sparkles, 
   Layers,
-  ShieldCheck,
   ArrowUpRight,
   Store,
   Tag,
   LoaderCircle,
 } from 'lucide-react';
-import { getCurrentCustomer, setCurrentCustomer, logoutCustomer, getCartCount, CustomerUser } from '../../services/customerAuth';
+import { getCurrentCustomer, logoutCustomer, getCartCount, CustomerUser } from '../../services/customerAuth';
 import { getLoggedInArtisan, logoutArtisan } from '../../data/seedData';
 import { LoginRequiredModal } from './LoginRequiredModal';
 import { CraftCategory, ArtisanProfile } from '../../types';
 import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceApi';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { LanguageSelector } from '../../i18n/LanguageSelector';
 
 interface MarketplaceNavbarProps {
   searchQuery?: string;
@@ -30,14 +31,14 @@ interface MarketplaceNavbarProps {
   onSelectCategory?: (category: CraftCategory | 'All') => void;
 }
 
-const CATEGORY_LIST: { id: CraftCategory | 'All'; label: string }[] = [
-  { id: 'All', label: 'All Categories' },
-  { id: 'Pottery', label: 'Terracotta & Pottery' },
-  { id: 'Handloom', label: 'Handloom & Textiles' },
-  { id: 'Metalcraft', label: 'Dokra & Metalcraft' },
-  { id: 'Woodcraft', label: 'Carved Woodcraft' },
-  { id: 'Jewellery', label: 'Heritage Jewellery' },
-  { id: 'Painting', label: 'Folk Art & Painting' },
+const CATEGORY_LIST: { id: CraftCategory | 'All'; key: keyof typeof import('../../i18n/translations').translations['en-IN']['categories'] }[] = [
+  { id: 'All', key: 'All' },
+  { id: 'Pottery', key: 'Pottery' },
+  { id: 'Handloom', key: 'Handloom' },
+  { id: 'Metalcraft', key: 'Metalcraft' },
+  { id: 'Woodcraft', key: 'Woodcraft' },
+  { id: 'Jewellery', key: 'Jewellery' },
+  { id: 'Painting', key: 'Painting' },
 ];
 
 export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
@@ -46,6 +47,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
   selectedCategory = 'All',
   onSelectCategory,
 }) => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState<CustomerUser | null>(getCurrentCustomer());
   const [artisan, setArtisan] = useState<ArtisanProfile | null>(getLoggedInArtisan());
@@ -132,13 +134,19 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
   };
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const categorySuggestions = CATEGORY_LIST.filter((item) =>
-    item.id !== 'All' && item.label.toLowerCase().includes(normalizedQuery),
-  ).slice(0, 2);
+  const categorySuggestions = CATEGORY_LIST.filter((item) => {
+    const label = t.categories[item.key] || item.id;
+    return item.id !== 'All' && label.toLowerCase().includes(normalizedQuery);
+  }).slice(0, 2);
+
   const artisanSuggestions = [...new Set(
     suggestionProducts.map((product) => product.artisan_name).filter(Boolean),
   )].slice(0, 2);
   const hasSuggestions = suggestionProducts.length > 0 || categorySuggestions.length > 0 || artisanSuggestions.length > 0;
+
+  const currentCategoryLabel = selectedCategory === 'All' 
+    ? t.nav.categories 
+    : (t.categories[selectedCategory as keyof typeof t.categories] || selectedCategory);
 
   return (
     <header className="sticky top-0 z-40 bg-[#fcfaf6]/95 backdrop-blur-md border-b border-[#e2eae4]">
@@ -151,16 +159,19 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             </span>
             <span className="hidden sm:inline text-emerald-300">|</span>
             <span className="hidden sm:inline text-[#d5e7dd]">
-              100% Authentic Indian Handicrafts • Direct Artisan Fair Living Wage
+              {t.nav.marketTagline}
             </span>
           </div>
 
-          <div className="hidden">
-            {artisan ? (
-              <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3">
+            {/* Global Language Selector */}
+            <LanguageSelector id="mkt-ribbon-language-select" />
+
+            {artisan && (
+              <div className="hidden sm:flex items-center gap-1.5">
                 <Link to="/artisan/dashboard" className="text-[#ffd186] hover:underline font-semibold flex items-center gap-1">
                   <Layers className="w-3 h-3" />
-                  <span>Artisan: {artisan.name.split(' ')[0]}</span>
+                  <span>{t.nav.artisan}: {artisan.name.split(' ')[0]}</span>
                 </Link>
                 <button
                   type="button"
@@ -170,14 +181,9 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                   title="Log Out of Artisan Account"
                 >
                   <LogOut className="w-2.5 h-2.5" />
-                  <span>Logout</span>
+                  <span>{t.nav.artisanLogout}</span>
                 </button>
               </div>
-            ) : (
-              <Link to="/artisan/dashboard" className="text-[#ffd186] hover:underline font-semibold flex items-center gap-1">
-                <Layers className="w-3 h-3" />
-                <span>Artisan Portal</span>
-              </Link>
             )}
           </div>
         </div>
@@ -211,7 +217,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             id="mkt-categories-menu-btn"
             className="px-3.5 py-2 rounded-xl bg-white border border-[#d2dfd6] hover:border-[#0c4b31] text-xs font-bold text-[#0c4b31] flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
           >
-            <span>{selectedCategory === 'All' ? 'Categories' : selectedCategory}</span>
+            <span>{currentCategoryLabel}</span>
             <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
           </button>
 
@@ -231,7 +237,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                       : 'hover:bg-gray-50 text-gray-700'
                   }`}
                 >
-                  {cat.label}
+                  {t.categories[cat.key] || cat.id}
                 </button>
               ))}
             </div>
@@ -244,7 +250,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
           <input
             id="marketplace-global-search"
             type="text"
-            placeholder="Search terracotta, handloom silk, dokra brass, woodcraft..."
+            placeholder={t.nav.searchPlaceholder}
             value={searchQuery}
             onFocus={() => setShowSuggestions(true)}
             onChange={(e) => {
@@ -263,7 +269,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
               {suggestionsLoading ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-gray-500">
                   <LoaderCircle className="w-4 h-4 animate-spin text-[#0c4b31]" />
-                  Searching crafts…
+                  <span>Searching crafts…</span>
                 </div>
               ) : hasSuggestions ? (
                 <>
@@ -301,7 +307,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#f1f8f4] transition-colors border-b border-gray-100"
                     >
                       <Tag className="w-4 h-4 text-[#e87722]" />
-                      <span className="flex-1"><b>{category.label}</b><span className="text-gray-500"> in Categories</span></span>
+                      <span className="flex-1"><b>{t.categories[category.key]}</b><span className="text-gray-500"> in Categories</span></span>
                       <ArrowUpRight className="w-4 h-4 text-gray-400" />
                     </button>
                   ))}
@@ -333,7 +339,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             to="/"
             className="px-3 py-2 rounded-lg text-xs font-bold text-[#2a3f34] hover:text-[#0c4b31] hover:bg-[#eef6f1] transition-colors"
           >
-            Home
+            {t.nav.home}
           </Link>
 
           {/* My Orders */}
@@ -344,7 +350,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             className="px-3 py-2 rounded-lg text-xs font-bold text-[#2a3f34] hover:text-[#0c4b31] hover:bg-[#eef6f1] transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Package className="w-4 h-4 text-[#e27d35]" />
-            <span>My Orders</span>
+            <span>{t.nav.myOrders}</span>
           </button>
 
           {/* Cart Icon */}
@@ -353,7 +359,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             id="mkt-nav-cart-btn"
             onClick={() => handleProtectedAction('/customer/cart', 'Please log in or create a customer account to view your shopping cart.')}
             className="relative p-2 rounded-xl bg-white border border-[#d2dfd6] hover:border-[#0c4b31] text-[#0c4b31] transition-all cursor-pointer"
-            aria-label="View Cart"
+            aria-label={t.nav.shoppingCart}
           >
             <ShoppingBag className="w-4 h-4" />
             {cartCount > 0 && (
@@ -390,14 +396,14 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                     onClick={() => setShowProfileMenu(false)}
                     className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
                   >
-                    Customer Profile
+                    {t.nav.customerProfile}
                   </Link>
                   <Link
                     to="/customer/custom-requests"
                     onClick={() => setShowProfileMenu(false)}
                     className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium flex items-center justify-between"
                   >
-                    <span>Custom Requests</span>
+                    <span>{t.nav.customRequests}</span>
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   </Link>
                   <Link
@@ -405,7 +411,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                     onClick={() => setShowProfileMenu(false)}
                     className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
                   >
-                    My Orders
+                    {t.nav.myOrders}
                   </Link>
                   <button
                     type="button"
@@ -414,7 +420,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                     className="w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>Customer Log Out</span>
+                    <span>{t.nav.customerLogout}</span>
                   </button>
                 </div>
               )}
@@ -426,14 +432,14 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                 id="mkt-customer-login-btn"
                 className="px-3.5 py-2 rounded-xl text-xs font-bold text-[#0c4b31] bg-white border border-[#bed8c8] hover:bg-[#eef8f2] transition-colors"
               >
-                Customer Login
+                {t.nav.customerLogin}
               </Link>
               <Link
                 to="/customer/register"
                 id="mkt-customer-register-btn"
                 className="px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#0c4b31] hover:bg-[#073623] shadow-xs transition-colors"
               >
-                Sign Up
+                {t.nav.customerSignUp}
               </Link>
             </div>
           )}
@@ -445,7 +451,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             type="button"
             onClick={() => handleProtectedAction('/customer/cart', 'Please log in or create a customer account to view your cart.')}
             className="p-2 rounded-lg text-[#0c4b31] relative"
-            aria-label="Cart"
+            aria-label={t.nav.shoppingCart}
           >
             <ShoppingBag className="w-5 h-5" />
             {cartCount > 0 && (
@@ -470,13 +476,13 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-4 space-y-3 animate-fadeIn text-xs">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Quick Links</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.nav.quickLinks}</span>
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-gray-800 font-bold hover:bg-[#edf8f1]"
             >
-              Home Page
+              {t.nav.home}
             </Link>
             <button
               type="button"
@@ -486,7 +492,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
               }}
               className="w-full text-left px-3 py-2 rounded-lg text-gray-800 font-bold hover:bg-[#edf8f1] flex items-center justify-between"
             >
-              <span>Custom Requests</span>
+              <span>{t.nav.customRequests}</span>
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             </button>
             <button
@@ -497,7 +503,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
               }}
               className="w-full text-left px-3 py-2 rounded-lg text-gray-800 font-bold hover:bg-[#edf8f1]"
             >
-              My Orders
+              {t.nav.myOrders}
             </button>
             <button
               type="button"
@@ -507,7 +513,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
               }}
               className="w-full text-left px-3 py-2 rounded-lg text-gray-800 font-bold hover:bg-[#edf8f1]"
             >
-              Shopping Cart
+              {t.nav.shoppingCart}
             </button>
           </div>
 
@@ -518,7 +524,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                 <div>
                   <p className="font-bold text-xs text-amber-950 flex items-center gap-1">
                     <User className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Customer: {customer.name}</span>
+                    <span>{t.nav.buyer}: {customer.name}</span>
                   </p>
                   <p className="text-[10px] text-amber-700">{customer.email || customer.mobile}</p>
                 </div>
@@ -531,8 +537,8 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                   }}
                   className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Customer Logout</span>
+                  <LogOut className="w-3 h-3" />
+                  <span>{t.nav.customerLogout}</span>
                 </button>
               </div>
             ) : (
@@ -542,52 +548,17 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                   onClick={() => setMobileMenuOpen(false)}
                   className="py-2.5 rounded-lg bg-[#edf8f1] text-[#0c4b31] font-bold text-center text-xs"
                 >
-                  Customer Login
+                  {t.nav.customerLogin}
                 </Link>
                 <Link
                   to="/customer/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="py-2.5 rounded-lg bg-[#0c4b31] text-white font-bold text-center text-xs"
                 >
-                  Create Account
+                  {t.nav.customerSignUp}
                 </Link>
               </div>
             )}
-
-            <div className="hidden">{/* Artisan Section */}
-            {artisan ? (
-              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-xs text-emerald-950 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>Artisan: {artisan.name}</span>
-                  </p>
-                  <p className="text-[10px] text-emerald-700">{artisan.craftType}</p>
-                </div>
-                <button
-                  type="button"
-                  id="mkt-mobile-artisan-logout-btn"
-                  onClick={() => {
-                    handleArtisanLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Artisan Logout</span>
-                </button>
-              </div>
-            ) : (
-              <Link
-                to="/artisan/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="py-2 rounded-lg bg-[#f0f8f3] border border-[#cbe5d4] text-[#0c4b31] font-bold text-xs text-center flex items-center justify-center gap-1.5"
-              >
-                <Layers className="w-3.5 h-3.5 text-[#0c4b31]" />
-                <span>Artisan Portal</span>
-              </Link>
-            )}</div>
-
           </div>
         </div>
       )}

@@ -18,6 +18,7 @@ import { getCurrentArtisan } from '../data/seedData';
 import { CraftCategory } from '../types';
 import { API_BASE } from '../services/apiConfig';
 import { removeBackground as imglyRemoveBackground } from '@imgly/background-removal';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const SAMPLE_CRAFT_PHOTOS = [
   {
@@ -118,6 +119,7 @@ const cropLargestForegroundObject = async (blob: Blob): Promise<Blob> => {
 };
 
 export const AddProduct: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const artisan = getCurrentArtisan();
@@ -452,26 +454,25 @@ export const AddProduct: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0c4b31] hover:text-[#e27d35] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Studio Dashboard</span>
+            <span>{t.artisan.editProductInfo?.replace('← ', '') || 'Back to Studio Dashboard'}</span>
           </Link>
 
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-[#0c4b31] text-white flex items-center justify-center text-xs font-bold">✦</span>
-            <span className="text-xs font-extrabold text-[#0c4b31]">KarigarSetu AI Studio</span>
+            <span className="text-xs font-extrabold text-[#0c4b31]">{t.artisan.dashboardTitle}</span>
           </div>
         </div>
 
         {/* Intro */}
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#e3f4ea] text-[#0c4b31] border border-[#bfe2ce] uppercase tracking-wider">
-            Step 1 of 3: Craft Data & Voice Capture
+            {t.artisan.step1Of3}
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0c4b31] tracking-tight mt-3">
-            Add a New Craft Product
+            {t.artisan.addProductPageTitle}
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-2">
-            Upload your craft photo and speak naturally in your mother tongue. 
-            Our AI will formulate an export-ready catalog and living wage recommendation.
+            {t.artisan.addProductPageSubtitle}
           </p>
         </div>
 
@@ -481,14 +482,14 @@ export const AddProduct: React.FC = () => {
           {/* Left Column: Photo Upload with Studio Backing */}
           <div className="lg:col-span-5 bg-white rounded-2xl border border-[#dce8df] shadow-md p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-[#0c4b31]">1. Product Photograph</h2>
+              <h2 className="text-base font-extrabold text-[#0c4b31]">{t.artisan.productPhotograph}</h2>
               <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                Auto Isolation
+                {t.artisan.autoIsolationBadge}
               </span>
             </div>
 
             <p className="text-xs text-gray-500">
-              Upload any phone picture with natural light. AI will isolate the craft and enhance clarity.
+              {t.artisan.photoUploadHint}
             </p>
 
             {/* Drop Zone Box */}
@@ -509,7 +510,7 @@ export const AddProduct: React.FC = () => {
                     className="h-full w-full object-contain object-center p-2 drop-shadow-lg transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold rounded-xl backdrop-blur-xs">
-                    Click to replace photo
+                    {t.artisan.clickToReplacePhoto}
                   </div>
                 </div>
               ) : (
@@ -519,10 +520,10 @@ export const AddProduct: React.FC = () => {
                   </div>
                   <div>
                     <strong className="block text-sm font-bold text-[#0c4b31]">
-                      Choose or Snap Photo
+                      {t.artisan.chooseOrSnapPhoto}
                     </strong>
                     <span className="text-[11px] text-gray-500">
-                      PNG, JPG or WEBP from phone
+                      {t.artisan.photoTypesHint}
                     </span>
                   </div>
                 </div>
@@ -531,7 +532,7 @@ export const AddProduct: React.FC = () => {
               {isEnhancingImage && (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center text-xs font-bold text-[#0c4b31] gap-2">
                   <Sparkles className="w-5 h-5 animate-spin text-[#e27d35]" />
-                  <span>Removing background… first photo may take a moment.</span>
+                  <span>{t.artisan.removingBackground}</span>
                 </div>
               )}
             </label>
@@ -539,7 +540,7 @@ export const AddProduct: React.FC = () => {
             {/* Quick Sample Photos for instant testing */}
             <div className="pt-2">
               <span className="block text-[11px] font-bold text-gray-500 mb-2">
-                Or test immediately with a sample craft:
+                {t.artisan.orTestWithSample}
               </span>
               <div className="grid grid-cols-3 gap-2">
                 {SAMPLE_CRAFT_PHOTOS.map((sample, idx) => (
@@ -566,9 +567,9 @@ export const AddProduct: React.FC = () => {
           {/* Right Column: Voice-First Description & Living Wage Form */}
           <div className="lg:col-span-7 bg-white rounded-2xl border border-[#dce8df] shadow-md p-6 sm:p-8 space-y-6">
             <div>
-              <h2 className="text-base font-extrabold text-[#0c4b31]">2. Describe Product by Voice</h2>
+              <h2 className="text-base font-extrabold text-[#0c4b31]">{t.artisan.describeProductByVoice}</h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Speak naturally in your mother tongue. The AI will populate name, category, and specifications.
+                {t.artisan.describeVoiceHint}
               </p>
             </div>
 
@@ -604,12 +605,12 @@ export const AddProduct: React.FC = () => {
                   {isListening ? (
                     <>
                       <Square className="w-4 h-4" />
-                      <span>⏹ Stop Recording</span>
+                      <span>⏹ {t.artisan.stopRecording}</span>
                     </>
                   ) : (
                     <>
                       <Mic className="w-4 h-4 text-[#ffd186]" />
-                      <span>🎙 Describe Product by Voice</span>
+                      <span>🎙 {t.artisan.describeByVoiceBtn}</span>
                     </>
                   )}
                 </button>
@@ -625,7 +626,7 @@ export const AddProduct: React.FC = () => {
 
               {/* Sample Voice Prompts for quick 1-click test */}
               <div className="pt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-600">
-                <span className="font-bold text-gray-700">Quick Test Voice Prompt:</span>
+                <span className="font-bold text-gray-700">{t.artisan.quickTestVoicePrompt}</span>
                 <button
                   type="button"
                   onClick={() => handleApplySampleVoice(
@@ -659,13 +660,13 @@ export const AddProduct: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label htmlFor="product-name" className="block text-xs font-bold text-gray-700 mb-1">
-                  Product Name / শিল্পকর্মের নাম *
+                  {t.artisan.productNameLabel}
                 </label>
                 <input
                   id="product-name"
                   type="text"
                   required
-                  placeholder="e.g. Heritage Bankura Terracotta Vase"
+                  placeholder={t.artisan.productNamePlaceholder}
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm bg-[#fafcfa] border border-[#cedbd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10"
@@ -675,7 +676,7 @@ export const AddProduct: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="product-category" className="block text-xs font-bold text-gray-700 mb-1">
-                    Craft Category / শিল্প বিভাগ *
+                    {t.artisan.craftCategoryLabel}
                   </label>
                   <select
                     id="product-category"
@@ -683,20 +684,20 @@ export const AddProduct: React.FC = () => {
                     onChange={(e) => setCategory(e.target.value as CraftCategory)}
                     className="w-full px-3.5 py-2.5 text-sm bg-[#fafcfa] border border-[#cedbd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10"
                   >
-                    <option value="" disabled>Select a craft category</option>
-                    <option value="Pottery">Pottery & Terracotta (মাটি ও টেরাকোটা)</option>
-                    <option value="Handloom">Handloom Textiles (তাঁত ও টেক্সটাইল)</option>
-                    <option value="Metalcraft">Metalcraft & Dokra (পিতল ও ঢোকরা)</option>
-                    <option value="Woodcraft">Woodcraft & Carving (কাঠের কারুকাজ)</option>
-                    <option value="Jewellery">Jewellery (ঐতিহ্যবাহী গহনা)</option>
-                    <option value="Painting">Painting & Folk Art (লোকচিত্র)</option>
+                    <option value="" disabled>{t.artisan.selectCategoryPlaceholder}</option>
+                    <option value="Pottery">Pottery & Terracotta</option>
+                    <option value="Handloom">Handloom Textiles</option>
+                    <option value="Metalcraft">Metalcraft & Dokra</option>
+                    <option value="Woodcraft">Woodcraft & Carving</option>
+                    <option value="Jewellery">Jewellery</option>
+                    <option value="Painting">Painting & Folk Art</option>
                     <option value="Other">Other Craft</option>
                   </select>
                 </div>
 
                 <div>
                   <label htmlFor="product-raw-material-cost" className="block text-xs font-bold text-gray-700 mb-1">
-                    Raw Material Cost / কাঁচামালের খরচ (₹)
+                    {t.artisan.rawMaterialCostLabel}
                   </label>
                   <input
                     id="product-raw-material-cost"
@@ -713,7 +714,7 @@ export const AddProduct: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="product-labour-cost" className="block text-xs font-bold text-gray-700 mb-1">
-                    Labour & Crafting Cost / শ্রম ও সময়ের মূল্য (₹)
+                    {t.artisan.labourCostLabel}
                   </label>
                   <input
                     id="product-labour-cost"
@@ -727,7 +728,7 @@ export const AddProduct: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-xl bg-[#f4f8f4] border border-[#d4e5d8] flex flex-col justify-center">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase">Estimated Fair Living Wage:</span>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase">{t.artisan.estimatedFairWage}</span>
                   <strong className="text-lg font-extrabold text-[#0c4b31]">
                     ₹{Math.round(((Number(materialCost) || 0) + (Number(labourCost) || 0)) * 1.35) || '—'}
                   </strong>
@@ -736,13 +737,13 @@ export const AddProduct: React.FC = () => {
 
               <div>
                 <label htmlFor="product-description" className="block text-xs font-bold text-gray-700 mb-1">
-                  Craft Story & Making Process / তৈরির প্রক্রিয়া ও বিবরণ *
+                  {t.artisan.craftStoryLabel}
                 </label>
                 <textarea
                   id="product-description"
                   rows={3}
                   required
-                  placeholder="Describe the making process, natural dyes, clay source, or loom technique..."
+                  placeholder={t.artisan.craftStoryPlaceholder}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm bg-[#fafcfa] border border-[#cedbd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10 resize-none"
@@ -766,7 +767,7 @@ export const AddProduct: React.FC = () => {
               className="w-full py-4 px-6 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-sm font-extrabold shadow-lg shadow-[#0c4b31]/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Wand2 className="w-4 h-4 text-[#ffd186]" />
-              <span>{isGenerating ? 'Synthesizing AI Catalog...' : 'Save & Generate AI Catalog →'}</span>
+              <span>{isGenerating ? t.artisan.synthesizingCatalog : t.artisan.saveAndGenerateBtn}</span>
             </button>
           </div>
 

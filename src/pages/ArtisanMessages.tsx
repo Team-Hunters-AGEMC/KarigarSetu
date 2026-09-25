@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Send, UserRound } from 'lucide-react';
 import { API_BASE } from '../services/apiConfig';
+import { useLanguage } from '../i18n/LanguageContext';
 
 type Conversation = {
   customer_id: number;
@@ -20,6 +21,7 @@ type ChatMessage = {
 };
 
 export const ArtisanMessages: React.FC = () => {
+  const { t } = useLanguage();
   const [inbox, setInbox] = useState<Conversation[]>([]);
   const [active, setActive] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -114,19 +116,19 @@ export const ArtisanMessages: React.FC = () => {
           className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#0b5538]"
         >
           <ArrowLeft size={18} />
-          Artisan Studio
+          {t.artisan.dashboardTitle}
         </Link>
 
         <div className="grid overflow-hidden rounded-3xl border border-[#dce9df] bg-white shadow-sm md:grid-cols-[300px_1fr]">
           <aside className="border-b border-[#e8f0ea] bg-[#f3f8f4] p-4 md:border-b-0 md:border-r">
             <h1 className="mb-4 flex items-center gap-2 font-extrabold text-[#0b5538]">
               <MessageCircle size={20} />
-              Buyer Messages
+              {t.artisan.buyerMessagesTitle}
             </h1>
 
             {inbox.length === 0 ? (
               <p className="text-sm text-slate-500">
-                এখনও কোনো buyer message নেই।
+                {t.artisan.noBuyerMessages}
               </p>
             ) : (
               inbox.map((item, index) => (
@@ -146,7 +148,7 @@ export const ArtisanMessages: React.FC = () => {
                   </div>
 
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {item.product_name || 'Product enquiry'}
+                    {item.product_name || t.artisan.productEnquiry}
                   </p>
 
                   <p className="mt-1 truncate text-xs text-slate-400">
@@ -161,14 +163,14 @@ export const ArtisanMessages: React.FC = () => {
             {!active ? (
               <div className="m-auto text-center text-slate-500">
                 <UserRound className="mx-auto mb-3" />
-                <p>Buyer-এর conversation select করো।</p>
+                <p>{t.artisan.selectBuyerConversation}</p>
               </div>
             ) : (
               <>
                 <header className="border-b border-[#e8f0ea] p-5">
                   <b>{active.customer_name}</b>
                   <p className="text-xs text-slate-500">
-                    {active.product_name || 'Product enquiry'}
+                    {active.product_name || t.artisan.productEnquiry}
                   </p>
                 </header>
 
@@ -202,7 +204,7 @@ export const ArtisanMessages: React.FC = () => {
                   <input
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder="Buyer-কে reply লিখুন…"
+                    placeholder={t.artisan.replyPlaceholder}
                     className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] px-4 py-3 text-sm outline-none focus:border-[#0b5538]"
                   />
 

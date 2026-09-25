@@ -4,64 +4,29 @@ import {
   Sparkles, 
   Mic, 
   Search, 
-  SlidersHorizontal, 
-  CheckCircle2, 
   ShieldCheck, 
   ChevronRight, 
-  ArrowUpRight,
   TrendingUp,
-  Heart,
   MapPin,
-  HelpCircle,
   Eye,
   Camera,
-  Layers,
-  Award
 } from 'lucide-react';
 import { getStoredProducts } from '../data/seedData';
 import { CraftCategory, ProductItem, SupportedLanguage } from '../types';
 import { ProductDetailModal } from '../components/ProductDetailModal';
+import { useLanguage } from '../i18n/LanguageContext';
 
-const CATEGORIES: { id: CraftCategory | 'All'; label: string; icon: string }[] = [
-  { id: 'All', label: 'All Crafts', icon: '✦' },
-  { id: 'Pottery', label: 'Terracotta & Clay', icon: '🏺' },
-  { id: 'Handloom', label: 'Handloom Textiles', icon: '🧵' },
-  { id: 'Metalcraft', label: 'Dokra & Brass', icon: '✨' },
-  { id: 'Woodcraft', label: 'Hand-Carved Wood', icon: '🪵' },
-  { id: 'Jewellery', label: 'Heritage Jewellery', icon: '💎' },
+const CATEGORIES: { id: CraftCategory | 'All'; key: keyof typeof import('../i18n/translations').translations['en-IN']['categories']; icon: string }[] = [
+  { id: 'All', key: 'All', icon: '✦' },
+  { id: 'Pottery', key: 'Pottery', icon: '🏺' },
+  { id: 'Handloom', key: 'Handloom', icon: '🧵' },
+  { id: 'Metalcraft', key: 'Metalcraft', icon: '✨' },
+  { id: 'Woodcraft', key: 'Woodcraft', icon: '🪵' },
+  { id: 'Jewellery', key: 'Jewellery', icon: '💎' },
 ];
 
-const HOME_TEXT = {
-  'en-IN': {
-    badge: 'AI-Powered Direct Artisan Marketplace', line1: 'Local Hands,', line2: 'Global Markets.',
-    intro: "Empowering India's traditional master craftspeople to digitize handmade treasures using just a smartphone photo and voice in their native mother tongue. Zero middleman commissions, 100% fair living wages.",
-    join: 'Join as an Artisan', explore: 'Explore Marketplace', voice: 'Voice listing in বাংলা, हिन्दी, English',
-    wage: 'Transparent Cost & Living Wage', screening: 'AI Handmade Authenticity Screening',
-    preview: 'Live AI Catalog Preview', title: 'Heritage Bankura Terracotta Horse',
-  },
-  'bn-IN': {
-    badge: 'AI-চালিত সরাসরি কারিগর মার্কেটপ্লেস', line1: 'স্থানীয় হাতের কাজ,', line2: 'বিশ্বজুড়ে বাজার।',
-    intro: 'স্মার্টফোনের ছবি ও নিজের মাতৃভাষার কণ্ঠস্বর ব্যবহার করে ভারতের ঐতিহ্যবাহী কারিগরদের হাতে তৈরি পণ্য ডিজিটালভাবে তুলে ধরতে সাহায্য করছি। কোনো মধ্যস্বত্বভোগীর কমিশন নেই, কারিগর পাবেন ন্যায্য মজুরি।',
-    join: 'কারিগর হিসেবে যোগ দিন', explore: 'মার্কেটপ্লেস দেখুন', voice: 'বাংলা, हिन्दी ও English-এ ভয়েস লিস্টিং',
-    wage: 'স্বচ্ছ খরচ ও ন্যায্য মজুরি', screening: 'AI দ্বারা হস্তশিল্পের সত্যতা যাচাই',
-    preview: 'লাইভ AI ক্যাটালগ প্রিভিউ', title: 'ঐতিহ্যবাহী বাঁকুড়ার টেরাকোটা ঘোড়া',
-  },
-  'hi-IN': {
-    badge: 'AI-संचालित सीधा कारीगर मार्केटप्लेस', line1: 'स्थानीय हाथों का हुनर,', line2: 'दुनिया भर के बाज़ार।',
-    intro: 'स्मार्टफोन की तस्वीर और अपनी मातृभाषा की आवाज़ से भारत के पारंपरिक कारीगरों को हस्तनिर्मित उत्पाद डिजिटल रूप में बेचने में सहायता। कोई बिचौलिया कमीशन नहीं, कारीगर को उचित मेहनताना।',
-    join: 'कारीगर के रूप में जुड़ें', explore: 'मार्केटप्लेस देखें', voice: 'বাংলা, हिन्दी और English में वॉइस लिस्टिंग',
-    wage: 'पारदर्शी लागत और उचित मेहनताना', screening: 'AI हस्तशिल्प प्रामाणिकता जाँच',
-    preview: 'लाइव AI कैटलॉग प्रीव्यू', title: 'पारंपरिक बांकुड़ा टेराकोटा घोड़ा',
-  },
-} as const;
-
-export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLang = 'bn-IN' }) => {
-  const t =
-  currentLang === 'bn-IN'
-    ? HOME_TEXT['bn-IN']
-    : currentLang === 'hi-IN'
-      ? HOME_TEXT['hi-IN']
-      : HOME_TEXT['en-IN'];
+export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<CraftCategory | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +60,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
 
   const handleSimulateVoiceInput = (sampleBengali: string) => {
     setVoiceTesting(true);
-    setVoiceTranscriptDemo('Listening in বাংলা (Bengali)...');
+    setVoiceTranscriptDemo('Listening in বাংলা / हिंदी / English...');
     setTimeout(() => {
       setVoiceTranscriptDemo(sampleBengali);
       setVoiceTesting(false);
@@ -113,16 +78,16 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e3f4ea] border border-[#b4dfc5] text-[#0c4b31] text-xs font-extrabold tracking-wide shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 text-[#e87722]" />
-                <span>{t.badge}</span>
+                <span>{t.home.badge}</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#0c4b31] tracking-tight leading-[1.08]">
-                {t.line1}
-                <span className="block text-[#e27d35]">{t.line2}</span>
+                {t.home.heroLine1}
+                <span className="block text-[#e27d35]">{t.home.heroLine2}</span>
               </h1>
 
               <p className="text-base sm:text-lg text-[#55695e] max-w-2xl leading-relaxed">
-                {t.intro}
+                {t.home.heroIntro}
               </p>
 
               {/* Action Buttons */}
@@ -132,7 +97,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                   id="hero-join-artisan-btn"
                   className="px-6 py-3.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white font-bold text-sm sm:text-base shadow-lg shadow-[#0c4b31]/20 hover:-translate-y-0.5 transition-all flex items-center gap-2"
                 >
-                  <span>{t.join}</span>
+                  <span>{t.home.joinAsArtisan}</span>
                   <ChevronRight className="w-4 h-4 text-[#ffd186]" />
                 </Link>
 
@@ -141,7 +106,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                   id="hero-explore-marketplace-btn"
                   className="px-6 py-3.5 rounded-xl bg-white hover:bg-[#f2f8f4] text-[#0c4b31] border-2 border-[#bdd6c7] font-bold text-sm sm:text-base hover:-translate-y-0.5 transition-all shadow-xs"
                 >
-                  {t.explore}
+                  {t.home.exploreMarketplace}
                 </Link>
               </div>
 
@@ -149,15 +114,15 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
               <div className="pt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-[#485e52]">
                 <div className="flex items-center gap-1.5">
                   <span className="w-5 h-5 rounded-full bg-[#dff3e6] text-[#0c4b31] flex items-center justify-center font-bold">✓</span>
-                  <span>{t.voice}</span>
+                  <span>{t.home.voiceListingBadge}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-5 h-5 rounded-full bg-[#dff3e6] text-[#0c4b31] flex items-center justify-center font-bold">✓</span>
-                  <span>{t.wage}</span>
+                  <span>{t.home.fairWageBadge}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-5 h-5 rounded-full bg-[#dff3e6] text-[#0c4b31] flex items-center justify-center font-bold">✓</span>
-                  <span>{t.screening}</span>
+                  <span>{t.home.screeningBadge}</span>
                 </div>
               </div>
             </div>
@@ -170,7 +135,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                 <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-xs font-bold text-[#0c4b31]">{t.preview}</span>
+                    <span className="text-xs font-bold text-[#0c4b31]">{t.home.livePreview}</span>
                   </div>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fcead2] text-[#b85b14]">
                     GI Tagged • Bankura
@@ -192,14 +157,14 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                 {/* Information */}
                 <div className="mt-4 space-y-2.5">
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="font-bold text-[#e27d35] tracking-wide uppercase">Terracotta & Clay</span>
+                    <span className="font-bold text-[#e27d35] tracking-wide uppercase">{t.categories.Pottery}</span>
                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5" /> 98% Handmade Score
                     </span>
                   </div>
 
                   <h3 className="font-extrabold text-lg text-[#0c4b31] leading-snug">
-                    {t.title}
+                    {t.home.demoTitle}
                   </h3>
                   
                   <p className="text-xs text-gray-600 line-clamp-2">
@@ -209,11 +174,11 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                   {/* Pricing Breakdown preview */}
                   <div className="p-2.5 rounded-xl bg-[#f4f9f5] border border-[#d8e8dd] flex items-center justify-between text-xs">
                     <div>
-                      <p className="text-[10px] text-gray-500 font-medium">Fair Living Price</p>
+                      <p className="text-[10px] text-gray-500 font-medium">{t.productDetails.finalFairPrice}</p>
                       <strong className="text-base font-extrabold text-[#0c4b31]">₹1,450</strong>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-gray-500">Artisan Labour Wage</p>
+                      <p className="text-[10px] text-gray-500">{t.productDetails.artisanLabour}</p>
                       <span className="font-bold text-emerald-800">₹650 (Direct to artisan)</span>
                     </div>
                   </div>
@@ -222,7 +187,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                   <div className="pt-2 border-t border-gray-100">
                     <p className="text-[11px] font-bold text-gray-500 mb-1.5 flex items-center gap-1">
                       <Mic className="w-3.5 h-3.5 text-[#e27d35]" />
-                      Voice Input Test (Click to simulate artisan speaking in Bangla):
+                      Voice Input Test:
                     </p>
                     <button
                       type="button"
@@ -268,63 +233,48 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
         </div>
       </section>
 
-      {/* Four Steps: How KarigarSetu Bridges the Divide */}
+      {/* Steps: How KarigarSetu Bridges the Divide */}
       <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-7xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#e3f4ea] text-[#0c4b31] tracking-wide uppercase">
-            Four Steps to Dignified Commerce
+            {t.home.howItWorksTitle}
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0c4b31] tracking-tight mt-3">
-            Designed for Craftspeople, not Tech Elites.
+            {t.home.howItWorksSubtitle}
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-2">
-            Most artisans cannot type in English or navigate convoluted e-commerce backends. 
-            KarigarSetu bridges this gap entirely through voice, image intelligence, and fair algorithms.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl bg-white border border-[#e2eae4] shadow-xs hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-[#e3f4ea] text-[#0c4b31] flex items-center justify-center font-extrabold text-xl mb-4">
               <Camera className="w-6 h-6 text-[#0c4b31]" />
             </div>
             <span className="text-[11px] font-bold text-[#e27d35] uppercase tracking-wider">Step 1</span>
-            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">Snap Any Photo</h3>
+            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">{t.home.step1Title}</h3>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Artisan captures their craft on any smartphone. Built-in image intelligence isolates the product and creates clean studio backdrop automatically.
+              {t.home.step1Desc}
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-white border border-[#e2eae4] shadow-xs hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-[#fff2de] text-[#e87722] flex items-center justify-center font-extrabold text-xl mb-4">
-              <Mic className="w-6 h-6 text-[#e87722]" />
+              <TrendingUp className="w-6 h-6 text-[#e87722]" />
             </div>
             <span className="text-[11px] font-bold text-[#e27d35] uppercase tracking-wider">Step 2</span>
-            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">Speak Naturally</h3>
+            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">{t.home.step2Title}</h3>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Describe the clay, weave, or brass casting in Bengali, Hindi, or local dialect. The voice model extracts dimensions, craft style, and materials.
+              {t.home.step2Desc}
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-white border border-[#e2eae4] shadow-xs hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-[#edf6f0] text-[#12774e] flex items-center justify-center font-extrabold text-xl mb-4">
-              <TrendingUp className="w-6 h-6 text-[#12774e]" />
+              <ShieldCheck className="w-6 h-6 text-[#12774e]" />
             </div>
             <span className="text-[11px] font-bold text-[#e27d35] uppercase tracking-wider">Step 3</span>
-            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">Fair Living Wage AI</h3>
+            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">{t.home.step3Title}</h3>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Transparent algorithm computes Raw Material + Artisan Hours = Fair Living Wage. Protects artisans from distress selling and exploitation.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white border border-[#e2eae4] shadow-xs hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-[#e8f0fe] text-[#1a56db] flex items-center justify-center font-extrabold text-xl mb-4">
-              <ShieldCheck className="w-6 h-6 text-[#1a56db]" />
-            </div>
-            <span className="text-[11px] font-bold text-[#e27d35] uppercase tracking-wider">Step 4</span>
-            <h3 className="text-lg font-bold text-[#0c4b31] mt-1 mb-2">Human-in-Loop Verification</h3>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Admin quality officers review AI screening flags to guarantee buyers receive authentic indigenous handicrafts, free of synthetic fakes.
+              {t.home.step3Desc}
             </p>
           </div>
         </div>
@@ -338,10 +288,10 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
               <span>Direct from Village Artisans</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0c4b31] tracking-tight">
-              Verified Artisan Marketplace
+              {t.nav.marketplace}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Each piece is certified handmade by KarigarSetu AI with zero middleman markup.
+              {t.nav.marketTagline}
             </p>
           </div>
 
@@ -352,7 +302,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
               <input
                 id="search-crafts-input"
                 type="text"
-                placeholder="Search terracotta, saree, artisan..."
+                placeholder={t.nav.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-[#ceddd2] rounded-xl focus:outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/10 transition-all shadow-xs"
@@ -375,7 +325,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
               }`}
             >
               <span>{cat.icon}</span>
-              <span>{cat.label}</span>
+              <span>{t.categories[cat.key] || cat.id}</span>
             </button>
           ))}
         </div>
@@ -384,16 +334,16 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
         {visibleProducts.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto">
             <span className="text-4xl">🏺</span>
-            <h3 className="text-xl font-bold text-[#0c4b31] mt-3">No crafts matched your query</h3>
+            <h3 className="text-xl font-bold text-[#0c4b31] mt-3">{t.marketplace.noProductsFound}</h3>
             <p className="text-sm text-gray-500 mt-1 mb-4">
-              Try searching for another craft category like &quot;Terracotta&quot;, &quot;Handloom&quot;, or &quot;Dokra&quot;.
+              {t.marketplace.noProductsHint}
             </p>
             <button
               type="button"
               onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
-              className="px-4 py-2 rounded-lg bg-[#0c4b31] text-white text-xs font-bold"
+              className="px-4 py-2 rounded-lg bg-[#0c4b31] text-white text-xs font-bold cursor-pointer"
             >
-              Reset Filters
+              {t.marketplace.clearFilters}
             </button>
           </div>
         ) : (
@@ -415,7 +365,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                   
                   {/* Category Pill */}
                   <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-[#0c4b31] shadow-xs">
-                    {product.category}
+                    {t.categories[product.category as keyof typeof t.categories] || product.category}
                   </span>
 
                   {/* AI Handmade Match Score */}
@@ -459,11 +409,11 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
                     <button
                       type="button"
                       onClick={() => setActiveModalProduct(product)}
-                      className="px-3 py-1.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold flex items-center gap-1.5 transition-all group-hover:shadow-md"
+                      className="px-3 py-1.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold flex items-center gap-1.5 transition-all group-hover:shadow-md cursor-pointer"
                       id={`inspect-craft-${product.id}`}
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>Inspect</span>
+                      <span>{t.marketplace.viewCraft}</span>
                     </button>
                   </div>
                 </div>
@@ -567,17 +517,17 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = ({ currentLan
             <ul className="space-y-2 text-xs">
               <li>
                 <Link to="/artisan/dashboard" className="hover:text-white transition-colors">
-                  Artisan Studio & Catalog
+                  {t.nav.artisanPortal}
                 </Link>
               </li>
               <li>
                 <Link to="/artisan/add-product" className="hover:text-white transition-colors">
-                  Voice-First Product Lister
+                  {t.artisan?.addProduct || 'Add Product'}
                 </Link>
               </li>
               <li>
                 <Link to="/artisan/register" className="hover:text-white transition-colors">
-                  Create Artisan Profile / Login
+                  {t.nav.artisanLogin}
                 </Link>
               </li>
             </ul>

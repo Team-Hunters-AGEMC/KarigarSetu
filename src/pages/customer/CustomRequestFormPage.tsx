@@ -20,8 +20,10 @@ import { getCurrentCustomer } from '../../services/customerAuth';
 import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceApi';
 import { customRequestsApi } from '../../services/customRequestsApi';
 import { API_BASE } from '../../services/apiConfig';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export const CustomRequestFormPage: React.FC = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -168,10 +170,10 @@ export const CustomRequestFormPage: React.FC = () => {
         {/* Back Link */}
         <Link
           to={productId ? `/marketplace/products/${productId}` : '/marketplace'}
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#0c4b31] hover:underline"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#0c4b31] hover:underline cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to {product ? product.product_name : 'Marketplace'}</span>
+          <span>Back to {product ? product.product_name : t.nav.marketplace}</span>
         </Link>
 
         {/* Header Banner */}
@@ -182,11 +184,10 @@ export const CustomRequestFormPage: React.FC = () => {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0c4b31] leading-tight">
-            Request Custom Handcrafted Piece
+            {t.customRequests.requestFormTitle}
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 leading-relaxed max-w-2xl">
-            Have a special dimension, preferred natural color, personalized engraving, or traditional motif in mind? 
-            Send your specifications directly to the master artisan for a personalized price quote.
+            {t.customRequests.requestFormSubtitle}
           </p>
 
           {/* Reference Product Card (if applicable) */}
@@ -255,7 +256,7 @@ export const CustomRequestFormPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
               <FileText className="w-4 h-4 text-[#0c4b31]" />
-              <span>Customization Details *</span>
+              <span>{t.customRequests.customizationDetails} *</span>
             </label>
             <p className="text-xs text-gray-500">
               Describe what changes or unique elements you want (e.g., custom clay figurine height, specific handloom border pattern, brass Dokra motif).
@@ -276,7 +277,7 @@ export const CustomRequestFormPage: React.FC = () => {
             <div className="space-y-1.5">
               <label className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-[#0c4b31]" />
-                <span>Quantity *</span>
+                <span>{t.customRequests.quantity} *</span>
               </label>
               <input
                 type="number"
@@ -293,7 +294,7 @@ export const CustomRequestFormPage: React.FC = () => {
             <div className="space-y-1.5">
               <label className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
                 <Palette className="w-4 h-4 text-[#0c4b31]" />
-                <span>Preferred Color / Tone</span>
+                <span>{t.customRequests.preferredColor}</span>
               </label>
               <input
                 type="text"
@@ -308,7 +309,7 @@ export const CustomRequestFormPage: React.FC = () => {
             <div className="space-y-1.5">
               <label className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
                 <Ruler className="w-4 h-4 text-[#0c4b31]" />
-                <span>Dimensions / Size</span>
+                <span>{t.customRequests.preferredSize}</span>
               </label>
               <input
                 type="text"
@@ -351,9 +352,9 @@ export const CustomRequestFormPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setReferenceImageUrl('')}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                 >
-                  Remove
+                  {t.cart.remove}
                 </button>
               </div>
             ) : (
@@ -396,7 +397,7 @@ export const CustomRequestFormPage: React.FC = () => {
           <div className="space-y-1.5 pt-2 border-t border-gray-100">
             <label className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
               <Info className="w-4 h-4 text-[#0c4b31]" />
-              <span>Additional Note / Occasion (Optional)</span>
+              <span>{t.customRequests.additionalNotes}</span>
             </label>
             <input
               type="text"
@@ -427,7 +428,7 @@ export const CustomRequestFormPage: React.FC = () => {
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-[#ffd186]" />
-                  <span>Send Custom Request</span>
+                  <span>{t.customRequests.submitRequest}</span>
                 </>
               )}
             </button>

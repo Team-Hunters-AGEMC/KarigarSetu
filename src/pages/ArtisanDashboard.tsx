@@ -24,8 +24,10 @@ import {
   logoutArtisan, 
 } from '../data/seedData';
 import { ArtisanProfile, ProductItem, ProductStatus } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export const ArtisanDashboard: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [artisan, setArtisan] = useState<ArtisanProfile>(getCurrentArtisan());
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(isArtisanLoggedIn());
@@ -248,12 +250,12 @@ export const ArtisanDashboard: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#e1eae3]">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#e27d35] tracking-wider uppercase">
-              <span>Artisan Workspace</span>
+              <span>{t.artisan.artisanWorkspace}</span>
               <span>•</span>
-              <span className="text-[#0c4b31]">{artisan.craftType} Artisan</span>
+              <span className="text-[#0c4b31]">{artisan.craftType} {t.artisan.artisanBadge}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0c4b31] tracking-tight">
-              Namaste, {artisan.name}
+              {t.artisan.namaste}, {artisan.name}
             </h1>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
               <MapPin className="w-3.5 h-3.5 text-[#e27d35]" />
@@ -270,7 +272,7 @@ export const ArtisanDashboard: React.FC = () => {
                   className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0c4b31]/20 flex items-center gap-2 transition-all hover:-translate-y-0.5"
                 >
                   <PlusCircle className="w-4 h-4 text-[#ffd186]" />
-                  <span>+ Add New Craft</span>
+                  <span>{t.artisan.addProductBtn}</span>
                 </Link>
 
                 <button
@@ -281,7 +283,7 @@ export const ArtisanDashboard: React.FC = () => {
                   title="Log out of Artisan Studio"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Artisan Logout</span>
+                  <span>{t.artisan.artisanLogout}</span>
                 </button>
               </>
             ) : (
@@ -292,7 +294,7 @@ export const ArtisanDashboard: React.FC = () => {
                   className="px-3.5 py-2.5 rounded-xl bg-[#edf8f1] hover:bg-[#dfefe5] text-[#0c4b31] border border-[#bedfc9] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#e27d35]" />
-                  <span>Artisan Sign In</span>
+                  <span>{t.artisan.artisanSignIn}</span>
                 </button>
                 <Link
                   to="/artisan/register"
@@ -300,7 +302,7 @@ export const ArtisanDashboard: React.FC = () => {
                   className="px-4 py-2.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0c4b31]/20 flex items-center gap-2 transition-all"
                 >
                   <UserCheck className="w-4 h-4 text-[#ffd186]" />
-                  <span>Artisan Sign In</span>
+                  <span>{t.artisan.artisanSignIn}</span>
                 </Link>
               </div>
             )}
@@ -313,9 +315,9 @@ export const ArtisanDashboard: React.FC = () => {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs sm:text-sm font-bold">You are currently logged out of the Artisan Workspace</h4>
+                <h4 className="text-xs sm:text-sm font-bold">{t.artisan.loggedOutAlertTitle}</h4>
                 <p className="text-xs text-amber-700/90 mt-0.5">
-                  Sign in with your registered phone number to publish handmade crafts, manage stock prices, or view buyer telemetry.
+                  {t.artisan.loggedOutAlertDesc}
                 </p>
               </div>
             </div>
@@ -325,13 +327,13 @@ export const ArtisanDashboard: React.FC = () => {
                 onClick={() => navigate('/artisan/register')}
                 className="px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-colors cursor-pointer"
               >
-                Artisan Sign In
+                {t.artisan.artisanSignIn}
               </button>
               <Link
                 to="/artisan/register"
                 className="px-3 py-1.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold transition-colors"
               >
-                Go to Sign In
+                {t.artisan.goToSignIn}
               </Link>
             </div>
           </div>
@@ -354,11 +356,10 @@ export const ArtisanDashboard: React.FC = () => {
               ✦ KarigarSetu AI Studio
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Turn your craft into fair living income.
+              {t.artisan.turnCraftBannerTitle}
             </h2>
             <p className="text-xs sm:text-sm text-[#d0e5d8] leading-relaxed">
-              Upload any phone photograph and describe your materials by voice in {artisan.language || 'Bengali'}. 
-              Our AI writes export-ready titles, generates marketing captions, and computes fair living wages.
+              {t.artisan.turnCraftBannerDesc}
             </p>
           </div>
           
@@ -371,38 +372,38 @@ export const ArtisanDashboard: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div className="p-4 rounded-xl bg-white border border-[#e2ece5] shadow-xs">
             <div className="flex items-center justify-between text-gray-500 mb-2">
-              <span className="text-xs font-semibold">Total Crafts Listed</span>
+              <span className="text-xs font-semibold">{t.artisan.totalProducts}</span>
               <Package className="w-4 h-4 text-[#0c4b31]" />
             </div>
             <strong className="text-2xl font-extrabold text-[#0c4b31]">{products.length}</strong>
-            <p className="text-[11px] text-gray-500 mt-1">In your studio collection</p>
+            <p className="text-[11px] text-gray-500 mt-1">{t.artisan.inStudioCollection}</p>
           </div>
 
           <div className="p-4 rounded-xl bg-white border border-[#e2ece5] shadow-xs">
             <div className="flex items-center justify-between text-gray-500 mb-2">
-              <span className="text-xs font-semibold">Marketplace Approved</span>
+              <span className="text-xs font-semibold">{t.artisan.approvedProducts}</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
             <strong className="text-2xl font-extrabold text-emerald-700">{approvedCount}</strong>
-            <p className="text-[11px] text-gray-500 mt-1">Live to global buyers</p>
+            <p className="text-[11px] text-gray-500 mt-1">{t.artisan.liveToBuyers}</p>
           </div>
 
           <div className="p-4 rounded-xl bg-white border border-[#e2ece5] shadow-xs">
             <div className="flex items-center justify-between text-gray-500 mb-2">
-              <span className="text-xs font-semibold">Under AI Quality Review</span>
+              <span className="text-xs font-semibold">{t.artisan.pendingReview}</span>
               <Clock className="w-4 h-4 text-amber-600" />
             </div>
             <strong className="text-2xl font-extrabold text-amber-700">{reviewCount}</strong>
-            <p className="text-[11px] text-gray-500 mt-1">Verification in progress</p>
+            <p className="text-[11px] text-gray-500 mt-1">{t.artisan.verificationInProgress}</p>
           </div>
 
           <div className="p-4 rounded-xl bg-white border border-[#e2ece5] shadow-xs">
             <div className="flex items-center justify-between text-gray-500 mb-2">
-              <span className="text-xs font-semibold">Available Units in Stock</span>
+              <span className="text-xs font-semibold">{t.artisan.stockUnits}</span>
               <TrendingUp className="w-4 h-4 text-[#e27d35]" />
             </div>
             <strong className="text-2xl font-extrabold text-[#0c4b31]">{totalStock}</strong>
-            <p className="text-[11px] text-gray-500 mt-1">Ready for direct dispatch</p>
+            <p className="text-[11px] text-gray-500 mt-1">{t.artisan.readyForDispatch}</p>
           </div>
         </div>
 
@@ -420,7 +421,7 @@ export const ArtisanDashboard: React.FC = () => {
                     : 'border-transparent text-gray-400 hover:text-gray-700'
                 }`}
               >
-                Product Catalog ({products.length})
+                {t.artisan.catalogTab} ({products.length})
               </button>
               <span className="text-gray-300">•</span>
               <button
@@ -434,7 +435,7 @@ export const ArtisanDashboard: React.FC = () => {
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-[#e27d35]" />
-                <span>Custom Requests</span>
+                <span>{t.artisan.customRequestsTab}</span>
                 {pendingCustomCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-[#e87722] text-white text-[10px] font-extrabold ml-1">
                     {pendingCustomCount} new
@@ -453,7 +454,7 @@ export const ArtisanDashboard: React.FC = () => {
                     activeFilter === 'all' ? 'bg-[#0c4b31] text-white font-bold' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  All ({products.length})
+                  {t.artisan.allFilter} ({products.length})
                 </button>
                 <button
                   type="button"
@@ -462,7 +463,7 @@ export const ArtisanDashboard: React.FC = () => {
                     activeFilter === 'approved' ? 'bg-[#0c4b31] text-white font-bold' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Approved ({approvedCount})
+                  {t.artisan.approvedFilter} ({approvedCount})
                 </button>
                 <button
                   type="button"
@@ -471,7 +472,7 @@ export const ArtisanDashboard: React.FC = () => {
                     activeFilter === 'review' ? 'bg-[#0c4b31] text-white font-bold' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Review ({reviewCount})
+                  {t.artisan.reviewFilter} ({reviewCount})
                 </button>
                 <button
                   type="button"
@@ -480,7 +481,7 @@ export const ArtisanDashboard: React.FC = () => {
                     activeFilter === 'unpublished' ? 'bg-[#0c4b31] text-white font-bold' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Unpublished
+                  {t.artisan.unpublishedFilter}
                 </button>
               </div>
             )}
@@ -492,8 +493,8 @@ export const ArtisanDashboard: React.FC = () => {
               {filteredProducts.length === 0 ? (
                 <div className="py-16 text-center text-gray-500">
                   <Package className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                  <p className="text-sm font-bold text-gray-700">No craft items found in this section.</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Click &quot;+ Add New Craft&quot; to list your first handmade creation.</p>
+                  <p className="text-sm font-bold text-gray-700">{t.artisan.noProductsYet}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t.artisan.noProductsHint}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -521,7 +522,7 @@ export const ArtisanDashboard: React.FC = () => {
                                   ? 'bg-amber-100 text-amber-800'
                                   : 'bg-gray-100 text-gray-700'
                               }`}>
-                                ● {product.status.replace(/_/g, ' ').toUpperCase()}
+                                ● {product.status === 'approved' ? t.artisan.approvedFilter : t.artisan.reviewFilter}
                               </span>
                               <span className="text-[11px] font-semibold text-gray-400">
                                 {product.category}
@@ -538,15 +539,15 @@ export const ArtisanDashboard: React.FC = () => {
 
                             <div className="flex items-center gap-4 text-xs text-gray-600 pt-1">
                               <span>
-                                Current Price: <strong className="text-[#0c4b31] font-bold">₹{product.selling_price.toLocaleString('en-IN')}</strong>
+                                {t.artisan.currentPrice}: <strong className="text-[#0c4b31] font-bold">₹{product.selling_price.toLocaleString('en-IN')}</strong>
                               </span>
                               <span>•</span>
                               <span>
-                                In Stock: <strong className={product.stock_quantity > 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>{product.stock_quantity}</strong>
+                                {t.artisan.inStock}: <strong className={product.stock_quantity > 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>{product.stock_quantity}</strong>
                               </span>
                               <span>•</span>
                               <span className="text-gray-400 text-[11px]">
-                                AI Living Wage Recommendation: ₹{product.suggested_price}
+                                {t.artisan.aiLivingWageRec}: ₹{product.suggested_price}
                               </span>
                             </div>
                           </div>
@@ -557,7 +558,7 @@ export const ArtisanDashboard: React.FC = () => {
                           {isEditing ? (
                             <div className="p-3 bg-[#f8faf8] border border-[#ceddd2] rounded-xl flex flex-wrap items-center gap-2">
                               <div>
-                                <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Price (₹)</label>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-0.5">{t.artisan.price} (₹)</label>
                                 <input
                                   type="number"
                                   min="1"
@@ -568,7 +569,7 @@ export const ArtisanDashboard: React.FC = () => {
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Stock Units</label>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-0.5">{t.artisan.stock}</label>
                                 <input
                                   type="number"
                                   min="0"
@@ -585,14 +586,14 @@ export const ArtisanDashboard: React.FC = () => {
                                   disabled={savingEdit}
                                   className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 disabled:opacity-50"
                                 >
-                                  {savingEdit ? 'Saving...' : 'Save'}
+                                  {savingEdit ? t.common.saving : t.artisan.save}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setEditingId(null)}
                                   className="px-2.5 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-300"
                                 >
-                                  Cancel
+                                  {t.artisan.cancel}
                                 </button>
                               </div>
                             </div>
@@ -604,11 +605,11 @@ export const ArtisanDashboard: React.FC = () => {
                                 className="px-3 py-1.5 rounded-lg bg-[#edf8f1] hover:bg-[#dff3e6] text-[#0c4b31] text-xs font-bold flex items-center gap-1 transition-colors"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
-                                <span>Edit Stock & Price</span>
+                                <span>{t.artisan.editStockPrice}</span>
                               </button>
 
                               <span className="rounded-lg bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#0c4b31]">
-                                {product.status === 'approved' ? 'Admin approved · Live' : 'Awaiting Admin decision'}
+                                {product.status === 'approved' ? t.artisan.adminApprovedLive : t.artisan.awaitingAdminDecision}
                               </span>
 
                               <button
@@ -636,14 +637,14 @@ export const ArtisanDashboard: React.FC = () => {
               {loadingCustomRequests ? (
                 <div className="py-12 text-center text-gray-500">
                   <div className="w-8 h-8 border-3 border-[#0c4b31] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-xs font-bold">Loading customer custom requests...</p>
+                  <p className="text-xs font-bold">{t.common.loading}</p>
                 </div>
               ) : customRequests.length === 0 ? (
                 <div className="py-16 text-center text-gray-500 space-y-2">
                   <Sparkles className="w-12 h-12 mx-auto text-[#d96b14] opacity-50" />
-                  <p className="text-sm font-bold text-gray-700">No Custom Requests Yet</p>
+                  <p className="text-sm font-bold text-gray-700">{t.customRequests.noRequestsTitle}</p>
                   <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                    When customers view your crafts and request customized colors, sizes or motifs, they will appear here.
+                    {t.customRequests.noRequestsHint}
                   </p>
                 </div>
               ) : (
@@ -658,7 +659,7 @@ export const ArtisanDashboard: React.FC = () => {
                             <span>•</span>
                             <span className="text-gray-500">{new Date(req.created_at).toLocaleString()}</span>
                             <span>•</span>
-                            <span className="font-bold text-gray-800">Buyer: {req.customer_name}</span>
+                            <span className="font-bold text-gray-800">{t.nav.buyer}: {req.customer_name}</span>
                           </div>
                           {req.product_name && (
                             <p className="text-xs text-gray-500">
@@ -670,27 +671,27 @@ export const ArtisanDashboard: React.FC = () => {
                         <div>
                           {req.status === 'pending' && (
                             <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
-                              ● Pending Your Quote
+                              ● {t.artisan.pendingQuoteBadge}
                             </span>
                           )}
                           {req.status === 'quoted' && (
                             <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
-                              ● Quoted (₹{req.quoted_price}) - Awaiting Buyer
+                              ● {t.artisan.quotedAwaitingBuyerBadge} (₹{req.quoted_price})
                             </span>
                           )}
                           {req.status === 'accepted' && (
                             <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                              ● Buyer Accepted Quote (₹{req.quoted_price})
+                              ● {t.artisan.buyerAcceptedBadge} (₹{req.quoted_price})
                             </span>
                           )}
                           {req.status === 'ordered' && (
                             <span className="px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold">
-                              ● Custom Order Placed & Confirmed
+                              ● {t.artisan.customOrderPlacedBadge}
                             </span>
                           )}
                           {req.status === 'rejected' && (
                             <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold">
-                              ● Request Declined
+                              ● {t.artisan.requestDeclinedBadge}
                             </span>
                           )}
                         </div>
@@ -703,7 +704,7 @@ export const ArtisanDashboard: React.FC = () => {
                           {req.reference_image_url ? (
                             <div>
                               <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">
-                                Customer Reference Image
+                                {t.artisan.customerReferenceImage}
                               </span>
                               <a
                                 href={req.reference_image_url}
@@ -723,7 +724,7 @@ export const ArtisanDashboard: React.FC = () => {
                             </div>
                           ) : (
                             <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-center text-xs text-gray-400 font-semibold">
-                              No reference photo attached
+                              {t.artisan.noReferencePhoto}
                             </div>
                           )}
                         </div>
@@ -731,7 +732,7 @@ export const ArtisanDashboard: React.FC = () => {
                         {/* Customization Details */}
                         <div className="lg:col-span-6 space-y-2">
                           <span className="text-[10px] font-extrabold text-[#0c4b31] uppercase tracking-wider block">
-                            Requested Custom Work
+                            {t.artisan.requestedCustomWork}
                           </span>
                           <p className="text-xs sm:text-sm text-gray-800 leading-relaxed font-medium bg-white p-3 rounded-xl border border-gray-200">
                             {req.customization_details}
@@ -739,29 +740,29 @@ export const ArtisanDashboard: React.FC = () => {
 
                           <div className="grid grid-cols-3 gap-2 text-xs">
                             <div className="p-2 rounded-lg bg-white border border-gray-200">
-                              <span className="text-gray-400 text-[10px] font-semibold block">Quantity</span>
+                              <span className="text-gray-400 text-[10px] font-semibold block">{t.artisan.quantity}</span>
                               <strong className="text-gray-900">{req.quantity} unit(s)</strong>
                             </div>
                             <div className="p-2 rounded-lg bg-white border border-gray-200">
-                              <span className="text-gray-400 text-[10px] font-semibold block">Color</span>
-                              <strong className="text-gray-900 truncate block">{req.preferred_color || 'As shown'}</strong>
+                              <span className="text-gray-400 text-[10px] font-semibold block">{t.artisan.color}</span>
+                              <strong className="text-gray-900 truncate block">{req.preferred_color || t.artisan.asShown}</strong>
                             </div>
                             <div className="p-2 rounded-lg bg-white border border-gray-200">
-                              <span className="text-gray-400 text-[10px] font-semibold block">Size</span>
-                              <strong className="text-gray-900 truncate block">{req.preferred_size || 'Standard'}</strong>
+                              <span className="text-gray-400 text-[10px] font-semibold block">{t.artisan.size}</span>
+                              <strong className="text-gray-900 truncate block">{req.preferred_size || t.artisan.standard}</strong>
                             </div>
                           </div>
 
                           {req.additional_note && (
                             <p className="text-xs text-gray-500 italic">
-                              Buyer Note: {req.additional_note}
+                              {t.artisan.buyerNote}: {req.additional_note}
                             </p>
                           )}
 
                           {req.artisan_message && (
                             <div className="p-2.5 rounded-xl bg-[#edf8f1] border border-[#cbe4d3] text-xs text-gray-700">
                               <strong className="text-[10px] uppercase text-[#0c4b31] block font-bold">
-                                Your Sent Message:
+                                {t.artisan.yourSentMessage}:
                               </strong>
                               <p className="italic mt-0.5">&quot;{req.artisan_message}&quot;</p>
                             </div>
@@ -773,7 +774,7 @@ export const ArtisanDashboard: React.FC = () => {
                           <div>
                             {req.quoted_price ? (
                               <div className="space-y-0.5">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase">Quoted Amount</span>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase">{t.artisan.quotedAmount}</span>
                                 <div className="text-xl font-extrabold text-[#0c4b31]">
                                   ₹{Number(req.quoted_price).toLocaleString('en-IN')}
                                 </div>
@@ -781,8 +782,8 @@ export const ArtisanDashboard: React.FC = () => {
                               </div>
                             ) : (
                               <div className="space-y-0.5">
-                                <span className="text-[10px] font-bold text-amber-700 uppercase">Price Required</span>
-                                <p className="text-xs text-gray-500">Quote total price including crafting & material.</p>
+                                <span className="text-[10px] font-bold text-amber-700 uppercase">{t.artisan.priceRequired}</span>
+                                <p className="text-xs text-gray-500">{t.artisan.priceRequiredHint}</p>
                               </div>
                             )}
                           </div>
@@ -798,7 +799,7 @@ export const ArtisanDashboard: React.FC = () => {
                                   className="w-full py-2.5 px-3 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                                 >
                                   <Sparkles className="w-3.5 h-3.5 text-[#ffd186]" />
-                                  <span>Send Price Quote</span>
+                                  <span>{t.artisan.sendPriceQuote}</span>
                                 </button>
 
                                 <button
@@ -807,7 +808,7 @@ export const ArtisanDashboard: React.FC = () => {
                                   onClick={() => handleOpenRejectModal(req)}
                                   className="w-full py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                 >
-                                  <span>Decline Request</span>
+                                  <span>{t.artisan.rejectRequest}</span>
                                 </button>
                               </>
                             )}
@@ -818,7 +819,7 @@ export const ArtisanDashboard: React.FC = () => {
                                 onClick={() => handleOpenQuoteModal(req)}
                                 className="w-full py-2 px-3 rounded-xl bg-white border border-[#0c4b31] text-[#0c4b31] hover:bg-[#edf8f1] text-xs font-bold transition-colors cursor-pointer"
                               >
-                                Revise Price Quote
+                                {t.artisan.revisePriceQuote}
                               </button>
                             )}
 
@@ -827,7 +828,7 @@ export const ArtisanDashboard: React.FC = () => {
                               className="w-full py-2 px-3 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
-                              <span>Messages Inbox</span>
+                              <span>{t.artisan.messagesInbox}</span>
                             </Link>
                           </div>
                         </div>
@@ -848,7 +849,7 @@ export const ArtisanDashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#e27d35]" />
                   <h3 className="text-lg font-extrabold text-[#0c4b31]">
-                    Send Custom Price Quote
+                    {t.artisan.sendQuoteModalTitle}
                   </h3>
                 </div>
                 <button
@@ -869,7 +870,7 @@ export const ArtisanDashboard: React.FC = () => {
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-gray-900">
-                    Total Quoted Price (₹) *
+                    {t.artisan.totalQuotedPriceLabel}
                   </label>
                   <input
                     type="number"
@@ -881,18 +882,18 @@ export const ArtisanDashboard: React.FC = () => {
                     placeholder="e.g. 1500"
                     className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-base font-bold outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/15"
                   />
-                  <p className="text-[11px] text-gray-400">Total amount buyer will pay upon accepting quote.</p>
+                  <p className="text-[11px] text-gray-400">{t.artisan.totalQuotedPriceHint}</p>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-gray-900">
-                    Artisan Message / Timeline to Buyer (Optional)
+                    {t.artisan.artisanMessageTimelineLabel}
                   </label>
                   <textarea
                     rows={3}
                     value={quoteMessageInput}
                     onChange={(e) => setQuoteMessageInput(e.target.value)}
-                    placeholder="e.g. Will take 5-7 days to handcraft and naturally sun-bake. Includes protective wooden crate."
+                    placeholder={t.artisan.artisanMessageTimelinePlaceholder}
                     className="w-full rounded-xl border border-gray-300 p-3 text-xs outline-none focus:border-[#0c4b31] focus:ring-2 focus:ring-[#0c4b31]/15"
                   />
                 </div>
@@ -904,7 +905,7 @@ export const ArtisanDashboard: React.FC = () => {
                   onClick={() => setQuoteModalReq(null)}
                   className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50"
                 >
-                  Cancel
+                  {t.artisan.cancel}
                 </button>
                 <button
                   type="button"
@@ -913,7 +914,7 @@ export const ArtisanDashboard: React.FC = () => {
                   onClick={handleSubmitQuote}
                   className="px-6 py-2.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
-                  {submittingQuote ? 'Sending Quote...' : 'Send Quote to Buyer'}
+                  {submittingQuote ? t.artisan.sendingQuote : t.artisan.sendQuoteToBuyerBtn}
                 </button>
               </div>
             </div>
@@ -926,7 +927,7 @@ export const ArtisanDashboard: React.FC = () => {
             <div className="w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-4 animate-scaleUp">
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <h3 className="text-base font-extrabold text-red-700">
-                  Decline Custom Request
+                  {t.artisan.declineModalTitle}
                 </h3>
                 <button
                   type="button"
@@ -938,16 +939,16 @@ export const ArtisanDashboard: React.FC = () => {
               </div>
 
               <p className="text-xs text-gray-600">
-                Are you sure you want to decline this request from <strong>{rejectModalReq.customer_name}</strong>?
+                {t.artisan.declineConfirmText} <strong>{rejectModalReq.customer_name}</strong>?
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-700">Reason for buyer (Optional):</label>
+                <label className="text-xs font-bold text-gray-700">{t.artisan.declineReasonLabel}</label>
                 <textarea
                   rows={3}
                   value={rejectMessageInput}
                   onChange={(e) => setRejectMessageInput(e.target.value)}
-                  placeholder="e.g. Currently out of traditional natural clay / capacity fully booked for this festival season."
+                  placeholder={t.artisan.declineReasonPlaceholder}
                   className="w-full rounded-xl border border-gray-300 p-3 text-xs outline-none focus:border-red-500"
                 />
               </div>
@@ -958,7 +959,7 @@ export const ArtisanDashboard: React.FC = () => {
                   onClick={() => setRejectModalReq(null)}
                   className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50"
                 >
-                  Back
+                  {t.common.back}
                 </button>
                 <button
                   type="button"
@@ -967,7 +968,7 @@ export const ArtisanDashboard: React.FC = () => {
                   onClick={handleSubmitReject}
                   className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold shadow-sm disabled:opacity-50 cursor-pointer"
                 >
-                  {submittingReject ? 'Declining...' : 'Decline Request'}
+                  {submittingReject ? t.artisan.decliningBtn : t.artisan.rejectRequest}
                 </button>
               </div>
             </div>

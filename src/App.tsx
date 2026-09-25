@@ -28,6 +28,8 @@ import { ProtectedAdminRoute } from './components/admin/ProtectedAdminRoute';
 import { ProtectedArtisanRoute } from './components/ProtectedArtisanRoute';
 import { SupportedLanguage } from './types';
 
+import { LanguageProvider } from './i18n/LanguageContext';
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -45,13 +47,7 @@ function AddProductRoute() {
   return isEditing ? <AddProduct /> : <AddCraftChoice />;
 }
 
-function MainLayout({
-  currentLang,
-  onLangChange,
-}: {
-  currentLang: SupportedLanguage;
-  onLangChange: (lang: SupportedLanguage) => void;
-}) {
+function MainLayout() {
   const location = useLocation();
 
   const isMarketplaceOrCustomerRoute =
@@ -63,13 +59,11 @@ function MainLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fcfaf6]">
-      {!hideStandardNav && (
-        <Navbar currentLang={currentLang} onLangChange={onLangChange} />
-      )}
+      {!hideStandardNav && <Navbar />}
 
       <div className="flex-1">
         <Routes>
-          <Route path="/" element={<Home currentLang={currentLang} />} />
+          <Route path="/" element={<Home />} />
 
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route
@@ -159,7 +153,7 @@ function MainLayout({
             }
           />
 
-          <Route path="*" element={<Home currentLang={currentLang} />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </div>
     </div>
@@ -167,28 +161,12 @@ function MainLayout({
 }
 
 export default function App() {
-  const [currentLang, setCurrentLang] = useState<SupportedLanguage>(() => {
-    const saved = localStorage.getItem('karigarsetu_language');
-
-    return saved === 'bn-IN' || saved === 'hi-IN' || saved === 'en-IN'
-      ? saved
-      : 'bn-IN';
-  });
-
-  const changeLanguage = (lang: SupportedLanguage) => {
-    setCurrentLang(lang);
-    localStorage.setItem('karigarsetu_language', lang);
-    document.documentElement.lang = lang;
-  };
-
-  useEffect(() => {
-    document.documentElement.lang = currentLang;
-  }, [currentLang]);
-
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <MainLayout currentLang={currentLang} onLangChange={changeLanguage} />
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <MainLayout />
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }

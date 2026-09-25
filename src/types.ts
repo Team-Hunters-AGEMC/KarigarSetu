@@ -15,7 +15,7 @@ export type ProductStatus =
   | 'rejected'
   | 'unpublished';
 
-export type SupportedLanguage = 'bn-IN' | 'hi-IN' | 'en-IN' | 'or-IN';
+export type SupportedLanguage = 'en-IN' | 'bn-IN' | 'hi-IN';
 
 export interface ArtisanProfile {
   id: number;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ShieldCheck, Truck, HeartHandshake, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Sparkles, ShieldCheck, Truck, HeartHandshake, SlidersHorizontal } from 'lucide-react';
 import { MarketplaceNavbar } from '../../components/marketplace/MarketplaceNavbar';
 import { ProductFilters } from '../../components/marketplace/ProductFilters';
 import { ProductGrid } from '../../components/marketplace/ProductGrid';
@@ -7,8 +7,10 @@ import { LoginRequiredModal } from '../../components/marketplace/LoginRequiredMo
 import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceApi';
 import { getCurrentCustomer } from '../../services/customerAuth';
 import { CraftCategory } from '../../types';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export const MarketplacePage: React.FC = () => {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -83,6 +85,10 @@ export const MarketplacePage: React.FC = () => {
     setInStockOnly(false);
   };
 
+  const categoryTitle = selectedCategory === 'All'
+    ? t.categories.All
+    : (t.categories[selectedCategory as keyof typeof t.categories] || selectedCategory);
+
   return (
     <div className="min-h-screen bg-[#fcfaf6] text-[#1a2e24]">
       {/* Marketplace Top Navigation */}
@@ -106,7 +112,7 @@ export const MarketplacePage: React.FC = () => {
               Authentic Handmade Crafts & Living Wage Marketplace
             </h1>
             <p className="text-xs sm:text-sm text-[#d1e8dc] leading-relaxed">
-              Every purchase directly sustains rural weavers, terracotta sculptors, and heritage metalcasters with zero middleman deductions.
+              {t.nav.marketTagline}
             </p>
           </div>
 
@@ -137,14 +143,14 @@ export const MarketplacePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-            className="py-2 px-3.5 rounded-xl bg-white border border-[#d2dfd6] text-xs font-bold text-[#0c4b31] flex items-center gap-2 shadow-2xs"
+            className="py-2 px-3.5 rounded-xl bg-white border border-[#d2dfd6] text-xs font-bold text-[#0c4b31] flex items-center gap-2 shadow-2xs cursor-pointer"
           >
             <SlidersHorizontal className="w-4 h-4" />
-            <span>Filters & Categories</span>
+            <span>{t.marketplace.filterAndRefine}</span>
           </button>
 
           <span className="text-xs font-semibold text-gray-500">
-            {products.length} Items Found
+            {products.length} {t.marketplace.resultsCount}
           </span>
         </div>
 
@@ -192,10 +198,10 @@ export const MarketplacePage: React.FC = () => {
           <section className="lg:col-span-9 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
               <h2 className="text-base sm:text-lg font-extrabold text-[#0c4b31]">
-                {selectedCategory === 'All' ? 'All Authentic Crafts' : `${selectedCategory} Collection`}
+                {categoryTitle}
               </h2>
               <span className="text-xs text-gray-500 font-medium">
-                Showing {products.length} verified products
+                Showing {products.length} {t.marketplace.resultsCount}
               </span>
             </div>
 
