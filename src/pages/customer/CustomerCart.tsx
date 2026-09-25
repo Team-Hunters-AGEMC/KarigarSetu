@@ -82,8 +82,33 @@ export const CustomerCart: React.FC = () => {
             <section className="space-y-3">
               {items.map((item) => (
                 <article key={item.product_id} className="flex flex-col gap-4 rounded-2xl border border-[#dce8df] bg-white p-4 shadow-sm sm:flex-row">
-                  <img src={item.image_url || ''} alt={item.product_name} className="h-24 w-24 rounded-xl bg-[#eef5f0] object-contain" />
-                  <div className="min-w-0 flex-1"><p className="text-xs font-bold text-[#e87722]">{item.artisan_name || 'Verified artisan'}</p><h2 className="truncate font-extrabold text-[#0c4b31]">{item.product_name}</h2><p className="mt-2 text-lg font-black">₹{Number(item.selling_price).toLocaleString('en-IN')}</p><p className={`mt-1 text-xs font-bold ${Number(item.stock_quantity) > 0 ? 'text-emerald-700' : 'text-red-600'}`}>{Number(item.stock_quantity) > 0 ? `${item.stock_quantity} in stock` : t.marketplace.outOfStock}</p></div>
+                  <Link
+                    to={`/marketplace/products/${item.product_id}`}
+                    className="group relative block h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#eef5f0]"
+                    title={item.product_name}
+                  >
+                    <img
+                      src={item.image_url || ''}
+                      alt={item.product_name}
+                      className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
+                    />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-[#e87722]">{item.artisan_name || 'Verified artisan'}</p>
+                    <Link
+                      to={`/marketplace/products/${item.product_id}`}
+                      className="group inline-block max-w-full"
+                      title={item.product_name}
+                    >
+                      <h2 className="truncate font-extrabold text-[#0c4b31] transition-colors duration-150 hover:text-[#083623] hover:underline">
+                        {item.product_name}
+                      </h2>
+                    </Link>
+                    <p className="mt-2 text-lg font-black">₹{Number(item.selling_price).toLocaleString('en-IN')}</p>
+                    <p className={`mt-1 text-xs font-bold ${Number(item.stock_quantity) > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                      {Number(item.stock_quantity) > 0 ? `${item.stock_quantity} in stock` : t.marketplace.outOfStock}
+                    </p>
+                  </div>
                   <div className="flex min-w-44 flex-col gap-3 sm:items-end sm:justify-between">
                     <div className="flex items-center rounded-xl border"><button type="button" disabled={item.quantity <= 1} onClick={() => changeQuantity(item.product_id, -1)} className="p-2 disabled:opacity-30 cursor-pointer"><Minus className="h-3 w-3" /></button><span className="min-w-8 text-center text-sm font-bold">{item.quantity}</span><button type="button" disabled={Number(item.stock_quantity) <= 0 || item.quantity >= Number(item.stock_quantity)} onClick={() => changeQuantity(item.product_id, 1)} className="p-2 disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"><Plus className="h-3 w-3" /></button></div>
                     <div className="grid w-full grid-cols-2 gap-2">
