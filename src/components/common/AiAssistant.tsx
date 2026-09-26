@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Sparkles,
-  X,
   Send,
   Trash2,
   Bot,
@@ -48,6 +47,31 @@ export const AiAssistant: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+
+  // Close AI Assistant on outside click (desktop & mobile)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      // Do not close if clicking inside the panel or on the launcher toggle button
+      if (panelRef.current?.contains(target) || launcherRef.current?.contains(target)) {
+        return;
+      }
+      setIsOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isOpen]);
 
   // Determine user role and context from route & localStorage
   const isArtisanRoute = location.pathname.startsWith('/artisan');
@@ -177,10 +201,11 @@ export const AiAssistant: React.FC = () => {
     : t.aiAssistant.promptPills.customer;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 font-sans flex flex-col items-end">
+    <div className="fixed bottom-6 right-6 z-50 font-sans flex flex-col items-end">
       {/* Chat Panel / Drawer */}
       {isOpen && (
         <div
+          ref={panelRef}
           className="w-[92vw] sm:w-[410px] h-[580px] max-h-[85vh] bg-[#fcfaf6] rounded-2xl shadow-2xl border border-stone-200 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200"
           style={{
             boxShadow: '0 20px 40px -15px rgba(44, 76, 56, 0.25), 0 0 0 1px rgba(44, 76, 56, 0.08)',
@@ -190,7 +215,7 @@ export const AiAssistant: React.FC = () => {
           <div className="bg-[#2c4c38] text-white px-4 py-3.5 flex items-center justify-between shadow-sm relative">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-emerald-700/60 border border-emerald-400/30 flex items-center justify-center text-amber-200 shadow-inner">
-                <Sparkles className="w-5 h-5 animate-pulse" />
+                <Sparkles className="w-5 h-5 animate-pulse text-[#ffd186]" />
               </div>
               <div>
                 <h3 className="font-semibold text-sm sm:text-base leading-tight flex items-center gap-1.5 text-stone-100">
@@ -209,19 +234,11 @@ export const AiAssistant: React.FC = () => {
                   type="button"
                   onClick={handleClearChat}
                   title={t.aiAssistant.clearChat}
-                  className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-emerald-700/50 transition-colors text-xs flex items-center gap-1"
+                  className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-emerald-700/50 transition-colors text-xs flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-emerald-700/50 transition-colors"
-                aria-label="Close Assistant"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
           </div>
 
@@ -393,26 +410,27 @@ export const AiAssistant: React.FC = () => {
 
       {/* Floating Toggle Button */}
       <button
+        ref={launcherRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="group relative flex items-center justify-center w-14 h-14 rounded-full bg-[#2c4c38] text-white shadow-xl hover:bg-[#223d2c] hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-amber-200/40 cursor-pointer"
+        className="group relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#0c4b31] hover:bg-[#073623] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-[#ffd186]/50 cursor-pointer"
         aria-label="Toggle KarigarSetu AI Assistant"
         style={{
-          boxShadow: '0 8px 25px -4px rgba(44, 76, 56, 0.45)',
+          boxShadow: '0 8px 24px -2px rgba(12, 75, 49, 0.45), 0 0 0 1px rgba(255, 209, 134, 0.25)',
         }}
       >
         {isOpen ? (
-          <ChevronDown className="w-7 h-7 transition-transform" />
+          <ChevronDown className="w-6 h-6 text-[#ffd186] transition-transform duration-200" />
         ) : (
-          <>
-            <Bot className="w-7 h-7 text-amber-100" />
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></span>
-          </>
+          <div className="relative flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-[#ffd186] transition-transform group-hover:rotate-12 duration-300" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-[#0c4b31] rounded-full animate-pulse"></span>
+          </div>
         )}
 
         {/* Hover Tooltip if closed */}
         {!isOpen && (
-          <span className="absolute right-16 bg-stone-900 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <span className="absolute right-16 bg-[#0c4b31] text-[#ffd186] text-xs font-bold px-3 py-1.5 rounded-xl shadow-lg border border-[#ffd186]/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             {t.aiAssistant.title}
           </span>
         )}

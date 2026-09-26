@@ -15,7 +15,9 @@ import {
   Store,
   Tag,
   LoaderCircle,
+  MessageSquare,
 } from 'lucide-react';
+import { API_BASE } from '../../services/apiConfig';
 import { getCurrentCustomer, logoutCustomer, getCartCount, CustomerUser } from '../../services/customerAuth';
 import { getLoggedInArtisan, logoutArtisan } from '../../data/seedData';
 import { LoginRequiredModal } from './LoginRequiredModal';
@@ -60,6 +62,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
   const [suggestionProducts, setSuggestionProducts] = useState<MarketplaceProduct[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   useEffect(() => {
     const handleCustomerUpdate = () => {
@@ -78,6 +81,40 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
       window.removeEventListener('karigarsetu_artisan_updated', handleArtisanUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const current = getCurrentCustomer();
+      if (!current) {
+        setUnreadMessagesCount(0);
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api/messages/inbox`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'X-Customer-Id': String(current.id),
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.data)) {
+          const total = data.data.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0);
+          setUnreadMessagesCount(total);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    fetchUnread();
+    window.addEventListener('karigarsetu_messages_updated', fetchUnread);
+    window.addEventListener('karigarsetu_customer_updated', fetchUnread);
+    return () => {
+      window.removeEventListener('karigarsetu_messages_updated', fetchUnread);
+      window.removeEventListener('karigarsetu_customer_updated', fetchUnread);
+    };
+  }, [customer]);
 
   useEffect(() => {
     const query = searchQuery.trim();
@@ -342,6 +379,23 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             {t.nav.home}
           </Link>
 
+          {/* Messages */}
+          <button
+            type="button"
+            id="mkt-nav-messages-btn"
+            onClick={() => handleProtectedAction('/customer/messages', 'Please log in or create a customer account to view your messages.')}
+            className="px-3 py-2 rounded-lg text-xs font-bold text-[#2a3f34] hover:text-[#0c4b31] hover:bg-[#eef6f1] transition-colors flex items-center gap-1.5 cursor-pointer relative"
+            title={t.nav.messages}
+          >
+            <MessageSquare className="w-4 h-4 text-[#0c4b31]" />
+            <span>{t.nav.messages}</span>
+            {unreadMessagesCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-[#e87722] text-white text-[9px] font-bold flex items-center justify-center shadow-2xs">
+                {unreadMessagesCount}
+              </span>
+            )}
+          </button>
+
           {/* My Orders */}
           <button
             type="button"
@@ -397,6 +451,20 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
                     className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
                   >
                     {t.nav.customerProfile}
+                  </Link>
+                  <Link
+                    to="/customer/messages"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 font-medium flex items-center justify-between"
+                  >
+                    <span>{t.nav.messages}</span>
+                    {unreadMessagesCount > 0 ? (
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#e87722] text-white text-[10px] font-bold">
+                        {unreadMessagesCount}
+                      </span>
+                    ) : (
+                      <MessageSquare className="w-3.5 h-3.5 text-[#0c4b31]" />
+                    )}
                   </Link>
                   <Link
                     to="/customer/custom-requests"
@@ -484,6 +552,24 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             >
               {t.nav.home}
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleProtectedAction('/customer/messages', 'Please log in or create a customer account to view messages.');
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg text-gray-800 font-bold hover:bg-[#edf8f1] flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#0c4b31]" />
+                <span>{t.nav.messages}</span>
+              </div>
+              {unreadMessagesCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-[#e87722] text-white text-[10px] font-bold">
+                  {unreadMessagesCount}
+                </span>
+              )}
+            </button>
             <button
               type="button"
               onClick={() => {

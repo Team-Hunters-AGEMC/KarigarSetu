@@ -10,7 +10,8 @@ import {
   Menu, 
   X, 
   LogOut, 
-  User 
+  User,
+  MessageSquare 
 } from 'lucide-react';
 import { 
   getLoggedInArtisan, 
@@ -106,6 +107,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#10422c] border border-emerald-700/50 text-[#e6f3eb]">
                 <User className="w-3 h-3 text-[#f9bc60]" />
                 <span className="truncate max-w-[100px]">{t.nav.buyer}: <strong className="text-white">{customer.name.split(' ')[0]}</strong></span>
+                <Link
+                  to="/customer/messages"
+                  className="text-[#ffd186] hover:text-white font-bold ml-1 text-[10px] hover:underline flex items-center gap-0.5"
+                  title="My Messages"
+                >
+                  <MessageSquare className="w-2.5 h-2.5" />
+                  <span>{t.nav.messages}</span>
+                </Link>
                 <button
                   type="button"
                   id="ribbon-customer-logout-btn"
@@ -233,6 +242,19 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <Layers className="w-4 h-4" />
               <span>{t.nav.artisanPortal}</span>
             </Link>
+
+            <Link
+              to="/artisan/messages"
+              id="nav-artisan-messages"
+              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
+                isActive('/artisan/messages')
+                  ? 'bg-[#0b4830] text-white shadow-sm'
+                  : 'text-[#2a3f34] hover:text-[#0b4830] hover:bg-[#eaf4ee]'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>{t.nav.messages}</span>
+            </Link>
           </nav>
         )}
 
@@ -242,9 +264,18 @@ export const Navbar: React.FC<NavbarProps> = () => {
           {isHomePage && (customer ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs font-semibold">
               <User className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-              <span className="font-bold text-amber-950 max-w-[90px] lg:max-w-[120px] truncate" title={`Customer: ${customer.name}`}>
+              <Link to="/customer/profile" className="font-bold text-amber-950 max-w-[90px] lg:max-w-[120px] truncate hover:underline" title={`Customer: ${customer.name}`}>
                 {customer.name.split(' ')[0]}
-              </span>
+              </Link>
+              <Link
+                to="/customer/messages"
+                id="nav-customer-messages-btn"
+                className="text-[#0c4b31] hover:text-[#073623] font-bold ml-1 flex items-center gap-0.5 hover:underline"
+                title="Messages"
+              >
+                <MessageSquare className="w-3 h-3 text-[#e27d35]" />
+                <span>{t.nav.messages}</span>
+              </Link>
               <button
                 type="button"
                 id="nav-customer-logout-btn"
@@ -351,6 +382,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 className="block px-3 py-2 rounded-lg text-sm font-bold text-[#0c4b31] hover:bg-[#edf7f1]"
               >
                 {t.nav.artisanPortal} {artisan ? `(${artisan.name.split(' ')[0]})` : ''}
+              </Link>
+              <Link
+                to="/artisan/messages"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-bold text-[#0c4b31] hover:bg-[#edf7f1]"
+              >
+                {t.nav.messages}
               </Link>
             </div>
           )}

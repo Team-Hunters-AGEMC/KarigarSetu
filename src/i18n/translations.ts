@@ -40,6 +40,8 @@ export const translations = {
       backToMarketplace: 'Back to Marketplace',
       backToStudio: 'Artisan Studio',
       exploreMarketplace: 'Explore Marketplace',
+      messages: 'Messages',
+      myMessages: 'My Messages',
     },
     // Categories
     categories: {
@@ -489,6 +491,7 @@ export const translations = {
       selectBuyerConversation: 'Select a buyer conversation from the left.',
       replyPlaceholder: 'Write reply to buyer…',
       sendReply: 'Send reply',
+      messages: 'Messages',
     },
     // Chat & Messaging
     chat: {
@@ -501,6 +504,22 @@ export const translations = {
       cancel: 'Cancel',
       delete: 'Delete',
       deleting: 'Deleting...',
+    },
+    // Customer Messages Inbox
+    customerMessages: {
+      title: 'My Messages',
+      subtitle: 'Direct communication with Indian craftspeople and master artisans.',
+      noConversations: 'No conversations yet',
+      noConversationsHint: 'Start a conversation with an artisan from any product page or custom request.',
+      selectConversation: 'Select a conversation',
+      selectConversationHint: 'Select any artisan conversation from the left to view messages and reply.',
+      newMessage: 'New message',
+      writeMessage: 'Write a message...',
+      send: 'Send',
+      craftEnquiry: 'Craft Enquiry',
+      directArtisanChat: 'Direct Artisan Chat',
+      backToConversations: 'Back to Conversations',
+      browseMarketplace: 'Explore Crafts',
     },
     // AI Assistant
     aiAssistant: {
@@ -581,6 +600,8 @@ export const translations = {
       backToMarketplace: 'মার্কেটপ্লেসে ফিরুন',
       backToStudio: 'কারিগর স্টুডিও',
       exploreMarketplace: 'মার্কেটপ্লেস দেখুন',
+      messages: 'মেসেজ',
+      myMessages: 'আমার মেসেজ',
     },
     // Categories
     categories: {
@@ -1030,6 +1051,7 @@ export const translations = {
       selectBuyerConversation: 'বাঁ দিক থেকে একজন ক্রেতার বার্তা নির্বাচন করুন।',
       replyPlaceholder: 'ক্রেতাকে উত্তর লিখুন…',
       sendReply: 'উত্তর পাঠান',
+      messages: 'মেসেজ',
     },
     // Chat & Messaging
     chat: {
@@ -1042,6 +1064,22 @@ export const translations = {
       cancel: 'বাতিল',
       delete: 'মুছুন',
       deleting: 'মুছে ফেলা হচ্ছে...',
+    },
+    // Customer Messages Inbox
+    customerMessages: {
+      title: 'আমার মেসেজ',
+      subtitle: 'ভারতীয় ঐতিহ্যবাহী কারিগরদের সাথে সরাসরি যোগাযোগ।',
+      noConversations: 'এখনো কোনো কথোপকথন নেই',
+      noConversationsHint: 'যেকোনো পণ্য পৃষ্ঠা বা কাস্টম অনুরোধ থেকে কারিগরের সাথে কথোপকথন শুরু করুন।',
+      selectConversation: 'একটি কথোপকথন নির্বাচন করুন',
+      selectConversationHint: 'মেসেজ দেখতে এবং উত্তর দিতে বাম পাশ থেকে যেকোনো কারিগরের কথোপকথন নির্বাচন করুন।',
+      newMessage: 'নতুন মেসেজ',
+      writeMessage: 'মেসেজ লিখুন...',
+      send: 'পাঠান',
+      craftEnquiry: 'হস্তশিল্প অনুসন্ধান',
+      directArtisanChat: 'সরাসরি কারিগর চ্যাট',
+      backToConversations: 'কথোপকথনে ফিরে যান',
+      browseMarketplace: 'মার্কেটপ্লেস দেখুন',
     },
     // AI Assistant
     aiAssistant: {
@@ -1122,6 +1160,8 @@ export const translations = {
       backToMarketplace: 'मार्केटप्लेस पर वापस जाएं',
       backToStudio: 'कारीगर स्टूडियो',
       exploreMarketplace: 'मार्केटप्लेस देखें',
+      messages: 'संदेश',
+      myMessages: 'मेरे संदेश',
     },
     // Categories
     categories: {
@@ -1571,6 +1611,7 @@ export const translations = {
       selectBuyerConversation: 'बाईं ओर से किसी खरीदार की बातचीत चुनें।',
       replyPlaceholder: 'खरीदार को उत्तर लिखें…',
       sendReply: 'उत्तर भेजें',
+      messages: 'संदेश',
     },
     // Chat & Messaging
     chat: {
@@ -1583,6 +1624,22 @@ export const translations = {
       cancel: 'रद्द करें',
       delete: 'हटाएँ',
       deleting: 'हटाया जा रहा है...',
+    },
+    // Customer Messages Inbox
+    customerMessages: {
+      title: 'मेरे संदेश',
+      subtitle: 'भारतीय पारंपरिक कारीगरों से सीधा संवाद।',
+      noConversations: 'अभी कोई बातचीत नहीं है',
+      noConversationsHint: 'किसी भी उत्पाद पृष्ठ या कस्टम अनुरोध से कारीगर के साथ बातचीत शुरू करें।',
+      selectConversation: 'कोई बातचीत चुनें',
+      selectConversationHint: 'संदेश देखने और उत्तर देने के लिए बाईं ओर से किसी भी कारीगर की बातचीत चुनें।',
+      newMessage: 'नया संदेश',
+      writeMessage: 'संदेश लिखें...',
+      send: 'भेजें',
+      craftEnquiry: 'शिल्प पूछताछ',
+      directArtisanChat: 'प्रत्यक्ष कारीगर चैट',
+      backToConversations: 'बातचीत पर वापस जाएं',
+      browseMarketplace: 'शिल्प खोजें',
     },
     // AI Assistant
     aiAssistant: {

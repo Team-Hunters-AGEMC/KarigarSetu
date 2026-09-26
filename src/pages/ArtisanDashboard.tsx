@@ -47,6 +47,7 @@ export const ArtisanDashboard: React.FC = () => {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editValues, setEditValues] = useState<{ stock: number; price: number }>({ stock: 0, price: 0 });
   const [actionNotice, setActionNotice] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   const loadData = async () => {
     const current = getCurrentArtisan();
@@ -78,6 +79,17 @@ export const ArtisanDashboard: React.FC = () => {
     } finally {
       setLoadingCustomRequests(false);
     }
+
+    try {
+      const inboxRes = await fetch('/api/messages/inbox', { credentials: 'include' });
+      const inboxData = await inboxRes.json();
+      if (inboxRes.ok && inboxData.success && Array.isArray(inboxData.data)) {
+        const total = inboxData.data.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0);
+        setUnreadMessagesCount(total);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const handleLogout = async () => {
@@ -94,9 +106,11 @@ export const ArtisanDashboard: React.FC = () => {
     loadData();
     window.addEventListener('karigarsetu_products_updated', loadData);
     window.addEventListener('karigarsetu_artisan_updated', loadData);
+    window.addEventListener('karigarsetu_messages_updated', loadData);
     return () => {
       window.removeEventListener('karigarsetu_products_updated', loadData);
       window.removeEventListener('karigarsetu_artisan_updated', loadData);
+      window.removeEventListener('karigarsetu_messages_updated', loadData);
     };
   }, []);
 
@@ -266,6 +280,21 @@ export const ArtisanDashboard: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {isLoggedIn ? (
               <>
+                <Link
+                  to="/artisan/messages"
+                  id="dashboard-messages-btn"
+                  className="px-3.5 sm:px-4 py-2.5 rounded-xl bg-white hover:bg-emerald-50 text-[#0c4b31] border border-[#bedfc9] text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-xs relative"
+                  title="Buyer Messages"
+                >
+                  <MessageSquare className="w-4 h-4 text-[#e27d35]" />
+                  <span>{t.artisan?.messages || t.nav?.messages || 'Messages'}</span>
+                  {unreadMessagesCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#e87722] text-white text-[10px] font-extrabold ml-0.5">
+                      {unreadMessagesCount}
+                    </span>
+                  )}
+                </Link>
+
                 <Link
                   to="/artisan/add-product"
                   id="dashboard-add-product-btn"
@@ -976,16 +1005,6 @@ export const ArtisanDashboard: React.FC = () => {
         )}
 
       </main>
-      {isLoggedIn && (
-        <Link
-          to="/artisan/messages"
-          aria-label="Open buyer messages"
-          title="Buyer Messages"
-          className="fixed bottom-6 right-6 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#0c4b31] text-white shadow-xl shadow-[#0c4b31]/35 transition-transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-[#bce0c9] sm:bottom-8 sm:right-8"
-        >
-          <MessageSquare className="h-6 w-6" />
-        </Link>
-      )}
     </div>
   );
 };
