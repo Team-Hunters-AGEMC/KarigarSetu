@@ -20,7 +20,6 @@ import { API_BASE } from '../../services/apiConfig';
 import { getCurrentCustomer } from '../../services/customerAuth';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { VoiceInputButton } from '../../components/common/VoiceInputButton';
-import { ArtisanRoomDecorations } from '../../components/common/ArtisanRoomDecorations';
 import { ChatCanvasBackground } from '../../components/common/ChatCanvasBackground';
 
 type Conversation = {
@@ -398,10 +397,7 @@ export const CustomerMessages: React.FC = () => {
   });
 
   return (
-    <div className="relative h-screen max-h-screen flex flex-col bg-[#faf5ed] text-[#173b2d] overflow-hidden">
-      {/* Handcrafted Studio Environment (Outside ambient decor) */}
-      <ArtisanRoomDecorations />
-
+    <div className="relative h-screen max-h-screen flex flex-col bg-[#f5f0e6] text-[#173b2d] overflow-hidden">
       {/* Top Navbar - Fixed flex-shrink-0 */}
       <div className="relative z-20 flex-shrink-0">
         <MarketplaceNavbar searchQuery="" onSearchChange={() => {}} selectedCategory="All" onSelectCategory={() => {}} />

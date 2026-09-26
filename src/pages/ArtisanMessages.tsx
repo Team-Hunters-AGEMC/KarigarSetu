@@ -16,7 +16,6 @@ import {
 import { API_BASE } from '../services/apiConfig';
 import { useLanguage } from '../i18n/LanguageContext';
 import { VoiceInputButton } from '../components/common/VoiceInputButton';
-import { ArtisanRoomDecorations } from '../components/common/ArtisanRoomDecorations';
 import { ChatCanvasBackground } from '../components/common/ChatCanvasBackground';
 
 type Conversation = {
@@ -259,10 +258,7 @@ export const ArtisanMessages: React.FC = () => {
   });
 
   return (
-    <div className="relative h-screen max-h-screen flex flex-col bg-[#faf5ed] text-[#173b2d] overflow-hidden">
-      {/* Handcrafted Studio Environment (Outside ambient decor) */}
-      <ArtisanRoomDecorations />
-
+    <div className="relative h-screen max-h-screen flex flex-col bg-[#f5f0e6] text-[#173b2d] overflow-hidden">
       {/* Main Messaging Viewport - Fixed like WhatsApp Web */}
       <main className="relative z-10 flex-1 min-h-0 w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 flex flex-col overflow-hidden">
         {/* Navigation Breadcrumb - Compact flex-shrink-0 */}

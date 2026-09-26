@@ -2,155 +2,149 @@ import React from 'react';
 
 /**
  * ChatCanvasBackground
- * Recreates the exact warm handcrafted studio atmosphere from the reference image:
- * - Fixed background for the chat body (NEVER scrolls or grows with messages)
- * - Warm handmade khadi paper / plaster grain base
- * - Left side: Potted trailing botanical plant on wooden craft shelf & terracotta matkas
- * - Right side: Stacked handcrafted terracotta carved pots & "Good Craft Builds Closer People" craft typography
- * - Subtle Indian block-print accents and warm sunlight lighting
+ * WhatsApp-style fixed handcrafted background ONLY for the chat body viewport:
+ * - Positioned absolute inset-0 with pointer-events-none & z-0
+ * - Never scrolls, grows, or stretches when messages are added
+ * - Soft ivory / handmade khadi paper texture base
+ * - Subtle corner/edge-only artisan motifs (botanical leaf sprigs, terracotta pottery)
+ * - Completely unobtrusive center area so chat bubbles remain 100% clear and legible
  */
 export const ChatCanvasBackground: React.FC = () => {
   return (
     <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
-      {/* 1. Warm Handcrafted Ivory / Khadi Paper Base Gradient */}
+      {/* 1. Warm Handcrafted Ivory / Khadi Paper Texture Base */}
       <div
         className="absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse 70% 50% at 20% 20%, rgba(255, 255, 255, 0.75) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 60% at 85% 75%, rgba(240, 222, 202, 0.45) 0%, transparent 70%),
-            linear-gradient(145deg, #faf4ec 0%, #f6eee3 45%, #eee3d3 100%)
+            radial-gradient(ellipse 65% 50% at 50% 25%, rgba(255, 255, 255, 0.85) 0%, transparent 70%),
+            radial-gradient(ellipse 70% 60% at 85% 85%, rgba(243, 231, 218, 0.45) 0%, transparent 75%),
+            linear-gradient(150deg, #faf5ec 0%, #f6eee3 50%, #ede3d4 100%)
           `,
         }}
       />
 
-      {/* 2. Micro Textile / Khadi Woven Paper Grain */}
+      {/* 2. Micro Khadi / Woven Handmade Paper Grain */}
       <div
-        className="absolute inset-0 opacity-40"
+        className="absolute inset-0 opacity-30"
         style={{
-          backgroundImage: `radial-gradient(circle, #bfae95 0.9px, transparent 0.9px)`,
-          backgroundSize: '20px 20px',
+          backgroundImage: `radial-gradient(circle, #bfae95 0.85px, transparent 0.85px)`,
+          backgroundSize: '22px 22px',
         }}
       />
 
-      {/* 3. Left Side: Potted Foliage Plant & Terracotta Urns (Reference Artwork) */}
-      <div className="hidden sm:block absolute top-0 bottom-0 left-0 w-44 md:w-56 lg:w-64 opacity-85 z-0">
+      {/* 3. Top-Left Corner: Subtle Trailing Leafy Botanical Vine */}
+      <div className="absolute top-0 left-0 w-32 sm:w-44 h-32 sm:h-44 opacity-35">
         <svg
-          viewBox="0 0 240 600"
+          viewBox="0 0 160 160"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="xMinYMid meet"
+          preserveAspectRatio="xMinYMin meet"
           className="w-full h-full"
         >
-          {/* Wooden Craft Shelf / Stand */}
-          <rect x="0" y="240" width="60" height="360" fill="#a47852" opacity="0.35" />
-          <line x1="0" y1="240" x2="60" y2="240" stroke="#7d532f" strokeWidth="4" opacity="0.5" />
-          <line x1="58" y1="240" x2="58" y2="600" stroke="#633e1c" strokeWidth="3" opacity="0.5" />
+          {/* Main graceful arching vine */}
+          <path d="M0 0 C30 20, 60 55, 95 90 C120 115, 140 145, 150 160" stroke="#5a7d57" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M45 42 C70 30, 100 25, 130 15" stroke="#5a7d57" strokeWidth="1.2" strokeLinecap="round" />
 
-          {/* Plant Pot on Stand */}
-          <ellipse cx="32" cy="238" rx="26" ry="7" fill="#c9713b" />
-          <ellipse cx="32" cy="235" rx="24" ry="5.5" fill="#994c1f" />
-          <path d="M10 240 C14 275, 18 295, 22 305 C32 308, 42 308, 52 305 C56 295, 60 275, 64 240 Z" fill="#b85f2d" />
-          <path d="M14 258 Q 32 264 50 258" stroke="#f6c29d" strokeWidth="1.2" fill="none" opacity="0.75" />
+          {/* Soft Sage & Olive Leaves */}
+          <path d="M25 20 C14 26, 16 38, 30 40 C38 35, 34 23, 25 20 Z" fill="#7ba577" />
+          <path d="M48 44 C38 52, 40 64, 54 66 C62 60, 58 48, 48 44 Z" fill="#658e60" />
+          <path d="M72 68 C62 76, 64 88, 78 90 C86 84, 82 72, 72 68 Z" fill="#7ba577" />
+          <path d="M96 92 C88 100, 90 110, 102 112 C108 106, 106 96, 96 92 Z" fill="#658e60" />
+          <path d="M75 28 C68 20, 78 12, 88 18 C92 24, 84 32, 75 28 Z" fill="#8cb787" />
+          <path d="M108 20 C100 12, 110 5, 120 10 C124 16, 116 24, 108 20 Z" fill="#7ba577" />
 
-          {/* Trailing Green Foliage Vines */}
-          <path d="M32 230 C20 180, 45 130, 25 80" stroke="#3d5a3c" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M32 230 C45 190, 70 160, 85 120" stroke="#3d5a3c" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M32 230 C28 260, 40 290, 36 330" stroke="#486947" strokeWidth="2" strokeLinecap="round" />
-          <path d="M32 230 C15 260, 10 290, 16 340" stroke="#486947" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Tiny warm terracotta berry dots */}
+          <circle cx="34" cy="24" r="2.2" fill="#c9713b" opacity="0.75" />
+          <circle cx="58" cy="48" r="2.2" fill="#c9713b" opacity="0.75" />
+          <circle cx="82" cy="72" r="2" fill="#c9713b" opacity="0.75" />
+        </svg>
+      </div>
 
-          {/* Leaves with Rich Green Tones */}
-          <path d="M25 80 C12 88, 14 105, 30 110 C42 102, 38 88, 25 80 Z" fill="#67975d" stroke="#2d482c" strokeWidth="0.8" />
-          <path d="M85 120 C98 128, 96 148, 80 152 C68 144, 72 128, 85 120 Z" fill="#7dae72" stroke="#2d482c" strokeWidth="0.8" />
-          <path d="M38 145 C22 152, 24 172, 42 176 C54 168, 50 152, 38 145 Z" fill="#588550" stroke="#2d482c" strokeWidth="0.8" />
-          <path d="M60 170 C74 176, 76 195, 60 200 C48 194, 50 178, 60 170 Z" fill="#67975d" stroke="#2d482c" strokeWidth="0.8" />
-          <path d="M36 330 C22 336, 26 352, 40 355 C50 348, 46 336, 36 330 Z" fill="#7dae72" stroke="#2d482c" strokeWidth="0.8" />
-          <path d="M16 340 C4 348, 8 362, 22 365 C30 358, 26 346, 16 340 Z" fill="#588550" stroke="#2d482c" strokeWidth="0.8" />
+      {/* 4. Top-Right Corner: Elegant Indian Geometric / Block-Print Craft Motif */}
+      <div className="absolute top-2 right-2 w-20 sm:w-28 h-20 sm:h-28 opacity-25">
+        <svg
+          viewBox="0 0 100 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMaxYMin meet"
+          className="w-full h-full"
+        >
+          {/* Subtle diamond block stamp */}
+          <path d="M50 8 L92 50 L50 92 L8 50 Z" stroke="#8d6e46" strokeWidth="1.2" strokeDasharray="3 3" />
+          <path d="M50 20 L80 50 L50 80 L20 50 Z" stroke="#8d6e46" strokeWidth="1" />
+          <circle cx="50" cy="50" r="4.5" fill="#c46a36" opacity="0.8" />
+          <circle cx="50" cy="20" r="2.2" fill="#8d6e46" />
+          <circle cx="80" cy="50" r="2.2" fill="#8d6e46" />
+          <circle cx="50" cy="80" r="2.2" fill="#8d6e46" />
+          <circle cx="20" cy="50" r="2.2" fill="#8d6e46" />
+        </svg>
+      </div>
 
-          {/* Lower Terracotta Matka / Clay Pitcher on Ground */}
+      {/* 5. Bottom-Left Corner: Subtle Terracotta Pottery on Craft Stand */}
+      <div className="absolute bottom-0 left-0 w-36 sm:w-48 h-36 sm:h-48 opacity-35">
+        <svg
+          viewBox="0 0 180 180"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMinYMax meet"
+          className="w-full h-full"
+        >
+          {/* Wooden craft stand border */}
+          <line x1="0" y1="160" x2="160" y2="160" stroke="#7d532f" strokeWidth="2.5" opacity="0.4" />
+          <line x1="120" y1="160" x2="120" y2="180" stroke="#633e1c" strokeWidth="2" opacity="0.4" />
+
+          {/* Terracotta Matka / Urn */}
           <path
-            d="M32 440 C32 418, 58 418, 58 440 C76 460, 82 505, 68 535 C52 542, 36 542, 20 535 C6 505, 12 460, 32 440 Z"
+            d="M50 85 C50 68, 80 68, 80 85 C98 102, 104 135, 92 155 C78 160, 52 160, 38 155 C26 135, 32 102, 50 85 Z"
             fill="#d67843"
           />
-          <ellipse cx="45" cy="436" rx="15" ry="5" fill="#f09866" />
-          <ellipse cx="45" cy="434" rx="12" ry="3.5" fill="#9f4618" />
-          {/* Etched tribal patterns */}
-          <path d="M18 475 Q 45 486 72 475" stroke="#f6c29d" strokeWidth="1.4" fill="none" opacity="0.8" />
-          <path d="M16 495 Q 45 506 74 495" stroke="#f6c29d" strokeWidth="1.4" fill="none" opacity="0.8" />
-          <circle cx="34" cy="485" r="2.2" fill="#f6c29d" opacity="0.8" />
-          <circle cx="45" cy="486" r="2.2" fill="#f6c29d" opacity="0.8" />
-          <circle cx="56" cy="485" r="2.2" fill="#f6c29d" opacity="0.8" />
+          <ellipse cx="65" cy="82" rx="14" ry="4.5" fill="#f09866" />
+          <ellipse cx="65" cy="80" rx="11" ry="3" fill="#9f4618" />
+          {/* Subtle etched relief patterns */}
+          <path d="M40 115 Q 65 124 90 115" stroke="#f6c29d" strokeWidth="1.2" fill="none" opacity="0.8" />
+          <path d="M42 130 Q 65 139 88 130" stroke="#f6c29d" strokeWidth="1.2" fill="none" opacity="0.8" />
+          <circle cx="56" cy="123" r="1.8" fill="#f6c29d" opacity="0.8" />
+          <circle cx="65" cy="124" r="1.8" fill="#f6c29d" opacity="0.8" />
+          <circle cx="74" cy="123" r="1.8" fill="#f6c29d" opacity="0.8" />
+
+          {/* Small Clay Bowl / Kundan next to it */}
+          <ellipse cx="120" cy="154" rx="22" ry="7" fill="#c46631" />
+          <ellipse cx="120" cy="152" rx="18" ry="5" fill="#943f14" />
+          <path d="M102 154 C104 162, 136 162, 138 154" fill="#a85221" opacity="0.9" />
         </svg>
       </div>
 
-      {/* 4. Right Side: Stacked Terracotta Pots & "Good Craft Builds Closer People" Script (Reference Artwork) */}
-      <div className="hidden md:block absolute top-0 bottom-0 right-0 w-56 lg:w-72 opacity-85 z-0">
+      {/* 6. Bottom-Right Corner: Stacked Traditional Terracotta Pots */}
+      <div className="absolute bottom-0 right-0 w-36 sm:w-48 h-36 sm:h-48 opacity-35">
         <svg
-          viewBox="0 0 280 600"
+          viewBox="0 0 180 180"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="xMaxYMid meet"
+          preserveAspectRatio="xMaxYMax meet"
           className="w-full h-full"
         >
-          {/* Traditional Craft Calligraphy matching the Reference Image */}
-          <g opacity="0.75" transform="translate(65, 175)">
-            <text x="0" y="0" fontFamily="serif" fontStyle="italic" fontSize="26" fill="#8d5f39" letterSpacing="0.05em">
-              Good
-            </text>
-            <text x="0" y="32" fontFamily="serif" fontSize="28" fontWeight="600" fill="#784825" letterSpacing="0.04em">
-              Craft
-            </text>
-            <text x="0" y="64" fontFamily="serif" fontSize="26" fontWeight="600" fill="#784825" letterSpacing="0.04em">
-              Builds
-            </text>
-            <text x="0" y="96" fontFamily="serif" fontStyle="italic" fontSize="26" fill="#8d5f39" letterSpacing="0.05em">
-              Closer
-            </text>
-            <text x="0" y="128" fontFamily="serif" fontSize="28" fontWeight="600" fill="#784825" letterSpacing="0.04em">
-              People
-            </text>
-          </g>
+          {/* Wooden craft stand border */}
+          <line x1="20" y1="160" x2="180" y2="160" stroke="#7d532f" strokeWidth="2.5" opacity="0.4" />
+          <line x1="60" y1="160" x2="60" y2="180" stroke="#633e1c" strokeWidth="2" opacity="0.4" />
 
-          {/* Botanical Vine branch trailing on right wall */}
-          <path d="M260 0 C245 60, 220 120, 240 180" stroke="#71866e" strokeWidth="2" strokeLinecap="round" />
-          <path d="M245 45 C230 42, 225 58, 238 64 C248 60, 250 50, 245 45 Z" fill="#849b81" />
-          <path d="M232 95 C215 98, 212 114, 226 118 C236 114, 238 102, 232 95 Z" fill="#71876e" />
-          <path d="M235 145 C220 150, 218 166, 232 170 C240 166, 242 154, 235 145 Z" fill="#849b81" />
+          {/* Carved Terracotta Pot */}
+          <path
+            d="M95 95 C95 78, 140 78, 140 95 C158 112, 162 140, 150 156 C136 160, 104 160, 90 156 C78 140, 82 112, 95 95 Z"
+            fill="#c9713b"
+          />
+          <ellipse cx="118" cy="92" rx="20" ry="6" fill="#e89665" />
+          <ellipse cx="118" cy="90" rx="16" ry="4" fill="#8c3e12" />
+          {/* Traditional motif lines */}
+          <path d="M88 122 Q 118 132 148 122" stroke="#f6c29d" strokeWidth="1.2" fill="none" opacity="0.8" />
+          <path d="M92 138 Q 118 147 144 138" stroke="#f6c29d" strokeWidth="1.2" fill="none" opacity="0.8" />
+          <circle cx="108" cy="130" r="1.8" fill="#f6c29d" opacity="0.8" />
+          <circle cx="118" cy="131" r="1.8" fill="#f6c29d" opacity="0.8" />
+          <circle cx="128" cy="130" r="1.8" fill="#f6c29d" opacity="0.8" />
 
-          {/* Hand-Carved Terracotta Pots / Bowls Stacked on Right Base */}
-          <g transform="translate(140, 360)">
-            {/* Wooden Base Pedestal */}
-            <rect x="0" y="190" width="140" height="50" fill="#875e3c" opacity="0.35" />
-            <line x1="0" y1="190" x2="140" y2="190" stroke="#684224" strokeWidth="3" opacity="0.5" />
-
-            {/* Bottom Large Terracotta Urn */}
-            <path
-              d="M20 90 C20 65, 80 65, 80 90 C105 110, 115 155, 95 185 C75 192, 45 192, 25 185 C5 155, 10 110, 20 90 Z"
-              fill="#c86d38"
-            />
-            <ellipse cx="50" cy="85" rx="32" ry="9" fill="#e58f58" />
-            <ellipse cx="50" cy="83" rx="28" ry="6.5" fill="#8c3e12" />
-            {/* Intricate relief carvings on pot */}
-            <path d="M12 125 Q 50 140 88 125" stroke="#f6c29d" strokeWidth="1.6" fill="none" opacity="0.8" />
-            <path d="M15 148 Q 50 162 85 148" stroke="#f6c29d" strokeWidth="1.6" fill="none" opacity="0.8" />
-            <circle cx="34" cy="137" r="2.5" fill="#f6c29d" opacity="0.8" />
-            <circle cx="50" cy="138" r="2.5" fill="#f6c29d" opacity="0.8" />
-            <circle cx="66" cy="137" r="2.5" fill="#f6c29d" opacity="0.8" />
-
-            {/* Small Terracotta Diya / Bowl on top of urn */}
-            <ellipse cx="50" cy="55" rx="28" ry="9" fill="#dd8149" />
-            <ellipse cx="50" cy="53" rx="24" ry="6" fill="#a44b1d" />
-            <ellipse cx="50" cy="52" rx="20" ry="4" fill="#75300b" />
-          </g>
-        </svg>
-      </div>
-
-      {/* 5. Center-Top Indian Craft Geometric Diamond Stamp */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-16 opacity-15 pointer-events-none">
-        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <path d="M30 5 L55 30 L30 55 L5 30 Z" stroke="#8d6e46" strokeWidth="1.2" strokeDasharray="3 2" fill="none" />
-          <path d="M30 15 L45 30 L30 45 L15 30 Z" stroke="#8d6e46" strokeWidth="1" fill="none" />
-          <circle cx="30" cy="30" r="3" fill="#c46a36" />
+          {/* Small Diya Bowl on Top */}
+          <ellipse cx="118" cy="72" rx="15" ry="5" fill="#d97d47" />
+          <ellipse cx="118" cy="70" rx="12" ry="3.5" fill="#a44b1d" />
         </svg>
       </div>
     </div>
