@@ -493,6 +493,28 @@ export const translations = {
       sendReply: 'Send reply',
       messages: 'Messages',
     },
+    // Artisan Authentication & Registration Messages
+    artisanLogin: {
+      errors: {
+        notFound: 'No artisan account was found with this mobile number.',
+        invalidPassword: 'Incorrect password. Please try again.',
+        pendingApproval: 'Your application is still awaiting Admin approval.',
+        rejected: 'Your artisan application was not approved by Admin.',
+        banned: 'This artisan account has been banned. Please contact the administrator.',
+        notApproved: 'Only Admin-approved artisans can sign in.',
+        invalidPhone: 'Enter a valid 10-digit mobile number.',
+        invalidCredentials: 'Invalid mobile number or password.',
+        loginRequired: 'Please log in to your approved account to access Artisan Studio.',
+        proofReq: 'Upload 2 photos of your crafts and 1 video of you making them.',
+        phoneRegistered: 'This mobile number is already registered.',
+        requiredFieldsMissing: 'Please fill in all required fields.',
+        invalidFileFormat: 'Photos must be PNG, JPG, or WEBP, and video must be MP4, WEBM, or MOV.',
+        serverError: 'Unable to connect to the server. Please try again later.',
+      },
+      success: {
+        applicationSubmitted: 'Application submitted to Admin. You can log in once approved.',
+      },
+    },
     // Chat & Messaging
     chat: {
       deleteForMe: 'Delete for Me',
@@ -1064,6 +1086,28 @@ export const translations = {
       sendReply: 'উত্তর পাঠান',
       messages: 'মেসেজ',
     },
+    // Artisan Authentication & Registration Messages
+    artisanLogin: {
+      errors: {
+        notFound: 'এই মোবাইল নম্বরে কোনো কারিগর অ্যাকাউন্ট পাওয়া যায়নি।',
+        invalidPassword: 'ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।',
+        pendingApproval: 'আপনার আবেদন এখনও অ্যাডমিনের অনুমোদনের অপেক্ষায় রয়েছে।',
+        rejected: 'আপনার কারিগর আবেদনটি অ্যাডমিন দ্বারা অনুমোদিত হয়নি।',
+        banned: 'এই কারিগর অ্যাকাউন্টটি ব্যান করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সঙ্গে যোগাযোগ করুন।',
+        notApproved: 'শুধুমাত্র অ্যাডমিন-অনুমোদিত কারিগররাই সাইন ইন করতে পারবেন।',
+        invalidPhone: 'একটি সঠিক ১০ সংখ্যার মোবাইল নম্বর দিন।',
+        invalidCredentials: 'মোবাইল নম্বর অথবা পাসওয়ার্ড সঠিক নয়।',
+        loginRequired: 'কারিগর স্টুডিও ব্যবহার করতে আপনার অনুমোদিত অ্যাকাউন্টে লগইন করুন।',
+        proofReq: '২টি কাজের ছবি ও ১টি কাজ করার ভিডিও দিন।',
+        phoneRegistered: 'এই মোবাইল নম্বরটি ইতিমধ্যেই নিবন্ধিত রয়েছে।',
+        requiredFieldsMissing: 'অনুগ্রহ করে সমস্ত প্রয়োজনীয় তথ্য পূরণ করুন।',
+        invalidFileFormat: 'ছবির ফরম্যাট PNG, JPG অথবা WEBP এবং ভিডিও MP4, WEBM অথবা MOV হতে হবে।',
+        serverError: 'সার্ভারের সাথে সংযোগ করা যাচ্ছে না। অনুগ্রহ করে পরে আবার চেষ্টা করুন।',
+      },
+      success: {
+        applicationSubmitted: 'আবেদন অ্যাডমিনের কাছে পাঠানো হয়েছে। অনুমোদনের পর আপনি লগইন করতে পারবেন।',
+      },
+    },
     // Chat & Messaging
     chat: {
       deleteForMe: 'শুধু আমার জন্য মুছুন',
@@ -1634,6 +1678,28 @@ export const translations = {
       replyPlaceholder: 'खरीदार को उत्तर लिखें…',
       sendReply: 'उत्तर भेजें',
       messages: 'संदेश',
+    },
+    // Artisan Authentication & Registration Messages
+    artisanLogin: {
+      errors: {
+        notFound: 'इस मोबाइल नंबर से कोई कारीगर खाता नहीं मिला।',
+        invalidPassword: 'गलत पासवर्ड। कृपया पुनः प्रयास करें।',
+        pendingApproval: 'आपका आवेदन अभी भी एडमिन की स्वीकृति की प्रतीक्षा कर रहा है।',
+        rejected: 'आपका कारीगर आवेदन एडमिन द्वारा स्वीकृत नहीं किया गया।',
+        banned: 'इस कारीगर खाते को प्रतिबंधित कर दिया गया है। कृपया एडमिन से संपर्क करें।',
+        notApproved: 'केवल एडमिन-स्वीकृत कारीगर ही साइन इन कर सकते हैं।',
+        invalidPhone: 'एक वैध 10 अंकों का मोबाइल नंबर दर्ज करें।',
+        invalidCredentials: 'मोबाइल नंबर या पासवर्ड अमान्य है।',
+        loginRequired: 'कारीगर स्टूडियो का उपयोग करने के लिए कृपया अपने स्वीकृत खाते में लॉगिन करें।',
+        proofReq: 'काम की 2 तस्वीरें और 1 वीडियो अपलोड करें।',
+        phoneRegistered: 'यह मोबाइल नंबर पहले से पंजीकृत है।',
+        requiredFieldsMissing: 'कृपया सभी आवश्यक फ़ील्ड भरें।',
+        invalidFileFormat: 'फ़ोटो PNG, JPG या WEBP और वीडियो MP4, WEBM या MOV होना चाहिए।',
+        serverError: 'सर्वर से कनेक्ट करने में असमर्थ। कृपया बाद में पुनः प्रयास करें।',
+      },
+      success: {
+        applicationSubmitted: 'आवेदन एडमिन को भेज दिया गया है। स्वीकृत होने के बाद आप लॉगिन कर सकेंगे।',
+      },
     },
     // Chat & Messaging
     chat: {

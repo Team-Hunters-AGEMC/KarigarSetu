@@ -55,7 +55,7 @@ export const ProtectedArtisanRoute: React.FC<React.PropsWithChildren> = ({ child
     return <div className="grid min-h-[60vh] place-items-center font-bold text-[#0c4b31]">Checking Artisan login…</div>;
   }
   if (state === 'login') {
-    return <Navigate to="/artisan/register" replace state={{ from: location.pathname, message: 'Artisan Studio ব্যবহার করতে আগের account-এ login করুন।' }} />;
+    return <Navigate to="/artisan/register" replace state={{ from: location.pathname, errorCode: 'LOGIN_REQUIRED' }} />;
   }
   return <>{children}</>;
 };

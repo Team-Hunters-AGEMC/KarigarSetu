@@ -8,6 +8,12 @@ import { useLanguage } from '../i18n/LanguageContext';
 const API = '';
 const field = 'w-full rounded-xl border border-[#cfe0d5] px-4 py-3 text-sm outline-none focus:border-[#0c5b3b]';
 
+interface NoticeState {
+  code: string;
+  ok: boolean;
+  fallbackText?: string;
+}
+
 export const ArtisanRegistration: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -17,17 +23,67 @@ export const ArtisanRegistration: React.FC = () => {
     queryMode === 'login' || location.state?.from ? 'login' : 'register'
   );
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(
-    location.state?.message ? { text: location.state.message, ok: false } : null
-  );
+  const [notice, setNotice] = useState<NoticeState | null>(() => {
+    if (location.state?.errorCode) {
+      return { code: location.state.errorCode, ok: false };
+    }
+    if (location.state?.message) {
+      return { code: 'LOGIN_REQUIRED', ok: false, fallbackText: location.state.message };
+    }
+    return null;
+  });
   const [files, setFiles] = useState<{ one?: File; two?: File; video?: File }>({});
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', password: '', language: 'Bengali', craftType: 'Pottery' as CraftCategory, location: '', experience: '1' });
   const [login, setLogin] = useState({ phone: '', password: '' });
 
+  const getNoticeMessage = (n: NoticeState): string => {
+    const err = t.artisanLogin?.errors;
+    if (!n.ok && err) {
+      switch (n.code) {
+        case 'ARTISAN_NOT_FOUND':
+          return err.notFound;
+        case 'INVALID_PASSWORD':
+          return err.invalidPassword;
+        case 'PENDING_APPROVAL':
+          return err.pendingApproval;
+        case 'ACCOUNT_REJECTED':
+          return err.rejected;
+        case 'ACCOUNT_BANNED':
+          return err.banned;
+        case 'NOT_APPROVED':
+          return err.notApproved;
+        case 'INVALID_PHONE':
+          return err.invalidPhone;
+        case 'INVALID_CREDENTIALS':
+          return err.invalidCredentials;
+        case 'LOGIN_REQUIRED':
+          return err.loginRequired;
+        case 'PROOF_FILES_REQUIRED':
+          return err.proofReq;
+        case 'PHONE_ALREADY_REGISTERED':
+          return err.phoneRegistered;
+        case 'REQUIRED_FIELDS_MISSING':
+          return err.requiredFieldsMissing;
+        case 'INVALID_FILE_FORMAT':
+          return err.invalidFileFormat;
+        case 'SERVER_ERROR':
+          return err.serverError;
+        default:
+          break;
+      }
+    }
+    if (n.ok && t.artisanLogin?.success) {
+      if (n.code === 'APPLICATION_SUBMITTED') {
+        return t.artisanLogin.success.applicationSubmitted;
+      }
+    }
+    return n.fallbackText || (n.ok ? t.common.success : (err?.serverError || t.common.error));
+  };
+
   const apply = async (e: React.FormEvent) => {
     e.preventDefault();
     setNotice(null);
-    if (!files.one || !files.two || !files.video) return setNotice({ text: t.artisan.proofReq1, ok: false });
+    if (!files.one || !files.two || !files.video) return setNotice({ code: 'PROOF_FILES_REQUIRED', ok: false });
     const data = new FormData();
     Object.entries(form).forEach(([k, v]) => data.append(k, String(v)));
     data.append('proofImage1', files.one);
@@ -36,10 +92,15 @@ export const ArtisanRegistration: React.FC = () => {
     setBusy(true);
     try {
       const r = await fetch(`${API}/api/artisans`, { method: 'POST', body: data, credentials: 'include' });
-      const d = await r.json();
-      setNotice({ text: d.message, ok: r.ok });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        setNotice({ code: 'APPLICATION_SUBMITTED', ok: true });
+      } else {
+        const code = d.error_code || (r.status === 409 ? 'PHONE_ALREADY_REGISTERED' : 'SERVER_ERROR');
+        setNotice({ code, ok: false, fallbackText: d.message });
+      }
     } catch {
-      setNotice({ text: t.common.error, ok: false });
+      setNotice({ code: 'SERVER_ERROR', ok: false });
     } finally {
       setBusy(false);
     }
@@ -50,15 +111,43 @@ export const ArtisanRegistration: React.FC = () => {
     setBusy(true);
     setNotice(null);
     try {
-      const r = await fetch(`${API}/api/artisans/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(login) });
-      const d = await r.json();
-      if (!r.ok) return setNotice({ text: d.message, ok: false });
+      const r = await fetch(`${API}/api/artisans/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(login),
+      });
+      const d = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        let code = d.error_code;
+        if (!code) {
+          if (r.status === 404) code = 'ARTISAN_NOT_FOUND';
+          else if (r.status === 401) code = 'INVALID_PASSWORD';
+          else if (r.status === 403) {
+            if (d.status === 'banned') code = 'ACCOUNT_BANNED';
+            else if (d.status === 'rejected') code = 'ACCOUNT_REJECTED';
+            else if (d.status === 'pending') code = 'PENDING_APPROVAL';
+            else code = 'NOT_APPROVED';
+          } else if (r.status === 400) {
+            code = 'INVALID_PHONE';
+          } else {
+            code = 'SERVER_ERROR';
+          }
+        }
+        return setNotice({ code, ok: false, fallbackText: d.message });
+      }
+
       setCurrentArtisan(d.artisan as ArtisanProfile);
       const returnTo = location.state?.from;
-      navigate(typeof returnTo === 'string' && returnTo.startsWith('/artisan/') && returnTo !== '/artisan/register'
-        ? returnTo : '/artisan/dashboard', { replace: true });
+      navigate(
+        typeof returnTo === 'string' && returnTo.startsWith('/artisan/') && returnTo !== '/artisan/register'
+          ? returnTo
+          : '/artisan/dashboard',
+        { replace: true }
+      );
     } catch {
-      setNotice({ text: t.common.error, ok: false });
+      setNotice({ code: 'SERVER_ERROR', ok: false });
     } finally {
       setBusy(false);
     }
@@ -77,8 +166,21 @@ export const ArtisanRegistration: React.FC = () => {
     <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31]"><ArrowLeft size={17} /> {t.nav.home}</Link>
     <div className="grid overflow-hidden rounded-3xl border bg-white shadow-xl lg:grid-cols-[.8fr_1.2fr]">
       <section className="bg-[#083d29] p-8 text-white"><ShieldCheck className="mb-5 text-emerald-300" size={38} /><h1 className="text-3xl font-black">{t.artisan.verifiedArtisanAccess}</h1><p className="mt-3 text-sm text-emerald-100">{t.artisan.adminVerificationNote}</p><div className="mt-8 space-y-4 text-sm"><p className="flex gap-3"><Image size={19} />{t.artisan.proofReq1}</p><p className="flex gap-3"><Clock size={19} />{t.artisan.proofReq2}</p><p className="flex gap-3"><CheckCircle2 size={19} />{t.artisan.proofReq3}</p></div></section>
-      <section className="p-6 sm:p-9"><div className="mb-6 grid grid-cols-2 rounded-xl bg-[#edf6f0] p-1"><button onClick={() => setMode('register')} className={`rounded-lg py-3 text-sm font-bold ${mode === 'register' ? 'bg-white shadow' : ''}`}>{t.artisan.newApplicationTab}</button><button onClick={() => setMode('login')} className={`rounded-lg py-3 text-sm font-bold ${mode === 'login' ? 'bg-white shadow' : ''}`}>{t.artisan.approvedLoginTab}</button></div>
-      {notice && <div className={`mb-4 rounded-xl border p-4 text-sm font-semibold ${notice.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`}>{notice.text}</div>}
+      <section className="p-6 sm:p-9">
+        <div className="mb-6 grid grid-cols-2 rounded-xl bg-[#edf6f0] p-1">
+          <button onClick={() => setMode('register')} className={`rounded-lg py-3 text-sm font-bold ${mode === 'register' ? 'bg-white shadow' : ''}`}>{t.artisan.newApplicationTab}</button>
+          <button onClick={() => setMode('login')} className={`rounded-lg py-3 text-sm font-bold ${mode === 'login' ? 'bg-white shadow' : ''}`}>{t.artisan.approvedLoginTab}</button>
+        </div>
+        {notice && (
+          <div
+            role="alert"
+            className={`mb-4 rounded-xl border p-4 text-sm font-semibold ${
+              notice.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'
+            }`}
+          >
+            {getNoticeMessage(notice)}
+          </div>
+        )}
       {mode === 'register' ? <form onSubmit={apply} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2">
         <input className={field} required placeholder={t.artisan.fullNamePlaceholder} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /><input className={field} required pattern="[0-9]{10}" placeholder={t.artisan.phonePlaceholder} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} />
         <input className={field} required type="email" placeholder={t.artisan.emailPlaceholder} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /><input className={field} required type="password" minLength={8} placeholder={t.artisan.passwordPlaceholder} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />

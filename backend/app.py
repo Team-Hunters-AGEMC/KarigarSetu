@@ -1195,6 +1195,7 @@ def create_artisan():
         return jsonify(
             {
                 "success": False,
+                "error_code": "REQUIRED_FIELDS_MISSING",
                 "message": "Required information is missing",
                 "missingFields": missing_fields,
             }
@@ -1204,12 +1205,24 @@ def create_artisan():
     proof_2 = request.files.get("proofImage2")
     proof_video = request.files.get("proofVideo")
     if not proof_1 or not proof_2 or not proof_video:
-        return jsonify({"success": False, "message": "দুটি ছবি এবং একটি ভিডিও অবশ্যই দিতে হবে"}), 400
+        return jsonify({
+            "success": False,
+            "error_code": "PROOF_FILES_REQUIRED",
+            "message": "Upload 2 photos of your crafts and 1 video of you making them.",
+        }), 400
     if not is_allowed_image(proof_1.filename) or not is_allowed_image(proof_2.filename):
-        return jsonify({"success": False, "message": "ছবির format PNG, JPG অথবা WEBP হতে হবে"}), 400
+        return jsonify({
+            "success": False,
+            "error_code": "INVALID_FILE_FORMAT",
+            "message": "Photos must be PNG, JPG, or WEBP.",
+        }), 400
     video_ext = proof_video.filename.rsplit(".", 1)[-1].lower() if "." in proof_video.filename else ""
     if video_ext not in ALLOWED_VIDEO_EXTENSIONS:
-        return jsonify({"success": False, "message": "ভিডিও MP4, WEBM অথবা MOV হতে হবে"}), 400
+        return jsonify({
+            "success": False,
+            "error_code": "INVALID_FILE_FORMAT",
+            "message": "Video must be MP4, WEBM, or MOV.",
+        }), 400
 
     def save_proof(upload, folder, resource_type):
         if not os.environ.get("CLOUDINARY_URL"):
@@ -1278,7 +1291,8 @@ def create_artisan():
         return jsonify(
             {
                 "success": True,
-                "message": "আবেদন Admin-এর কাছে পাঠানো হয়েছে। অনুমোদনের পরে login করতে পারবেন।",
+                "error_code": "APPLICATION_SUBMITTED",
+                "message": "Application submitted to Admin. You can log in once approved.",
                 "artisanId": artisan_id,
                 "status": "pending",
             }
@@ -1288,6 +1302,7 @@ def create_artisan():
         return jsonify(
             {
                 "success": False,
+                "error_code": "PHONE_ALREADY_REGISTERED",
                 "message": "This mobile number is already registered",
             }
         ), 409
@@ -1336,6 +1351,7 @@ def login_artisan():
         return jsonify(
             {
                 "success": False,
+                "error_code": "INVALID_PHONE",
                 "message": "Enter a valid 10-digit mobile number",
             }
         ), 400
@@ -1366,20 +1382,39 @@ def login_artisan():
         return jsonify(
             {
                 "success": False,
-                "message": "এই mobile number-এ কোনো artisan profile পাওয়া যায়নি",
+                "error_code": "ARTISAN_NOT_FOUND",
+                "message": "No artisan account was found with this mobile number",
             }
         ), 404
 
     if artisan["verification_status"] != "approved":
-        message = "আপনার আবেদন এখনও Admin-এর অনুমোদনের অপেক্ষায় আছে"
-        if artisan["verification_status"] == "rejected":
-            message = "আপনার Artisan আবেদন অনুমোদিত হয়নি"
-        elif artisan["verification_status"] == "banned":
-            message = "আপনার Artisan account Admin দ্বারা ban করা হয়েছে"
-        return jsonify({"success": False, "status": artisan["verification_status"], "message": message}), 403
+        status = artisan["verification_status"]
+        if status == "banned":
+            error_code = "ACCOUNT_BANNED"
+            message = "This artisan account has been banned. Please contact the administrator."
+        elif status == "rejected":
+            error_code = "ACCOUNT_REJECTED"
+            message = "Your artisan application was not approved by Admin."
+        elif status == "pending":
+            error_code = "PENDING_APPROVAL"
+            message = "Your application is still awaiting Admin approval."
+        else:
+            error_code = "NOT_APPROVED"
+            message = "Only Admin-approved artisans can sign in."
+
+        return jsonify({
+            "success": False,
+            "status": status,
+            "error_code": error_code,
+            "message": message,
+        }), 403
 
     if not artisan["password_hash"] or not check_password_hash(artisan["password_hash"], password):
-        return jsonify({"success": False, "message": "Phone number অথবা password ভুল"}), 401
+        return jsonify({
+            "success": False,
+            "error_code": "INVALID_PASSWORD",
+            "message": "Incorrect password. Please try again.",
+        }), 401
 
     session.clear()
     session.permanent = True
