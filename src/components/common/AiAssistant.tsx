@@ -17,6 +17,7 @@ import {
 import { useLanguage } from '../../i18n/LanguageContext';
 import { apiUrl } from '../../services/apiConfig';
 import { VoiceInputButton } from './VoiceInputButton';
+import { AiAssistantAtmosphere } from './AiAssistantAtmosphere';
 
 const aiAssistantLogo = new URL('../../assets/ai-assistant-logo.png', import.meta.url).href;
 
@@ -246,12 +247,15 @@ export const AiAssistant: React.FC = () => {
       {isOpen && (
         <div
           ref={panelRef}
-          className="w-[92vw] sm:w-[410px] h-[580px] max-h-[85vh] bg-[#051822] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_30px_rgba(6,182,212,0.2)] border border-cyan-500/30 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200 backdrop-blur-xl"
+          className="relative w-[92vw] sm:w-[420px] h-[590px] max-h-[85vh] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(6,182,212,0.3)] border border-cyan-400/40 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200"
         >
-          {/* Header */}
-          <div className="bg-[#072430]/95 backdrop-blur-md border-b border-cyan-500/25 text-white px-4 py-3.5 flex items-center justify-between shadow-sm relative">
+          {/* Deep Navy / Dark Teal 3D Wave Mesh & Glowing Particles Environment (Reference 1) */}
+          <AiAssistantAtmosphere />
+
+          {/* Header - Dark Glass with Glowing Cyan Logo */}
+          <div className="relative z-10 bg-[#041a26]/90 backdrop-blur-md border-b border-cyan-500/25 text-white px-4 py-3.5 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-[#092b3a] border-2 border-cyan-400/70 p-0.5 shadow-[0_0_12px_rgba(6,182,212,0.4)] shrink-0 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-[#092b3a] border-2 border-cyan-400 p-0.5 shadow-[0_0_14px_rgba(34,211,238,0.55)] shrink-0 flex items-center justify-center">
                 <img
                   src={aiAssistantLogo}
                   alt="KarigarSetu AI"
@@ -283,29 +287,27 @@ export const AiAssistant: React.FC = () => {
             </div>
           </div>
 
-          {/* Chat Messages Body - Deep Navy & Glowing Teal Wave Pattern */}
-          <div
-            className="flex-1 overflow-y-auto p-4 space-y-3.5 relative"
-            style={{
-              backgroundColor: '#061b26',
-              backgroundImage: `radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.16), transparent 55%), radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.13), transparent 55%), url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 60 Q 30 40, 60 60 T 120 60' stroke='%2306b6d4' stroke-width='0.6' fill='none' stroke-opacity='0.08'/%3E%3Cpath d='M0 80 Q 30 60, 60 80 T 120 80' stroke='%2310b981' stroke-width='0.6' fill='none' stroke-opacity='0.06'/%3E%3C/svg%3E")`,
-              backgroundSize: 'cover, cover, 120px 120px',
-            }}
-          >
+          {/* Chat Messages Body - Overlaid on Dark Atmosphere */}
+          <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3.5 bg-transparent">
             {/* Greeting Card if no messages */}
             {messages.length === 0 && (
               <div className="space-y-4">
-                <div className="bg-[#082939]/80 border border-cyan-500/25 p-4 rounded-2xl shadow-lg text-cyan-50 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 text-cyan-300 font-semibold text-xs mb-1.5">
-                    <img src={aiAssistantLogo} alt="AI" className="w-5 h-5 rounded-full object-cover shrink-0 border border-cyan-400/40" />
-                    <span>KarigarSetu Smart Guide</span>
+                <div className="bg-[#062433]/75 border border-cyan-500/30 p-4 rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.45)] text-cyan-50 backdrop-blur-md">
+                  <div className="flex items-center justify-between text-cyan-300 font-semibold text-xs mb-2">
+                    <div className="flex items-center gap-2">
+                      <img src={aiAssistantLogo} alt="AI" className="w-5 h-5 rounded-full object-cover shrink-0 border border-cyan-400/50" />
+                      <span className="font-bold tracking-wide">KarigarSetu Smart Guide</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/30 text-cyan-300">
+                      AI Verified
+                    </span>
                   </div>
                   <p className="text-xs sm:text-sm leading-relaxed text-slate-200">{welcomeText}</p>
                 </div>
 
                 {/* Quick Prompts */}
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider font-semibold text-cyan-300/80 mb-2 flex items-center gap-1 px-1">
+                  <p className="text-[11px] uppercase tracking-wider font-semibold text-cyan-300/85 mb-2 flex items-center gap-1 px-1">
                     <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
                     {t.aiAssistant.suggestedQuestions}
                   </p>
@@ -315,7 +317,7 @@ export const AiAssistant: React.FC = () => {
                         key={idx}
                         type="button"
                         onClick={() => handleSendMessage(pill)}
-                        className="text-left text-xs bg-[#092b3a]/75 hover:bg-[#0d3b50] text-cyan-100 hover:text-white px-3.5 py-2.5 rounded-xl border border-cyan-500/25 hover:border-cyan-400/50 transition-all shadow-sm font-medium cursor-pointer"
+                        className="text-left text-xs bg-[#082a3c]/75 hover:bg-[#0c3a52] text-cyan-100 hover:text-white px-3.5 py-2.5 rounded-xl border border-cyan-500/30 hover:border-cyan-400/60 transition-all shadow-sm font-medium cursor-pointer backdrop-blur-xs"
                       >
                         {pill}
                       </button>
@@ -340,8 +342,8 @@ export const AiAssistant: React.FC = () => {
                 <div
                   className={`relative group max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                     msg.sender === 'user'
-                      ? 'bg-gradient-to-r from-[#0d6e53] to-[#0a5a44] text-white border border-emerald-400/30 rounded-br-xs shadow-md'
-                      : 'bg-[#092937]/90 text-slate-100 border border-cyan-500/25 rounded-bl-xs shadow-lg backdrop-blur-xs'
+                      ? 'bg-gradient-to-r from-[#0d6e53] to-[#0a5c46] text-white border border-emerald-400/40 rounded-br-xs shadow-[0_4px_16px_rgba(13,110,83,0.35)]'
+                      : 'bg-[#062332]/85 text-cyan-50 border border-cyan-400/30 rounded-bl-xs shadow-[0_4px_16px_rgba(0,0,0,0.5)] backdrop-blur-md'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.text}</div>
@@ -396,7 +398,7 @@ export const AiAssistant: React.FC = () => {
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-[#092b3a] p-0.5 flex items-center justify-center shrink-0 shadow-2xs border border-cyan-400/50 animate-pulse">
                   <img src={aiAssistantLogo} alt="AI" className="w-full h-full object-cover rounded-full" />
                 </div>
-                <div className="bg-[#092937]/90 text-cyan-200 border border-cyan-500/25 px-3.5 py-2 rounded-2xl rounded-bl-xs text-xs flex items-center gap-2 shadow-lg backdrop-blur-xs">
+                <div className="bg-[#062433]/90 text-cyan-200 border border-cyan-500/30 px-3.5 py-2 rounded-2xl rounded-bl-xs text-xs flex items-center gap-2 shadow-lg backdrop-blur-xs">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
                   <span>{t.aiAssistant.thinking}</span>
                 </div>
@@ -422,13 +424,13 @@ export const AiAssistant: React.FC = () => {
 
           {/* Quick Prompt Pills when in conversation */}
           {messages.length > 0 && !isLoading && (
-            <div className="px-3 py-1.5 bg-[#061e2b] border-t border-cyan-500/20 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
+            <div className="relative z-10 px-3 py-1.5 bg-[#031520]/80 border-t border-cyan-500/20 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5 backdrop-blur-xs">
               {suggestedPills.slice(0, 3).map((pill, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSendMessage(pill)}
-                  className="inline-block text-[11px] bg-[#0a2e3f] hover:bg-[#0f3f56] text-cyan-200 hover:text-white px-2.5 py-1 rounded-full border border-cyan-500/30 transition-colors shadow-2xs cursor-pointer"
+                  className="inline-block text-[11px] bg-[#07293b]/85 hover:bg-[#0c3950] text-cyan-200 hover:text-white px-2.5 py-1 rounded-full border border-cyan-500/30 transition-colors shadow-2xs cursor-pointer"
                 >
                   {pill}
                 </button>
@@ -442,7 +444,7 @@ export const AiAssistant: React.FC = () => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-2.5 sm:p-3 bg-[#051c27] border-t border-cyan-500/20 flex items-center gap-1.5 sm:gap-2"
+            className="relative z-10 p-2.5 sm:p-3 bg-[#031622]/95 border-t border-cyan-500/25 flex items-center gap-1.5 sm:gap-2 backdrop-blur-md"
           >
             <input
               ref={inputRef}
@@ -452,7 +454,7 @@ export const AiAssistant: React.FC = () => {
               placeholder={t.aiAssistant.askAnything}
               disabled={isLoading}
               maxLength={1000}
-              className="min-w-0 flex-1 bg-[#092b3a] hover:bg-[#0c3345] focus:bg-[#0c374b] text-white placeholder-slate-400 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-cyan-500/30 focus:border-cyan-400 focus:outline-none transition-colors"
+              className="min-w-0 flex-1 bg-[#062433] hover:bg-[#082b3d] focus:bg-[#0a3348] text-white placeholder-cyan-200/40 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-cyan-500/35 focus:border-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-300/40 transition-colors"
             />
             <VoiceInputButton
               theme="dark"
@@ -465,7 +467,7 @@ export const AiAssistant: React.FC = () => {
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}
-              className="w-9 h-9 rounded-xl bg-gradient-to-r from-[#0ea5e9] to-[#0d9488] hover:from-[#38bdf8] hover:to-[#14b8a6] disabled:opacity-30 text-white flex items-center justify-center transition-all shadow-[0_0_12px_rgba(14,165,233,0.35)] shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              className="w-9 h-9 rounded-xl bg-gradient-to-r from-[#06b6d4] to-[#0d9488] hover:from-[#22d3ee] hover:to-[#14b8a6] disabled:opacity-30 text-white flex items-center justify-center transition-all shadow-[0_0_14px_rgba(6,182,212,0.4)] shrink-0 cursor-pointer disabled:cursor-not-allowed"
               title={t.aiAssistant.send}
             >
               {isLoading ? (

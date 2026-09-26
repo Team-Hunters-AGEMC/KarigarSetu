@@ -4,6 +4,7 @@ import { ArrowLeft, MessageCircle, Send, UserRound, MoreVertical, Trash2, Ban, S
 import { API_BASE } from '../services/apiConfig';
 import { useLanguage } from '../i18n/LanguageContext';
 import { VoiceInputButton } from '../components/common/VoiceInputButton';
+import { ArtisanRoomDecorations } from '../components/common/ArtisanRoomDecorations';
 
 type Conversation = {
   customer_id: number;
@@ -200,8 +201,11 @@ export const ArtisanMessages: React.FC = () => {
   });
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] px-4 py-8 text-[#173b2d]">
-      <div className="mx-auto max-w-6xl">
+    <main className="relative min-h-screen bg-[#faf5ed] px-4 py-8 text-[#173b2d] overflow-x-hidden">
+      {/* Handcrafted Studio Environment (Hanging lamp, potted plant, pottery, sunlight) */}
+      <ArtisanRoomDecorations />
+
+      <div className="relative z-10 mx-auto max-w-6xl">
         <Link
           to="/artisan/dashboard"
           className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31] hover:underline"
@@ -210,7 +214,7 @@ export const ArtisanMessages: React.FC = () => {
           {t.artisan.dashboardTitle}
         </Link>
 
-        <div className="grid overflow-hidden rounded-3xl border border-[#e6dfd1] bg-[#fbf9f5] shadow-md md:grid-cols-[330px_1fr] min-h-[640px]">
+        <div className="grid overflow-hidden rounded-3xl border border-[#e6dfd1] bg-[#fbf9f5]/95 backdrop-blur-xs shadow-xl md:grid-cols-[330px_1fr] min-h-[640px]">
           <aside className="border-b border-[#e9e3d6] bg-[#f7f3eb] p-4 md:border-b-0 md:border-r md:border-[#e9e3d6]">
             <div className="mb-3.5 flex items-center justify-between border-b border-[#e6dfd1] pb-3">
               <h1 className="flex items-center gap-2 font-serif font-bold text-[#16382a] text-lg">
@@ -334,6 +338,56 @@ export const ArtisanMessages: React.FC = () => {
                     backgroundSize: '24px 24px, 120px 120px',
                   }}
                 >
+                  {/* Canvas Corner Leaf/Botanical Branch Motif (Reference 2) */}
+                  <svg
+                    viewBox="0 0 100 100"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="pointer-events-none absolute top-1 left-1 w-24 sm:w-32 h-24 sm:h-32 opacity-25 z-0"
+                  >
+                    <path d="M0 0 C25 20, 50 55, 75 90" stroke="#71866e" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M20 18 C10 24, 12 36, 26 38 C34 34, 30 22, 20 18 Z" fill="#849b81" />
+                    <path d="M38 40 C28 48, 30 60, 44 62 C52 56, 48 44, 38 40 Z" fill="#71876e" />
+                    <path d="M56 64 C48 72, 50 84, 62 85 C70 80, 66 68, 56 64 Z" fill="#849b81" />
+                    <circle cx="28" cy="22" r="2" fill="#d97706" opacity="0.7" />
+                    <circle cx="46" cy="45" r="2" fill="#d97706" opacity="0.7" />
+                  </svg>
+
+                  {/* Canvas Corner Indian Geometric / Diamond Block Motif (Reference 2) */}
+                  <svg
+                    viewBox="0 0 80 80"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="pointer-events-none absolute top-2 right-2 w-16 sm:w-20 h-16 sm:h-20 opacity-20 z-0"
+                  >
+                    <path d="M40 5 L75 40 L40 75 L5 40 Z" stroke="#8d7456" strokeWidth="1" strokeDasharray="2 2" fill="none" />
+                    <path d="M40 18 L62 40 L40 62 L18 40 Z" stroke="#8d7456" strokeWidth="1" fill="none" />
+                    <circle cx="40" cy="40" r="4" fill="#c46a36" opacity="0.6" />
+                    <circle cx="40" cy="18" r="2" fill="#8d7456" />
+                    <circle cx="62" cy="40" r="2" fill="#8d7456" />
+                    <circle cx="40" cy="62" r="2" fill="#8d7456" />
+                    <circle cx="18" cy="40" r="2" fill="#8d7456" />
+                  </svg>
+
+                  {/* Canvas Bottom-Left Terracotta Pot & Clay Bowl (Reference 2) */}
+                  <svg
+                    viewBox="0 0 110 110"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="pointer-events-none absolute bottom-3 left-3 w-24 sm:w-28 h-24 sm:h-28 opacity-25 z-0"
+                  >
+                    <path
+                      d="M45 40 C45 28, 65 28, 65 40 C78 55, 82 85, 70 98 C58 102, 42 102, 30 98 C18 85, 22 55, 45 40 Z"
+                      fill="#d47945"
+                    />
+                    <ellipse cx="55" cy="38" rx="12" ry="4" fill="#e89665" />
+                    <ellipse cx="55" cy="37" rx="9" ry="2.5" fill="#a44b1d" />
+                    <path d="M30 65 Q 55 72 80 65" stroke="#f6c09b" strokeWidth="1.2" fill="none" opacity="0.8" />
+                    <path d="M32 78 Q 55 85 78 78" stroke="#f6c09b" strokeWidth="1.2" fill="none" opacity="0.8" />
+                    <ellipse cx="78" cy="94" rx="22" ry="7" fill="#b85f2d" />
+                    <ellipse cx="78" cy="92" rx="19" ry="5" fill="#883b13" />
+                  </svg>
+
                   {messages.length === 0 ? (
                     <div className="pt-16 pb-12 text-center flex flex-col items-center justify-center">
                       {/* Dual overlapping chat bubbles with sparkles (Reference Image 1) */}
