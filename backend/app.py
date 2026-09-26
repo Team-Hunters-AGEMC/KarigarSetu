@@ -495,6 +495,10 @@ def initialize_database():
             sender_role TEXT NOT NULL,
             body TEXT NOT NULL,
             is_read INTEGER NOT NULL DEFAULT 0,
+            deleted_for_customer INTEGER NOT NULL DEFAULT 0,
+            deleted_for_artisan INTEGER NOT NULL DEFAULT 0,
+            deleted_for_everyone INTEGER NOT NULL DEFAULT 0,
+            deleted_at TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (customer_id) REFERENCES customers (id),
             FOREIGN KEY (artisan_id) REFERENCES artisans (id),
@@ -502,6 +506,18 @@ def initialize_database():
         )
         """
     )
+
+    message_columns = {row["name"] for row in connection.execute("PRAGMA table_info(marketplace_messages)").fetchall()}
+    message_migrations = {
+        "deleted_for_customer": "INTEGER NOT NULL DEFAULT 0",
+        "deleted_for_artisan": "INTEGER NOT NULL DEFAULT 0",
+        "deleted_for_everyone": "INTEGER NOT NULL DEFAULT 0",
+        "deleted_at": "TEXT",
+    }
+    for column, definition in message_migrations.items():
+        if column not in message_columns:
+            connection.execute(f"ALTER TABLE marketplace_messages ADD COLUMN {column} {definition}")
+
 
     connection.execute(
         """
@@ -1836,15 +1852,24 @@ def require_message_user():
     return None, None
 
 
-def message_payload(row):
+def message_payload(row, viewer_role=None):
+    is_deleted_everyone = bool(row["deleted_for_everyone"]) if "deleted_for_everyone" in row.keys() else False
+    sender_role = row["sender_role"]
+    body = row["body"]
+    
+    if is_deleted_everyone:
+        body = ""  # Replaced on client by translation placeholder
+
     return {
         "id": row["id"],
         "customer_id": row["customer_id"],
         "artisan_id": row["artisan_id"],
         "product_id": row["product_id"],
-        "sender_role": row["sender_role"],
-        "body": row["body"],
+        "sender_role": sender_role,
+        "body": body,
         "is_read": bool(row["is_read"]),
+        "is_deleted_everyone": is_deleted_everyone,
+        "deleted_at": row["deleted_at"] if "deleted_at" in row.keys() else None,
         "created_at": row["created_at"],
         "customer_name": row["customer_name"],
         "artisan_name": row["artisan_name"],
@@ -1872,14 +1897,15 @@ def get_messages():
 
     connection = get_database()
     try:
-        query = """
+        delete_filter = "m.deleted_for_customer = 0" if role == "customer" else "m.deleted_for_artisan = 0"
+        query = f"""
             SELECT m.*, c.name AS customer_name, a.name AS artisan_name,
                    p.product_name AS product_name
             FROM marketplace_messages m
             JOIN customers c ON c.id = m.customer_id
             JOIN artisans a ON a.id = m.artisan_id
             LEFT JOIN products p ON p.id = m.product_id
-            WHERE m.customer_id = ? AND m.artisan_id = ?
+            WHERE m.customer_id = ? AND m.artisan_id = ? AND {delete_filter}
         """
         values = [customer_id, artisan_id]
         if product_id:
@@ -1895,7 +1921,7 @@ def get_messages():
             (customer_id, artisan_id, role),
         )
         connection.commit()
-        return jsonify({"success": True, "data": [message_payload(row) for row in rows]})
+        return jsonify({"success": True, "data": [message_payload(row, role) for row in rows]})
     finally:
         connection.close()
 
@@ -1916,7 +1942,8 @@ def get_messages_inbox():
                 JOIN customers c ON c.id = m.customer_id
                 JOIN artisans a ON a.id = m.artisan_id
                 LEFT JOIN products p ON p.id = m.product_id
-                WHERE m.customer_id = ? ORDER BY m.created_at DESC, m.id DESC
+                WHERE m.customer_id = ? AND m.deleted_for_customer = 0
+                ORDER BY m.created_at DESC, m.id DESC
                 """, (user_id,)
             ).fetchall()
         else:
@@ -1927,7 +1954,8 @@ def get_messages_inbox():
                 JOIN customers c ON c.id = m.customer_id
                 JOIN artisans a ON a.id = m.artisan_id
                 LEFT JOIN products p ON p.id = m.product_id
-                WHERE m.artisan_id = ? ORDER BY m.created_at DESC, m.id DESC
+                WHERE m.artisan_id = ? AND m.deleted_for_artisan = 0
+                ORDER BY m.created_at DESC, m.id DESC
                 """, (user_id,)
             ).fetchall()
 
@@ -1936,7 +1964,7 @@ def get_messages_inbox():
             key = f"{row['customer_id']}:{row['artisan_id']}:{row['product_id'] or 0}"
             item = conversations.get(key)
             if item is None:
-                item = message_payload(row)
+                item = message_payload(row, role)
                 item["unread_count"] = 0
                 conversations[key] = item
             if row["sender_role"] != role and not row["is_read"]:
@@ -1992,9 +2020,84 @@ def send_message():
             LEFT JOIN products p ON p.id = m.product_id WHERE m.id = ?
             """, (message_id,)
         ).fetchone()
-        return jsonify({"success": True, "data": message_payload(row)}), 201
+        return jsonify({"success": True, "data": message_payload(row, role)}), 201
     finally:
         connection.close()
+
+
+@app.delete("/api/messages/<int:message_id>")
+def delete_message(message_id):
+    role, user_id = require_message_user()
+    if role is None:
+        return jsonify({"success": False, "message": "Please log in to delete messages"}), 401
+
+    scope = request.args.get("scope", "me").strip().lower()
+    if scope not in {"me", "everyone"}:
+        return jsonify({"success": False, "message": "Invalid deletion scope. Use 'me' or 'everyone'"}), 400
+
+    connection = get_database()
+    try:
+        row = connection.execute(
+            """
+            SELECT * FROM marketplace_messages WHERE id = ?
+            """, (message_id,)
+        ).fetchone()
+
+        if row is None:
+            return jsonify({"success": False, "message": "Message not found"}), 404
+
+        # Verify access to this conversation
+        if role == "customer" and row["customer_id"] != user_id:
+            return jsonify({"success": False, "message": "Unauthorized"}), 403
+        if role == "artisan" and row["artisan_id"] != user_id:
+            return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        if scope == "everyone":
+            # Only the original sender can delete for everyone
+            if row["sender_role"] != role:
+                return jsonify({"success": False, "message": "Only the sender can delete this message for everyone"}), 403
+
+            connection.execute(
+                """
+                UPDATE marketplace_messages
+                SET deleted_for_everyone = 1, deleted_at = ?, body = ''
+                WHERE id = ?
+                """, (now_str, message_id)
+            )
+        else:
+            # Delete for Me: hide only for the current user
+            if role == "customer":
+                connection.execute(
+                    """
+                    UPDATE marketplace_messages
+                    SET deleted_for_customer = 1
+                    WHERE id = ?
+                    """, (message_id,)
+                )
+            else:
+                connection.execute(
+                    """
+                    UPDATE marketplace_messages
+                    SET deleted_for_artisan = 1
+                    WHERE id = ?
+                    """, (message_id,)
+                )
+
+        connection.commit()
+        return jsonify({
+            "success": True,
+            "message": "Message deleted successfully",
+            "data": {
+                "id": message_id,
+                "scope": scope,
+                "deleted_for_everyone": scope == "everyone"
+            }
+        })
+    finally:
+        connection.close()
+
 
 
 def custom_request_payload(row):

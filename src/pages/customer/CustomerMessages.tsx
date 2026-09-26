@@ -1,16 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, MessageCircle, Send, Store, UserRound } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Store, UserRound, MoreVertical, Trash2, Ban } from 'lucide-react';
 import { MarketplaceNavbar } from '../../components/marketplace/MarketplaceNavbar';
 import { API_BASE } from '../../services/apiConfig';
 import { getCurrentCustomer } from '../../services/customerAuth';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 type ChatMessage = {
-  id: number; body: string; sender_role: 'customer' | 'artisan'; created_at: string;
-  artisan_name?: string; product_name?: string;
+  id: number;
+  body: string;
+  sender_role: 'customer' | 'artisan';
+  created_at: string;
+  is_deleted_everyone?: boolean;
+  artisan_name?: string;
+  product_name?: string;
 };
 
 export const CustomerMessages: React.FC = () => {
+  const { t } = useLanguage();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const artisanId = Number(params.get('artisan_id'));
@@ -23,7 +30,17 @@ export const CustomerMessages: React.FC = () => {
   const [error, setError] = useState('');
   const [artisanFallbackName, setArtisanFallbackName] = useState(artisanNameParam);
 
+  // Message Action Menu & Deletion Modal State
+  const [activeMenuMessageId, setActiveMenuMessageId] = useState<number | null>(null);
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<ChatMessage | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   const title = useMemo(() => messages[0]?.artisan_name || artisanFallbackName || 'Artisan', [messages, artisanFallbackName]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const getHeaders = (extra: Record<string, string> = {}) => {
     const customer = getCurrentCustomer();
@@ -53,7 +70,6 @@ export const CustomerMessages: React.FC = () => {
       if (!response.ok || !result.success) throw new Error(result.message || 'Messages could not be loaded');
       setMessages(result.data || []);
       if (!artisanFallbackName && (!result.data || result.data.length === 0)) {
-        // Attempt to fetch artisan name if no messages yet
         fetch(`${API_BASE}/api/artisans/public/${artisanId}`)
           .then((res) => res.json())
           .then((resData) => {
@@ -82,6 +98,18 @@ export const CustomerMessages: React.FC = () => {
     load();
   }, [artisanId, productId]);
 
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages, loading]);
+
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuMessageId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const send = async (event: React.FormEvent) => {
     event.preventDefault();
     const body = draft.trim();
@@ -106,69 +134,187 @@ export const CustomerMessages: React.FC = () => {
     }
   };
 
+  const handleDeleteForMe = async (messageId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMenuMessageId(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/messages/${messageId}?scope=me`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: getHeaders(),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Failed to delete message');
+      setMessages((old) => old.filter((m) => m.id !== messageId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete message');
+    }
+  };
+
+  const confirmDeleteForEveryone = async () => {
+    if (!deleteConfirmTarget) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/messages/${deleteConfirmTarget.id}?scope=everyone`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: getHeaders(),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Failed to delete for everyone');
+      setMessages((old) =>
+        old.map((m) =>
+          m.id === deleteConfirmTarget.id ? { ...m, body: '', is_deleted_everyone: true } : m
+        )
+      );
+      setDeleteConfirmTarget(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete for everyone');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#173b2d]">
+    <div className="min-h-screen bg-[#faf8f5] text-[#173b2d]">
       <MarketplaceNavbar searchQuery="" onSearchChange={() => {}} selectedCategory="All" onSelectCategory={() => {}} />
       <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
         <Link
           to={productId ? `/marketplace/products/${productId}` : '/customer/custom-requests'}
           className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#0b5538] hover:underline"
         >
-          <ArrowLeft size={18} /> {productId ? 'Back to product' : 'Back to Custom Requests'}
+          <ArrowLeft size={18} /> {productId ? t.productDetails?.backToMarketplace || 'Back to product' : t.customRequests?.title || 'Back to Custom Requests'}
         </Link>
-        <section className="overflow-hidden rounded-3xl border border-[#dce9df] bg-white shadow-sm">
-          <header className="flex items-center gap-3 border-b border-[#e8f0ea] bg-[#f2f8f3] p-5">
-            <div className="grid h-11 w-11 place-items-center rounded-full bg-[#0b5538] text-white">
+        <section className="overflow-hidden rounded-3xl border border-[#dce9df] bg-white shadow-md">
+          {/* Header */}
+          <header className="flex items-center gap-3.5 border-b border-[#e5ede7] bg-gradient-to-r from-[#f0f7f2] via-[#f7faf8] to-[#fbfdfb] p-5">
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#0b5538] text-white shadow-xs">
               <Store size={21} />
             </div>
             <div>
-              <h1 className="font-extrabold text-[#0b5538]">Message {title}</h1>
-              <p className="text-xs text-slate-500">
+              <h1 className="text-base font-extrabold text-[#0b5538] sm:text-lg">{t.productDetails?.messageArtisan || 'Message'} {title}</h1>
+              <p className="text-xs font-medium text-slate-500">
                 {messages[0]?.product_name
-                  ? `About: ${messages[0].product_name}`
-                  : 'Ask about this handmade craft, customizations, and orders'}
+                  ? `${t.productDetails?.specifications || 'About'}: ${messages[0].product_name}`
+                  : t.productDetails?.artisanCraftsmanship || 'Ask about this handmade craft, customizations, and orders'}
               </p>
             </div>
           </header>
-          <div className="h-[430px] space-y-3 overflow-y-auto bg-[#fcfdfb] p-5">
+
+          {/* Chat Canvas with Warm Subtle Background */}
+          <div className="relative h-[460px] space-y-3.5 overflow-y-auto bg-[#fbf9f6] p-4 sm:p-6" style={{ backgroundImage: 'radial-gradient(#e5ded6 0.75px, transparent 0.75px)', backgroundSize: '16px 16px' }}>
             {loading ? (
-              <p className="pt-16 text-center text-sm text-slate-500">Opening conversation…</p>
+              <p className="pt-20 text-center text-sm font-medium text-slate-500">Opening conversation…</p>
             ) : messages.length === 0 ? (
-              <div className="pt-16 text-center">
-                <MessageCircle className="mx-auto mb-3 text-[#0b5538]" />
-                <p className="font-bold">Start a conversation</p>
-                <p className="mt-1 text-sm text-slate-500">
+              <div className="pt-20 text-center">
+                <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-full bg-[#ebf5ee] text-[#0b5538]">
+                  <MessageCircle size={26} />
+                </div>
+                <p className="font-extrabold text-[#173b2d]">{t.customRequests?.chatWithArtisan || 'Start a conversation'}</p>
+                <p className="mx-auto mt-1.5 max-w-sm text-xs text-slate-500">
                   Ask the artisan about material, size, delivery, or custom work.
                 </p>
               </div>
             ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender_role === 'customer' ? 'justify-end' : 'justify-start'}`}
-                >
+              messages.map((message) => {
+                const isMe = message.sender_role === 'customer';
+                const isDeletedEveryone = Boolean(message.is_deleted_everyone);
+
+                return (
                   <div
-                    className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm ${
-                      message.sender_role === 'customer'
-                        ? 'rounded-br-md bg-[#0b5538] text-white'
-                        : 'rounded-bl-md bg-[#eaf4ec] text-[#173b2d]'
-                    }`}
+                    key={message.id}
+                    className={`group relative flex ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
-                    <p>{message.body}</p>
-                    <p
-                      className={`mt-1 text-[10px] ${
-                        message.sender_role === 'customer' ? 'text-emerald-100' : 'text-slate-400'
+                    <div
+                      className={`relative max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-xs transition-all ${
+                        isMe
+                          ? isDeletedEveryone
+                            ? 'rounded-br-sm border border-[#e2ece5] bg-[#f0f4f1] text-slate-500 italic'
+                            : 'rounded-br-sm bg-[#0b5538] text-white'
+                          : isDeletedEveryone
+                          ? 'rounded-bl-sm border border-[#edebe8] bg-[#f4f2ef] text-slate-500 italic'
+                          : 'rounded-bl-sm border border-[#e4ede6] bg-white text-[#173b2d]'
                       }`}
                     >
-                      {new Date(message.created_at).toLocaleString()}
-                    </p>
+                      {/* Message Body or Placeholder */}
+                      <div className="flex items-start gap-2">
+                        {isDeletedEveryone && <Ban size={14} className="mt-0.5 shrink-0 opacity-60" />}
+                        <p className="leading-relaxed break-words">
+                          {isDeletedEveryone
+                            ? isMe
+                              ? t.chat?.youDeletedMessage || 'You deleted this message'
+                              : t.chat?.thisMessageDeleted || 'This message was deleted'
+                            : message.body}
+                        </p>
+                      </div>
+
+                      {/* Timestamp & Status */}
+                      <div className="mt-1 flex items-center justify-between gap-3 text-[10px]">
+                        <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-slate-400'}>
+                          {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
+                      {/* Contextual Action Button (Three Dots) */}
+                      {!isDeletedEveryone && (
+                        <div className={`absolute top-2 ${isMe ? '-left-8' : '-right-8'} opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100`}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuMessageId(activeMenuMessageId === message.id ? null : message.id);
+                            }}
+                            className="rounded-full bg-white/90 p-1 text-slate-500 shadow-sm hover:bg-white hover:text-slate-800"
+                            title="Message options"
+                          >
+                            <MoreVertical size={15} />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {activeMenuMessageId === message.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className={`absolute z-30 top-7 ${isMe ? 'left-0' : 'right-0'} w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-xs`}
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteForMe(message.id, e)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50"
+                              >
+                                <Trash2 size={14} className="text-slate-500" />
+                                <span>{t.chat?.deleteForMe || 'Delete for Me'}</span>
+                              </button>
+
+                              {isMe && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuMessageId(null);
+                                    setDeleteConfirmTarget(message);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-red-600 hover:bg-red-50"
+                                >
+                                  <Ban size={14} className="text-red-500" />
+                                  <span>{t.chat?.deleteForEveryone || 'Delete for Everyone'}</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
+            <div ref={messagesEndRef} />
           </div>
+
           {error && <p className="mx-5 my-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{error}</p>}
-          <form onSubmit={send} className="flex gap-3 border-t border-[#e8f0ea] p-4">
+
+          {/* Message Input Footer */}
+          <form onSubmit={send} className="flex items-center gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3.5 sm:p-4">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#edf6f0] text-[#0b5538]">
               <UserRound size={18} />
             </div>
@@ -177,19 +323,57 @@ export const CustomerMessages: React.FC = () => {
               onChange={(e) => setDraft(e.target.value)}
               maxLength={1500}
               placeholder="Write your message…"
-              className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] px-4 text-sm outline-none focus:border-[#0b5538]"
+              className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
             />
             <button
               disabled={!draft.trim() || sending}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0b5538] px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0b5538] px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50"
             >
-              <Send size={17} />
-              {sending ? 'Sending…' : 'Send'}
+              <Send size={16} />
+              <span className="hidden sm:inline">{sending ? 'Sending…' : 'Send'}</span>
             </button>
           </form>
         </section>
       </main>
+
+      {/* Confirmation Modal for Delete for Everyone */}
+      {deleteConfirmTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-3xl border border-[#dce9df] bg-white p-6 shadow-2xl space-y-4">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-red-50 text-red-600">
+              <Trash2 size={24} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-extrabold text-[#173b2d]">
+                {t.chat?.deleteForEveryoneConfirmTitle || 'Delete this message for everyone?'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {t.chat?.deleteForEveryoneConfirmDesc || 'This message will be removed for both you and the other participant.'}
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteConfirmTarget(null)}
+                className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+              >
+                {t.chat?.cancel || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={confirmDeleteForEveryone}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? t.chat?.deleting || 'Deleting...' : t.chat?.delete || 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
 

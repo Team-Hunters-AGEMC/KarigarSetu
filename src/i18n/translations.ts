@@ -467,6 +467,18 @@ export const translations = {
       replyPlaceholder: 'Write reply to buyer…',
       sendReply: 'Send reply',
     },
+    // Chat & Messaging
+    chat: {
+      deleteForMe: 'Delete for Me',
+      deleteForEveryone: 'Delete for Everyone',
+      thisMessageDeleted: 'This message was deleted',
+      youDeletedMessage: 'You deleted this message',
+      deleteForEveryoneConfirmTitle: 'Delete this message for everyone?',
+      deleteForEveryoneConfirmDesc: 'This message will be removed for both you and the other participant.',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      deleting: 'Deleting...',
+    },
     // Common Messages
     common: {
       loading: 'Loading...',
@@ -938,6 +950,18 @@ export const translations = {
       replyPlaceholder: 'ক্রেতাকে উত্তর লিখুন…',
       sendReply: 'উত্তর পাঠান',
     },
+    // Chat & Messaging
+    chat: {
+      deleteForMe: 'শুধু আমার জন্য মুছুন',
+      deleteForEveryone: 'সবার জন্য মুছুন',
+      thisMessageDeleted: 'এই মেসেজটি মুছে ফেলা হয়েছে',
+      youDeletedMessage: 'আপনি এই মেসেজটি মুছে দিয়েছেন',
+      deleteForEveryoneConfirmTitle: 'সবার জন্য এই মেসেজটি মুছবেন?',
+      deleteForEveryoneConfirmDesc: 'এই মেসেজটি আপনার এবং অন্য অংশগ্রহণকারী উভয়ের জন্যই সরানো হবে।',
+      cancel: 'বাতিল',
+      delete: 'মুছুন',
+      deleting: 'মুছে ফেলা হচ্ছে...',
+    },
     // Common Messages
     common: {
       loading: 'লোড হচ্ছে...',
@@ -1408,6 +1432,18 @@ export const translations = {
       selectBuyerConversation: 'बाईं ओर से किसी खरीदार की बातचीत चुनें।',
       replyPlaceholder: 'खरीदार को उत्तर लिखें…',
       sendReply: 'उत्तर भेजें',
+    },
+    // Chat & Messaging
+    chat: {
+      deleteForMe: 'केवल मेरे लिए हटाएँ',
+      deleteForEveryone: 'सभी के लिए हटाएँ',
+      thisMessageDeleted: 'यह संदेश हटा दिया गया है',
+      youDeletedMessage: 'आपने यह संदेश हटा दिया',
+      deleteForEveryoneConfirmTitle: 'क्या यह संदेश सभी के लिए हटाना है?',
+      deleteForEveryoneConfirmDesc: 'यह संदेश आपके और दूसरे सहभागी दोनों के लिए हटा दिया जाएगा।',
+      cancel: 'रद्द करें',
+      delete: 'हटाएँ',
+      deleting: 'हटाया जा रहा है...',
     },
     // Common Messages
     common: {
