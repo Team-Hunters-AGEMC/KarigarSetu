@@ -25,6 +25,7 @@ import { CraftCategory, ArtisanProfile } from '../../types';
 import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceApi';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LanguageSelector } from '../../i18n/LanguageSelector';
+import mktNavTexture from '../../assets/marketplace-navbar-texture.webp';
 
 interface MarketplaceNavbarProps {
   searchQuery?: string;
@@ -186,7 +187,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
     : (t.categories[selectedCategory as keyof typeof t.categories] || selectedCategory);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#fcfaf6]/95 backdrop-blur-md border-b border-[#e2eae4]">
+    <header className="sticky top-0 z-40 bg-[#FBF5EA] shadow-xs">
       {/* Top micro ribbon */}
       <div className="bg-[#0b4830] text-[#e3f4ea] text-[11px] py-1 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -226,8 +227,12 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
         </div>
       </div>
 
-      {/* Main Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-3 lg:gap-6">
+      {/* Main Bar with Handcrafted Ivory Craft Texture */}
+      <div 
+        className="relative bg-[#FBF5EA] bg-cover bg-center border-b border-[#dfcfb7]"
+        style={{ backgroundImage: `url(${mktNavTexture})` }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-3 lg:gap-6 relative z-10">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group" id="mkt-nav-brand">
           <div className="w-9 h-9 rounded-xl bg-[#0c4b31] text-white flex items-center justify-center font-extrabold text-base shadow-sm group-hover:scale-105 transition-transform">
@@ -538,6 +543,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
+      </div>
       </div>
 
       {/* Mobile Drawer */}

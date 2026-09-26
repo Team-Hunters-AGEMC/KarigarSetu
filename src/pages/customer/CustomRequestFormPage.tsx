@@ -192,11 +192,11 @@ export const CustomRequestFormPage: React.FC = () => {
 
           {/* Reference Product Card (if applicable) */}
           {product && (
-            <div className="mt-4 p-4 rounded-2xl bg-[#fafcfa] border border-[#d6e5da] flex items-center gap-4">
+            <div className="mt-4 p-4 rounded-2xl bg-[#EAF2E5] border border-[#CBDCC6] flex items-center gap-4 karigarsetu-product-card">
               <img
                 src={product.image_url}
                 alt={product.product_name}
-                className="w-16 h-16 rounded-xl object-contain bg-white border border-gray-200 shrink-0"
+                className="w-16 h-16 rounded-xl object-contain bg-white border border-[#CBDCC6] p-1 shrink-0"
               />
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-bold text-[#e27d35] uppercase tracking-wider block">

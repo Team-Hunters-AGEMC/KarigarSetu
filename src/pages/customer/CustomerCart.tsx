@@ -84,9 +84,9 @@ export const CustomerCart: React.FC = () => {
                 <article
                   key={item.product_id}
                   onClick={() => navigate(`/marketplace/products/${item.product_id}`)}
-                  className="group flex flex-col gap-4 rounded-2xl border border-[#dce8df] bg-white p-4 shadow-sm transition-all duration-150 hover:border-[#8eb8a0] hover:shadow-md cursor-pointer sm:flex-row"
+                  className="group karigarsetu-product-card-interactive flex flex-col gap-4 rounded-2xl border border-[#CBDCC6] bg-[#EAF2E5] hover:bg-[#E3EEDF] p-4 shadow-sm transition-all duration-150 hover:shadow-md cursor-pointer sm:flex-row"
                 >
-                  <div className="relative block h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#eef5f0]">
+                  <div className="relative block h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-white border border-[#CBDCC6] p-1">
                     <img
                       src={item.image_url || ''}
                       alt={item.product_name}

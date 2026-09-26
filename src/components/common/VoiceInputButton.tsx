@@ -92,8 +92,8 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
             ? 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-500/30 ring-2 ring-red-400 ring-offset-1 animate-pulse'
             : theme === 'dark'
             ? isSupported
-              ? 'bg-[#0b3342]/90 hover:bg-[#104457] text-cyan-300 border border-cyan-500/40 hover:border-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
-              : 'bg-slate-800 text-slate-500 border border-slate-700 opacity-50'
+              ? 'bg-[#135747] hover:bg-[#1a6e5a] text-emerald-100 border border-[#217d66] hover:border-[#D9A441] shadow-xs'
+              : 'bg-emerald-950/80 text-emerald-700 border border-emerald-900 opacity-50'
             : isSupported
             ? 'bg-emerald-50/80 hover:bg-emerald-100 text-[#0c4b31] border border-[#bedfc9] hover:border-[#0c4b31] shadow-2xs'
             : 'bg-stone-100 text-stone-400 border border-stone-200 opacity-60'

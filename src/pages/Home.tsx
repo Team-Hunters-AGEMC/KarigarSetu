@@ -70,23 +70,23 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
   return (
     <div className="min-h-screen bg-transparent text-[#1a2d23]">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-[#e5ebe7] bg-radial-[at_85%_15%] from-[#fff1d6] via-[#fcfaf6] to-[#f4f8f4]">
+      <section className="relative overflow-hidden pt-8 pb-14 lg:pt-14 lg:pb-20 bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
             {/* Left Column: Vision & Utility */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e3f4ea] border border-[#b4dfc5] text-[#0c4b31] text-xs font-extrabold tracking-wide shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-[#e87722]" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e2ede4]/85 border border-[#bcdbc8]/80 text-[#133827] text-xs font-bold tracking-wide shadow-2xs">
+                <span className="text-emerald-700 font-extrabold">✓</span>
                 <span>{t.home.badge}</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#0c4b31] tracking-tight leading-[1.08]">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#133827] tracking-tight leading-[1.08]">
                 {t.home.heroLine1}
-                <span className="block text-[#e27d35]">{t.home.heroLine2}</span>
+                <span className="block text-[#be531c]">{t.home.heroLine2}</span>
               </h1>
 
-              <p className="text-base sm:text-lg text-[#55695e] max-w-2xl leading-relaxed">
+              <p className="text-base sm:text-lg text-[#3f5247] max-w-2xl leading-relaxed">
                 {t.home.heroIntro}
               </p>
 
@@ -95,7 +95,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                 <Link
                   to="/artisan/register"
                   id="hero-join-artisan-btn"
-                  className="px-6 py-3.5 rounded-xl bg-[#0c4b31] hover:bg-[#073623] text-white font-bold text-sm sm:text-base shadow-lg shadow-[#0c4b31]/20 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                  className="px-6 py-3.5 rounded-xl bg-[#133827] hover:bg-[#0c261a] text-white font-bold text-sm sm:text-base shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2"
                 >
                   <span>{t.home.joinAsArtisan}</span>
                   <ChevronRight className="w-4 h-4 text-[#ffd186]" />
@@ -104,24 +104,24 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                 <Link
                   to="/marketplace"
                   id="hero-explore-marketplace-btn"
-                  className="px-6 py-3.5 rounded-xl bg-white hover:bg-[#f2f8f4] text-[#0c4b31] border-2 border-[#bdd6c7] font-bold text-sm sm:text-base hover:-translate-y-0.5 transition-all shadow-xs"
+                  className="px-6 py-3.5 rounded-xl bg-[#fbf7ee]/90 hover:bg-[#f5eedf] text-[#133827] border border-[#d6caba] font-bold text-sm sm:text-base hover:-translate-y-0.5 transition-all shadow-xs"
                 >
                   {t.home.exploreMarketplace}
                 </Link>
               </div>
 
               {/* Capability Badges */}
-              <div className="pt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-[#485e52]">
+              <div className="pt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-[#3d5145]">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-[#dff3e6] text-[#0c4b31] flex items-center justify-center font-bold">✓</span>
+                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px]">✓</span>
                   <span>{t.home.voiceListingBadge}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-[#dff3e6] text-[#0c4b31] flex items-center justify-center font-bold">✓</span>
+                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px]">✓</span>
                   <span>{t.home.fairWageBadge}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-[#dff3e6] text-[#0c4b31] flex items-center justify-center font-bold">✓</span>
+                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px]">✓</span>
                   <span>{t.home.screeningBadge}</span>
                 </div>
               </div>
@@ -129,13 +129,13 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
 
             {/* Right Column: Interactive Live Smart Catalog Preview Card */}
             <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md bg-white rounded-2xl p-5 border border-[#d6e3da] shadow-2xl shadow-[#0c4b31]/10 transform lg:rotate-1 hover:rotate-0 transition-transform duration-300">
+              <div className="relative mx-auto max-w-md bg-[#fffaf2]/95 backdrop-blur-xs rounded-2xl p-5 border border-[#e8dfd1] shadow-xl hover:shadow-2xl transition-all duration-300">
                 
                 {/* Header of Preview Card */}
-                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center justify-between pb-3 border-b border-[#ebdcca]">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-xs font-bold text-[#0c4b31]">{t.home.livePreview}</span>
+                    <span className="text-xs font-bold text-[#133827]">{t.home.livePreview}</span>
                   </div>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fcead2] text-[#b85b14]">
                     GI Tagged • Bankura
@@ -143,13 +143,13 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                 </div>
 
                 {/* Hero Showcase Product */}
-                <div className="relative mt-3 rounded-xl overflow-hidden bg-gradient-to-b from-[#fff7e6] to-[#f4ebe1] p-3 flex items-center justify-center group">
+                <div className="relative mt-3 rounded-xl overflow-hidden bg-gradient-to-b from-[#f8f1e6] to-[#ece1d0] p-3 flex items-center justify-center group">
                   <img
                     src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=700&auto=format&fit=crop&q=80"
                     alt="Heritage Bankura Terracotta Horse"
                     className="w-full h-56 object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
                   />
-                  <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-[#0c4b31] shadow-xs">
+                  <span className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-[#133827] shadow-xs">
                     ✦ Auto Studio Isolation Active
                   </span>
                 </div>
@@ -157,25 +157,25 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                 {/* Information */}
                 <div className="mt-4 space-y-2.5">
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="font-bold text-[#e27d35] tracking-wide uppercase">{t.categories.Pottery}</span>
+                    <span className="font-bold text-[#be531c] tracking-wide uppercase">{t.categories.Pottery}</span>
                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5" /> 98% Handmade Score
                     </span>
                   </div>
 
-                  <h3 className="font-extrabold text-lg text-[#0c4b31] leading-snug">
+                  <h3 className="font-extrabold text-lg text-[#133827] leading-snug">
                     {t.home.demoTitle}
                   </h3>
                   
-                  <p className="text-xs text-gray-600 line-clamp-2">
+                  <p className="text-xs text-[#526459] line-clamp-2">
                     Hand-thrown hollow terracotta from Ganges alluvial silt, wood-fired in traditional brick kilns by Radhamohan Pal.
                   </p>
 
                   {/* Pricing Breakdown preview */}
-                  <div className="p-2.5 rounded-xl bg-[#f4f9f5] border border-[#d8e8dd] flex items-center justify-between text-xs">
+                  <div className="p-2.5 rounded-xl bg-[#f4ede2]/70 border border-[#dfd5c5] flex items-center justify-between text-xs">
                     <div>
                       <p className="text-[10px] text-gray-500 font-medium">{t.productDetails.finalFairPrice}</p>
-                      <strong className="text-base font-extrabold text-[#0c4b31]">₹1,450</strong>
+                      <strong className="text-base font-extrabold text-[#133827]">₹1,450</strong>
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] text-gray-500">{t.productDetails.artisanLabour}</p>
@@ -184,21 +184,21 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                   </div>
 
                   {/* Interactive Voice Demo in Hero */}
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="text-[11px] font-bold text-gray-500 mb-1.5 flex items-center gap-1">
-                      <Mic className="w-3.5 h-3.5 text-[#e27d35]" />
+                  <div className="pt-2 border-t border-[#ebdcca]">
+                    <p className="text-[11px] font-bold text-gray-600 mb-1.5 flex items-center gap-1">
+                      <Mic className="w-3.5 h-3.5 text-[#be531c]" />
                       Voice Input Test:
                     </p>
                     <button
                       type="button"
                       id="simulate-bengali-voice-btn"
                       onClick={() => handleSimulateVoiceInput('বাঁকুড়ার পঞ্চমুড়ার মাটির ঘোড়া, সম্পূর্ণ হাতে গড়া ও কাঠের আগুনে পোড়ানো।')}
-                      className="w-full text-left p-2 rounded-lg bg-[#fff8ed] hover:bg-[#ffefd8] border border-[#fbdcb2] text-[11px] font-medium text-[#7d410f] transition-colors flex items-center justify-between"
+                      className="w-full text-left p-2 rounded-lg bg-[#fbf4ea] hover:bg-[#f4e8d8] border border-[#e8d5be] text-[11px] font-medium text-[#7d410f] transition-colors flex items-center justify-between cursor-pointer"
                     >
                       <span className="truncate italic">
                         {voiceTranscriptDemo || '🎙️ "বাঁকুড়ার মাটির ঘোড়া, ১৮ দিন সময় লেগেছে তৈরি করতে..."'}
                       </span>
-                      <span className="text-[10px] font-bold shrink-0 text-[#e27d35] ml-2">
+                      <span className="text-[10px] font-bold shrink-0 text-[#be531c] ml-2">
                         {voiceTesting ? 'Processing...' : '▶ Test Voice'}
                       </span>
                     </button>
@@ -212,7 +212,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
       </section>
 
       {/* Impact & Welfare Stats Ribbon */}
-      <section className="bg-[#0c4b31] text-white py-8 px-4 border-y border-[#185e40]">
+      <section className="bg-[#133827] text-white py-8 px-4 border-t border-[#1c4d36]">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           <div className="space-y-1">
             <strong className="text-2xl sm:text-3xl font-extrabold text-[#ffd186]">1,420+</strong>
@@ -351,11 +351,11 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
             {visibleProducts.map((product) => (
               <article
                 key={product.id}
-                className="group bg-white rounded-2xl border border-[#dfe7e2] hover:border-[#0c4b31] overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                className="group karigarsetu-product-card-interactive bg-[#EAF2E5] hover:bg-[#E3EEDF] rounded-2xl border border-[#CBDCC6] overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
                 id={`product-card-${product.id}`}
               >
                 {/* Product Image Container */}
-                <div className="relative aspect-4/3 bg-gradient-to-br from-[#f8faf8] to-[#eaf2ec] overflow-hidden">
+                <div className="relative aspect-4/3 bg-white border-b border-[#CBDCC6] overflow-hidden">
                   <img
                     src={product.image_url}
                     alt={product.product_name}

@@ -16,12 +16,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
   return (
     <article
       id={`product-card-${product.id}`}
-      className="group bg-white rounded-2xl border border-[#e2ece5] hover:border-[#0c4b31]/40 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden"
+      className="group karigarsetu-product-card-interactive bg-[#EAF2E5] hover:bg-[#E3EEDF] rounded-2xl border border-[#CBDCC6] hover:border-[#b8cdb2] shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden"
     >
-      {/* Product Image Area */}
+      {/* Product Image Area - Clean White/Neutral Canvas */}
       <Link
         to={`/marketplace/products/${product.id}`}
-        className="relative block h-52 sm:h-56 bg-gradient-to-br from-[#f8fbf9] to-[#edf4f0] overflow-hidden p-3"
+        className="relative block h-52 sm:h-56 bg-white overflow-hidden p-3 border-b border-[#CBDCC6]"
       >
         <img
           src={product.image_url}
@@ -79,21 +79,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
         </div>
 
         {/* Price & Primary Action Buttons */}
-        <div className="pt-2 border-t border-gray-100 space-y-3">
+        <div className="pt-2 border-t border-[#d4e3d0] space-y-3">
           <div className="flex items-baseline justify-between">
             <div>
-              <span className="text-[10px] text-gray-400 font-medium block">Direct Price</span>
+              <span className="text-[10px] text-gray-500 font-medium block">Direct Price</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-lg sm:text-xl font-extrabold text-[#0c4b31]">
                   ₹{product.selling_price}
                 </span>
-                <span className="text-[10px] text-emerald-700 font-bold bg-[#e3f4ea] px-1.5 py-0.2 rounded">
+                <span className="text-[10px] text-emerald-800 font-bold bg-[#d6e8d2] px-1.5 py-0.2 rounded border border-[#c1dbbc]">
                   Fair Wage
                 </span>
               </div>
             </div>
 
-            <span className="text-[11px] text-gray-400">
+            <span className="text-[11px] text-gray-500">
               Free Delivery
             </span>
           </div>
@@ -102,7 +102,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
             <Link
               to={`/marketplace/products/${product.id}`}
               id={`view-details-${product.id}`}
-              className="py-2.5 px-3 rounded-xl bg-[#f4f8f5] hover:bg-[#e6f1ea] text-[#0c4b31] text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-colors"
+              className="py-2.5 px-3 rounded-xl bg-white/85 hover:bg-white text-[#0c4b31] border border-[#CBDCC6] text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>{t.marketplace.viewCraft}</span>

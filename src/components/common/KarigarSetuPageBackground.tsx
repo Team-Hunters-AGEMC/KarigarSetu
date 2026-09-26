@@ -9,32 +9,26 @@ interface KarigarSetuPageBackgroundProps {
 /**
  * KarigarSetuPageBackground
  * Standard Global Page Background for KarigarSetu:
- * - Uses the approved handcrafted KarigarSetu background artwork
- * - Warm ivory/cream handmade paper texture with terracotta and sage leaf corner accents
- * - Clean spacious center for content readability
- * - Fixed background layer behind content (does not stretch or grow with long pages)
- * - Separate content layer (relative z-10) so all cards, headers, and UI sit cleanly above it
+ * - Uses the approved handcrafted KarigarSetu background artwork (karigarsetu-global-background.png)
+ * - Fixed background layer at z-0 behind content
+ * - Content layer at relative z-10 so all cards, headers, and UI sit cleanly above it
+ * - No opaque background color on parent wrapper that could occlude the background image
  */
 export const KarigarSetuPageBackground: React.FC<KarigarSetuPageBackgroundProps> = ({
   children,
   className = '',
 }) => {
   return (
-    <div className={`relative min-h-screen bg-[#F8F2E8] flex flex-col ${className}`}>
-      {/* Fixed Handcrafted Background Layer */}
+    <div className={`relative min-h-screen ${className}`}>
+      {/* Background Layer at z-0 */}
       <div
-        className="fixed inset-0 pointer-events-none -z-10 bg-[#F8F2E8] bg-no-repeat bg-center bg-cover bg-scroll md:bg-fixed"
-        style={{
-          backgroundImage: `url(${globalBg})`,
-        }}
+        className="fixed inset-0 z-0 pointer-events-none bg-[#F8F2E8] bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${globalBg})` }}
         aria-hidden="true"
-      >
-        {/* Subtle translucent overlay (12%) for crisp text contrast while preserving the art */}
-        <div className="absolute inset-0 bg-[#fffaf4]/12 pointer-events-none" />
-      </div>
+      />
 
-      {/* Page Content Layer */}
-      <div className="relative z-10 flex-1 flex flex-col min-h-screen">
+      {/* Page Content Layer at relative z-10 */}
+      <div className="relative z-10 min-h-screen flex flex-col">
         {children}
       </div>
     </div>

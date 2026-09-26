@@ -92,10 +92,10 @@ export const PaymentDetails: React.FC = () => {
             <Option value="card" icon={<CreditCard className="text-[#0b5738]" />} title={t.checkout.card} text={t.checkout.cardDesc} />
           </div>
         </section>
-        <aside className="h-fit rounded-3xl border bg-white p-6 shadow-sm">
+        <aside className="h-fit rounded-3xl border border-[#CBDCC6] bg-[#EAF2E5] p-6 shadow-sm karigarsetu-product-card">
           <h2 className="font-extrabold">{t.cart.orderSummary}</h2>
           <div className="mt-4 flex gap-3">
-            <img src={checkout.product.image_url || ''} className="h-16 w-16 rounded-lg object-contain bg-[#eef5f0]" />
+            <img src={checkout.product.image_url || ''} className="h-16 w-16 rounded-lg object-contain bg-white border border-[#CBDCC6] p-1" />
             <div>
               <p className="font-bold">{checkout.product.product_name}</p>
               <p className="text-xs text-gray-500">{t.productDetails.quantity}: {checkout.quantity}</p>

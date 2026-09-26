@@ -193,8 +193,8 @@ export const ProductDetailsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left: Large High-Resolution Showcase Image */}
-          <div className="lg:col-span-6 bg-white rounded-3xl border border-[#dce8df] p-6 shadow-sm overflow-hidden space-y-4">
-            <div className="relative h-80 sm:h-96 md:h-[420px] bg-gradient-to-br from-[#fbfdfb] to-[#edf4ee] rounded-2xl flex items-center justify-center p-4 overflow-hidden">
+          <div className="lg:col-span-6 karigarsetu-product-card bg-[#EAF2E5] rounded-3xl border border-[#CBDCC6] p-6 shadow-sm overflow-hidden space-y-4">
+            <div className="relative h-80 sm:h-96 md:h-[420px] bg-white rounded-2xl flex items-center justify-center p-4 overflow-hidden border border-[#CBDCC6]">
               <img
                 src={product.image_url}
                 alt={product.product_name}
@@ -211,29 +211,29 @@ export const ProductDetailsPage: React.FC = () => {
             </div>
 
             <div className="flex gap-3" aria-label="Product image gallery">
-              <button type="button" onClick={() => setActiveImage('studio')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition cursor-pointer ${activeImage === 'studio' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show full product image">
+              <button type="button" onClick={() => setActiveImage('studio')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-white p-1 transition cursor-pointer ${activeImage === 'studio' ? 'border-[#0c4b31]' : 'border-[#CBDCC6] hover:border-[#0c4b31]'}`} aria-label="Show full product image">
                 <img src={product.image_url} alt="Full product view" className="h-full w-full object-contain" />
                 <span className="absolute bottom-0 inset-x-0 bg-black/55 py-0.5 text-[9px] font-bold text-white">Full view</span>
               </button>
-              <button type="button" onClick={() => setActiveImage('detail')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-[#f4f8f5] p-1 transition cursor-pointer ${activeImage === 'detail' ? 'border-[#0c4b31]' : 'border-transparent hover:border-[#b9d7c5]'}`} aria-label="Show craftsmanship detail">
+              <button type="button" onClick={() => setActiveImage('detail')} className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-white p-1 transition cursor-pointer ${activeImage === 'detail' ? 'border-[#0c4b31]' : 'border-[#CBDCC6] hover:border-[#0c4b31]'}`} aria-label="Show craftsmanship detail">
                 <img src={product.image_url} alt="Craftsmanship detail" className="h-full w-full scale-[2.1] object-contain" style={{ transformOrigin: `${detailFocus.x}% ${detailFocus.y}%` }} />
                 <span className="absolute bottom-0 inset-x-0 bg-black/55 py-0.5 text-[9px] font-bold text-white">Detail zoom</span>
               </button>
             </div>
 
             {/* Quick Guarantees Strip */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-center">
-              <div className="p-2.5 rounded-xl bg-[#f4f9f5] border border-[#dce9df]">
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#d4e3d0] text-center">
+              <div className="p-2.5 rounded-xl bg-white/80 border border-[#CBDCC6]">
                 <ShieldCheck className="w-4 h-4 text-emerald-700 mx-auto mb-1" />
                 <span className="text-[11px] font-bold text-gray-800 block">GI Certified</span>
                 <span className="text-[10px] text-gray-500">Traditional Origin</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#f4f9f5] border border-[#dce9df]">
+              <div className="p-2.5 rounded-xl bg-white/80 border border-[#CBDCC6]">
                 <Truck className="w-4 h-4 text-emerald-700 mx-auto mb-1" />
                 <span className="text-[11px] font-bold text-gray-800 block">Safe Transit</span>
                 <span className="text-[10px] text-gray-500">Bubble Cushioning</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#f4f9f5] border border-[#dce9df]">
+              <div className="p-2.5 rounded-xl bg-white/80 border border-[#CBDCC6]">
                 <CheckCircle2 className="w-4 h-4 text-emerald-700 mx-auto mb-1" />
                 <span className="text-[11px] font-bold text-gray-800 block">Living Wage</span>
                 <span className="text-[10px] text-gray-500">Zero Middlemen</span>
@@ -243,7 +243,7 @@ export const ProductDetailsPage: React.FC = () => {
 
           {/* Right: Commercial Details & Purchase Options */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="bg-white rounded-3xl border border-[#dce8df] p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="karigarsetu-product-card bg-[#EAF2E5] rounded-3xl border border-[#CBDCC6] p-6 sm:p-8 shadow-sm space-y-5">
               
               {/* Category & Title */}
               <div className="space-y-1.5">
@@ -294,7 +294,7 @@ export const ProductDetailsPage: React.FC = () => {
               </div>
 
               {/* Price Display */}
-              <div className="p-4 rounded-2xl bg-[#f4f9f5] border border-[#cee0d3] flex items-baseline justify-between">
+              <div className="p-4 rounded-2xl bg-white/80 border border-[#CBDCC6] flex items-baseline justify-between">
                 <div>
                   <span className="text-xs text-gray-500 font-medium block">{t.productDetails.finalFairPrice}</span>
                   <div className="flex items-baseline gap-2">
@@ -399,7 +399,7 @@ export const ProductDetailsPage: React.FC = () => {
         </div>
 
         {/* Tabbed Story, Craftsmanship, and Origin */}
-        <div className="bg-white rounded-3xl border border-[#dce8df] p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="karigarsetu-product-card bg-[#EAF2E5] rounded-3xl border border-[#CBDCC6] p-6 sm:p-8 shadow-sm space-y-6">
           <div className="flex border-b border-gray-200 gap-4">
             <button
               type="button"

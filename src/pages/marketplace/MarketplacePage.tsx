@@ -8,6 +8,7 @@ import { marketplaceApi, MarketplaceProduct } from '../../services/marketplaceAp
 import { getCurrentCustomer } from '../../services/customerAuth';
 import { CraftCategory } from '../../types';
 import { useLanguage } from '../../i18n/LanguageContext';
+import mktHeroJuteTexture from '../../assets/marketplace-hero-jute-texture.webp';
 
 export const MarketplacePage: React.FC = () => {
   const { t } = useLanguage();
@@ -100,37 +101,41 @@ export const MarketplacePage: React.FC = () => {
       />
 
       {/* Hero / Value Proposition Strip */}
-      <section className="bg-gradient-to-r from-[#0b4830] via-[#0f593b] to-[#126b48] text-white py-8 px-4 sm:px-6 relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 bg-[radial-gradient(#ffd186_1px,transparent_1px)] [background-size:16px_16px]" />
+      <section 
+        className="relative overflow-hidden bg-[#073323] bg-cover bg-center text-white py-9 px-4 sm:px-6 shadow-md"
+        style={{ backgroundImage: `url(${mktHeroJuteTexture})` }}
+      >
+        {/* Subtle dark green overlay to ensure maximum text contrast while keeping textile fibers & jute clearly visible */}
+        <div className="absolute inset-0 bg-[#042d22]/25 pointer-events-none" />
         
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
           <div className="max-w-2xl space-y-2 text-center md:text-left">
-            <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-white/15 text-[#ffd186] border border-white/20 uppercase tracking-wider inline-flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#0b3827]/60 text-[#ffd186] border border-[#ffd186]/30 uppercase tracking-wider inline-flex items-center gap-1.5 backdrop-blur-xs">
               <Sparkles className="w-3 h-3 text-[#ffd186]" /> Direct from Traditional Indian Clusters
             </span>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
               Authentic Handmade Crafts & Living Wage Marketplace
             </h1>
-            <p className="text-xs sm:text-sm text-[#d1e8dc] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#e0efe7] leading-relaxed">
               {t.nav.marketTagline}
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 shrink-0 text-center w-full md:w-auto">
-            <div className="bg-white/10 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-white/15">
+            <div className="bg-[#0b3827]/75 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white/20 shadow-lg">
               <ShieldCheck className="w-5 h-5 text-emerald-300 mx-auto mb-1" />
-              <strong className="text-xs font-bold block">100% Genuine</strong>
-              <span className="text-[10px] text-gray-300">AI & Human Certified</span>
+              <strong className="text-xs font-bold block text-white">100% Genuine</strong>
+              <span className="text-[10px] text-emerald-100/80">All Human Certified</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-white/15">
+            <div className="bg-[#0b3827]/75 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white/20 shadow-lg">
               <HeartHandshake className="w-5 h-5 text-[#ffd186] mx-auto mb-1" />
-              <strong className="text-xs font-bold block">Fair Wage</strong>
-              <span className="text-[10px] text-gray-300">Direct to Karigar</span>
+              <strong className="text-xs font-bold block text-white">Fair Wage</strong>
+              <span className="text-[10px] text-amber-100/80">Direct to Karigar</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-white/15">
+            <div className="bg-[#0b3827]/75 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white/20 shadow-lg">
               <Truck className="w-5 h-5 text-emerald-300 mx-auto mb-1" />
-              <strong className="text-xs font-bold block">Safe Delivery</strong>
-              <span className="text-[10px] text-gray-300">Eco Fragile Packing</span>
+              <strong className="text-xs font-bold block text-white">Safe Delivery</strong>
+              <span className="text-[10px] text-emerald-100/80">Eco Fragile Packing</span>
             </div>
           </div>
         </div>
