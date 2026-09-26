@@ -1,5 +1,5 @@
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 from uuid import uuid4
 from math import isfinite
 from datetime import datetime, timedelta
@@ -206,13 +206,6 @@ def get_request_artisan_id():
     if session.get("user_role") != "artisan":
         return None
     return session.get("user_id")
-
-
-def remove_uploaded_image(image_url):
-    image_path = get_uploaded_image_path(image_url)
-
-    if image_path is not None:
-        image_path.unlink()
 
 
 def parse_ai_suggested_price(value):
@@ -663,6 +656,121 @@ def get_uploaded_image_path(image_url):
 
     image_path = UPLOAD_FOLDER / filename
     return image_path if image_path.is_file() else None
+
+
+def extract_cloudinary_public_id(image_url):
+    """Safely extract the Cloudinary public_id for a KarigarSetu product image.
+
+    Returns the public_id string (e.g. 'karigarsetu/product-images/xyz123') if valid,
+    or None if the URL is not a verified KarigarSetu product image hosted on Cloudinary.
+    """
+    if not image_url or not isinstance(image_url, str):
+        return None
+
+    try:
+        parsed_url = urlparse(image_url.strip())
+    except Exception:
+        return None
+
+    hostname = (parsed_url.hostname or "").lower()
+    if parsed_url.scheme != "https" or not (
+        hostname == "res.cloudinary.com" or hostname.endswith(".cloudinary.com")
+    ):
+        return None
+
+    path = unquote(parsed_url.path or "")
+    upload_marker = "/image/upload/"
+    upload_idx = path.find(upload_marker)
+    if upload_idx == -1:
+        return None
+
+    after_upload = path[upload_idx + len(upload_marker):]
+
+    # KarigarSetu product images are strictly stored under 'karigarsetu/product-images/'.
+    target_folder = "karigarsetu/product-images/"
+    folder_idx = after_upload.find(target_folder)
+    if folder_idx == -1:
+        return None
+
+    relative_asset_path = after_upload[folder_idx:]
+    relative_asset_path = relative_asset_path.split("?")[0].split("#")[0]
+
+    # Strip the file extension (.png, .jpg, .jpeg, .webp, etc.)
+    if "." in relative_asset_path:
+        public_id, _ = relative_asset_path.rsplit(".", 1)
+    else:
+        public_id = relative_asset_path
+
+    if (
+        public_id.startswith(target_folder)
+        and len(public_id.strip()) > len(target_folder)
+    ):
+        return public_id.strip()
+
+    return None
+
+
+def remove_uploaded_image(image_url):
+    """Safely delete an uploaded product image from local storage or Cloudinary.
+
+    Safety rules:
+    - If it's a local file in UPLOAD_FOLDER, it is unlinked using existing logic.
+    - If it's a Cloudinary image belonging to 'karigarsetu/product-images', its
+      public_id is verified and deleted using cloudinary.uploader.destroy.
+    - If public_id cannot be safely determined, no Cloudinary asset is touched.
+    - Any error is caught and logged defensively; application flows never crash.
+    """
+    if not image_url or not isinstance(image_url, str):
+        return
+
+    # 1. Local image check (preserves existing behavior)
+    image_path = get_uploaded_image_path(image_url)
+    if image_path is not None:
+        try:
+            image_path.unlink()
+            app.logger.info("Deleted local product image: %s", image_path)
+        except OSError as err:
+            app.logger.warning("Failed to delete local product image %s: %s", image_path, err)
+        return
+
+    # 2. Cloudinary product image check
+    public_id = extract_cloudinary_public_id(image_url)
+    if public_id is not None:
+        if not os.environ.get("CLOUDINARY_URL"):
+            app.logger.warning(
+                "Skipping Cloudinary cleanup for public_id '%s': CLOUDINARY_URL is not configured",
+                public_id,
+            )
+            return
+
+        try:
+            result = cloudinary.uploader.destroy(
+                public_id,
+                resource_type="image",
+                invalidate=True,
+            )
+            status = result.get("result") if isinstance(result, dict) else str(result)
+            if status == "ok":
+                app.logger.info("Successfully deleted Cloudinary product image: %s", public_id)
+            else:
+                app.logger.warning(
+                    "Cloudinary destroy returned unexpected status '%s' for public_id '%s'",
+                    status,
+                    public_id,
+                )
+        except Exception as err:
+            app.logger.warning(
+                "Cloudinary cleanup failed for public_id '%s': %s",
+                public_id,
+                err,
+            )
+        return
+
+    # 3. Not a local upload and not a recognizable KarigarSetu Cloudinary asset
+    app.logger.info(
+        "Image URL '%s' is neither a local file nor a recognized KarigarSetu Cloudinary product asset; skipping cleanup.",
+        image_url,
+    )
 
 
 def get_uploaded_image_bytes(image_url):
@@ -3528,6 +3636,19 @@ def delete_product(product_id):
             (image_url, product_id),
         ).fetchone()
 
+        if other_image_reference is None:
+            order_item_reference = connection.execute(
+                """
+                SELECT id
+                FROM customer_order_items
+                WHERE image_url = ?
+                LIMIT 1
+                """,
+                (image_url,),
+            ).fetchone()
+            if order_item_reference is not None:
+                other_image_reference = order_item_reference
+
     connection.execute(
         "DELETE FROM products WHERE id = ?",
         (product_id,),
@@ -3538,8 +3659,12 @@ def delete_product(product_id):
     if other_image_reference is None:
         try:
             remove_uploaded_image(image_url)
-        except OSError:
-            pass
+        except Exception as err:
+            app.logger.warning(
+                "Unexpected error during image cleanup for product %s: %s",
+                product_id,
+                err,
+            )
 
     return jsonify(
         {
