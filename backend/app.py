@@ -3767,6 +3767,437 @@ def generate_catalog():
             "message": "Gemini AI catalog generation failed",
             "error": str(error),
         }), 502
+
+def build_ai_assistant_context(user_role, user_id, current_route, product_id=None, artisan_id=None, custom_request_id=None):
+    """Safely build sanitized internal database context for the AI Assistant."""
+    context_data = {
+        "role": user_role or "guest",
+        "current_route": current_route or "/",
+        "products_summary": [],
+        "current_product": None,
+        "current_artisan": None,
+        "customer_orders_summary": [],
+        "customer_custom_requests": [],
+        "artisan_products_summary": [],
+        "artisan_custom_requests": [],
+    }
+
+    connection = get_database()
+    try:
+        # 1. Fetch top approved products from marketplace for product-related assistance
+        approved_rows = connection.execute(
+            """
+            SELECT p.id, p.product_name, p.category, p.description,
+                   COALESCE(p.selling_price, p.suggested_price, 0) AS price,
+                   p.stock_quantity, p.length, p.width, p.height, p.dimension_unit,
+                   a.name AS artisan_name, a.location AS artisan_location
+            FROM products p
+            LEFT JOIN artisans a ON a.id = p.artisan_id
+            WHERE p.status = 'approved'
+            ORDER BY p.id DESC
+            LIMIT 25
+            """
+        ).fetchall()
+        context_data["products_summary"] = [
+            {
+                "id": r["id"],
+                "name": r["product_name"],
+                "category": r["category"],
+                "price_inr": r["price"],
+                "stock": r["stock_quantity"],
+                "artisan": r["artisan_name"],
+                "location": r["artisan_location"],
+                "dimensions": f"{r['length'] or '-'}x{r['width'] or '-'}x{r['height'] or '-'} {r['dimension_unit'] or 'cm'}" if (r['length'] or r['width'] or r['height']) else "Not specified",
+            }
+            for r in approved_rows
+        ]
+
+        # 2. If specific product_id is provided or referenced in route
+        target_prod_id = product_id
+        if not target_prod_id and current_route and "/marketplace/products/" in current_route:
+            try:
+                target_prod_id = int(current_route.split("/marketplace/products/")[1].split("/")[0].split("?")[0])
+            except (ValueError, IndexError):
+                pass
+
+        if target_prod_id:
+            p_row = connection.execute(
+                """
+                SELECT p.id, p.product_name, p.category, p.description,
+                       COALESCE(p.selling_price, p.suggested_price, 0) AS price,
+                       p.stock_quantity, p.length, p.width, p.height, p.dimension_unit,
+                       p.status, a.id AS artisan_id, a.name AS artisan_name, a.location AS artisan_location,
+                       a.experience AS artisan_experience, a.craft_type AS artisan_craft
+                FROM products p
+                LEFT JOIN artisans a ON a.id = p.artisan_id
+                WHERE p.id = ?
+                """,
+                (target_prod_id,),
+            ).fetchone()
+            if p_row:
+                context_data["current_product"] = {
+                    "id": p_row["id"],
+                    "name": p_row["product_name"],
+                    "category": p_row["category"],
+                    "description": p_row["description"],
+                    "price_inr": p_row["price"],
+                    "stock": p_row["stock_quantity"],
+                    "status": p_row["status"],
+                    "dimensions": f"L: {p_row['length'] or '-'} cm, W: {p_row['width'] or '-'} cm, H: {p_row['height'] or '-'} {p_row['dimension_unit'] or 'cm'}",
+                    "artisan_id": p_row["artisan_id"],
+                    "artisan_name": p_row["artisan_name"],
+                    "artisan_location": p_row["artisan_location"],
+                }
+
+        # 3. If specific artisan_id is provided
+        target_artisan_id = artisan_id
+        if not target_artisan_id and current_route and "/marketplace/artisans/" in current_route:
+            try:
+                target_artisan_id = int(current_route.split("/marketplace/artisans/")[1].split("/")[0].split("?")[0])
+            except (ValueError, IndexError):
+                pass
+
+        if target_artisan_id:
+            a_row = connection.execute(
+                "SELECT id, name, craft_type, location, experience FROM artisans WHERE id = ?",
+                (target_artisan_id,),
+            ).fetchone()
+            if a_row:
+                context_data["current_artisan"] = {
+                    "id": a_row["id"],
+                    "name": a_row["name"],
+                    "craft_type": a_row["craft_type"],
+                    "location": a_row["location"],
+                    "experience_years": a_row["experience"],
+                }
+
+        # 4. If logged-in Customer: fetch their own orders & custom requests
+        if user_role == "customer" and user_id:
+            c_orders = connection.execute(
+                """
+                SELECT id, order_number, total_amount, status, created_at
+                FROM customer_orders
+                WHERE customer_id = ?
+                ORDER BY id DESC
+                LIMIT 5
+                """,
+                (user_id,),
+            ).fetchall()
+            order_list = []
+            for o in c_orders:
+                items = connection.execute(
+                    "SELECT product_name, quantity, unit_price FROM customer_order_items WHERE order_id = ?",
+                    (o["id"],),
+                ).fetchall()
+                order_list.append({
+                    "order_number": o["order_number"],
+                    "status": str(o["status"]).replace("_", " ").title(),
+                    "total_amount_inr": o["total_amount"],
+                    "created_at": o["created_at"],
+                    "items": [f"{it['product_name']} (Qty: {it['quantity']}, ₹{it['unit_price']})" for it in items],
+                })
+            context_data["customer_orders_summary"] = order_list
+
+            c_requests = connection.execute(
+                """
+                SELECT r.id, r.status, r.quoted_price, r.quantity, r.customization_details,
+                       a.name AS artisan_name, p.product_name
+                FROM custom_product_requests r
+                JOIN artisans a ON a.id = r.artisan_id
+                LEFT JOIN products p ON p.id = r.product_id
+                WHERE r.customer_id = ?
+                ORDER BY r.id DESC
+                LIMIT 5
+                """,
+                (user_id,),
+            ).fetchall()
+            context_data["customer_custom_requests"] = [
+                {
+                    "request_id": cr["id"],
+                    "artisan": cr["artisan_name"],
+                    "product": cr["product_name"] or "Custom Craft",
+                    "details": cr["customization_details"],
+                    "status": cr["status"],
+                    "quoted_price_inr": cr["quoted_price"],
+                }
+                for cr in c_requests
+            ]
+
+        # 5. If logged-in Artisan: fetch their own product listings & custom requests
+        if user_role == "artisan" and user_id:
+            art_products = connection.execute(
+                """
+                SELECT id, product_name, category, status, stock_quantity,
+                       COALESCE(selling_price, suggested_price, 0) AS price,
+                       ai_confidence_score, ai_risk_score, ai_decision_reason
+                FROM products
+                WHERE artisan_id = ?
+                ORDER BY id DESC
+                LIMIT 10
+                """,
+                (user_id,),
+            ).fetchall()
+            context_data["artisan_products_summary"] = [
+                {
+                    "id": ap["id"],
+                    "name": ap["product_name"],
+                    "category": ap["category"],
+                    "status": ap["status"],
+                    "stock": ap["stock_quantity"],
+                    "price_inr": ap["price"],
+                    "ai_decision": ap["ai_decision_reason"] or "N/A",
+                }
+                for ap in art_products
+            ]
+
+            art_requests = connection.execute(
+                """
+                SELECT r.id, r.status, r.quoted_price, r.quantity, r.customization_details,
+                       c.name AS customer_name, p.product_name
+                FROM custom_product_requests r
+                JOIN customers c ON c.id = r.customer_id
+                LEFT JOIN products p ON p.id = r.product_id
+                WHERE r.artisan_id = ?
+                ORDER BY r.id DESC
+                LIMIT 5
+                """,
+                (user_id,),
+            ).fetchall()
+            context_data["artisan_custom_requests"] = [
+                {
+                    "request_id": ar["id"],
+                    "customer": ar["customer_name"],
+                    "product": ar["product_name"] or "Custom Craft",
+                    "details": ar["customization_details"],
+                    "status": ar["status"],
+                    "quoted_price_inr": ar["quoted_price"],
+                }
+                for ar in art_requests
+            ]
+    finally:
+        connection.close()
+
+    return context_data
+
+
+def generate_fallback_ai_reply(user_message, language, user_role, context_data):
+    """Provides instant, highly accurate rule-based responses if Gemini is unavailable or unconfigured."""
+    msg_lower = user_message.lower()
+    is_bn = language.startswith("bn")
+    is_hi = language.startswith("hi")
+
+    # Artisan questions
+    if user_role == "artisan" or "add product" in msg_lower or "price suggestion" in msg_lower or "স্টুডিও" in msg_lower or "পণ্য যোগ" in msg_lower or "उत्पाद जोड़ें" in msg_lower:
+        if "add" in msg_lower or "যোগ" in msg_lower or "जोड़" in msg_lower or "create" in msg_lower:
+            if is_bn:
+                return "কারিগর স্টুডিওতে গিয়ে '+ Add Craft' বা 'AI-Assisted Listing' এ ক্লিক করে আপনার হস্তশিল্পের ছবি তুলুন এবং ভয়েস বা লিখে বিবরণ দিন। এআই স্বয়ংক্রিয়ভাবে অনুমোদন ও ফেয়ার প্রাইস তৈরি করবে।"
+            if is_hi:
+                return "कारीगर स्टूडियो में जाकर '+ Add Craft' या 'AI-Assisted Listing' पर क्लिक करें। अपने हस्तशिल्प की फोटो अपलोड करें और बोलकर या लिखकर विवरण दें। एआई सही कीमत और विवरण सुझाएगा।"
+            return "Go to Artisan Studio and click '+ Add Craft' or 'AI-Assisted Listing'. Upload your craft photo and speak/write the details. AI will assist with cataloging, authenticity check, and fair price calculation."
+
+        if "price" in msg_lower or "মূল্য" in msg_lower or "कीमत" in msg_lower:
+            if is_bn:
+                return "এআই প্রস্তাবিত মূল্য (AI Suggested Price) কাঁচামালের খরচ, শ্রম এবং কারিগরির মানের ভিত্তিতে একটি ন্যায্য জীবনধারণ মজুরি (Living Wage) নির্ধারণ করে। এটি একটি নির্দেশিকা—কারিগর চাইলে নিজের পছন্দমতো বিক্রয়মূল্য নির্ধারণ করতে পারেন।"
+            if is_hi:
+                return "एआई सुझाई गई कीमत (AI Suggested Price) सामग्री की लागत, श्रम और शिल्प की गुणवत्ता के आधार पर उचित मजदूरी की गणना करती है। यह केवल एक सलाह है—कारीगर अपनी इच्छानुसार विक्रय मूल्य बदल सकते हैं।"
+            return "The AI Suggested Price calculates a fair living wage based on raw material costs, labour hours, and craft intricacy. It is advisory, and artisans can review and set their final selling price."
+
+        if "custom" in msg_lower or "কাস্টম" in msg_lower or "अनुरोध" in msg_lower or "quote" in msg_lower:
+            requests = context_data.get("artisan_custom_requests", [])
+            req_count = len(requests)
+            if is_bn:
+                return f"আপনার কারিগর ড্যাশবোর্ডে 'Custom Requests' ট্যাবে {req_count} টি অনুরোধ রয়েছে। সেখানে গিয়ে আপনি গ্রাহকের বিবরণ দেখে উদ্ধৃতি মূল্য (Quote Price) ও বার্তা পাঠাতে পারেন।"
+            if is_hi:
+                return f"आपके कारीगर डैशबोर्ड पर 'Custom Requests' टैब में {req_count} अनुरोध हैं। आप ग्राहक का विवरण देखकर कोटेड प्राइस और संदेश भेज सकते हैं।"
+            return f"You have {req_count} custom requests in your Artisan Dashboard under 'Custom Requests'. You can review buyer preferences and submit a custom price quote."
+
+    # Customer questions
+    if "order" in msg_lower or "অর্ডার" in msg_lower or "ऑर्डर" in msg_lower:
+        orders = context_data.get("customer_orders_summary", [])
+        if user_role != "customer":
+            if is_bn:
+                return "আপনার অর্ডার দেখতে অনুগ্রহ করে কাস্টমার হিসেবে লগইন করুন এবং উপরের 'My Orders' সেকশনে যান।"
+            if is_hi:
+                return "अपने ऑर्डर देखने के लिए कृपया कस्टमर के रूप में लॉगिन करें और 'My Orders' सेक्शन देखें।"
+            return "Please log in as a customer and visit 'My Orders' in the navigation bar to track all your orders."
+        if not orders:
+            if is_bn:
+                return "আপনার অ্যাকাউন্টে বর্তমানে কোনো অর্ডার নেই। মার্কেটপ্লেস ঘুরে খাঁটি হস্তশিল্প পণ্য অর্ডার করতে পারেন।"
+            if is_hi:
+                return "आपके खाते में फिलहाल कोई सक्रिय ऑर्डर नहीं है। आप मार्केटप्लेस से पसंदीदा हस्तशिल्प खरीद सकते हैं।"
+            return "You currently have no orders. Browse the Marketplace to discover authentic handicrafts and place an order!"
+        latest = orders[0]
+        if is_bn:
+            return f"আপনার সর্বশেষ অর্ডার #{latest['order_number']}-এর বর্তমান স্থিতি: {latest['status']} (মোট ₹{latest['total_amount_inr']})। বিস্তারিত দেখতে 'My Orders' পেজে যান।"
+        if is_hi:
+            return f"आपके नवीनतम ऑर्डर #{latest['order_number']} की वर्तमान स्थिति: {latest['status']} (कुल ₹{latest['total_amount_inr']})। अधिक विवरण के लिए 'My Orders' पर जाएँ।"
+        return f"Your latest order #{latest['order_number']} status is: {latest['status']} (Total ₹{latest['total_amount_inr']}). View full tracking in 'My Orders'."
+
+    if "custom" in msg_lower or "কাস্টম" in msg_lower or "অনুরোধ" in msg_lower or "अनुरोध" in msg_lower:
+        if is_bn:
+            return "যে কোনো পণ্যের বিবরণ পেজে গিয়ে 'Request Custom Product' বোতামে ক্লিক করুন। আপনার পছন্দমতো রঙ, সাইজ ও বিস্তারিত বিবরণ দিলে কারিগর সরাসরি কোটেশন দেবেন।"
+        if is_hi:
+            return "किसी भी उत्पाद विवरण पृष्ठ पर जाकर 'Request Custom Product' बटन पर क्लिक करें। अपना पसंदीदा रंग, आकार और आवश्यकताएं दर्ज करें, कारीगर आपको उचित कोटेशन भेजेंगे।"
+        return "Visit any craft's Product Details page and click 'Request Custom Product'. Specify your preferred size, color, quantity, and notes. The artisan will respond with a tailored price quote."
+
+    if "message" in msg_lower or "chat" in msg_lower or "মেসেজ" in msg_lower or "বার্তা" in msg_lower or "संदेश" in msg_lower:
+        if is_bn:
+            return "মার্কেটপ্লেসের যে কোনো পণ্যের পৃষ্ঠায় 'Message Artisan' বোতামে ক্লিক করে সরাসরি কারিগরের সাথে কথা বলতে পারেন।"
+        if is_hi:
+            return "मार्केटप्लेस के किसी भी उत्पाद पेज पर 'Message Artisan' बटन पर क्लिक करके कारीगर से सीधी बातचीत कर सकते हैं।"
+        return "You can click the 'Message Artisan' button on any craft page to chat directly with the verified master artisan."
+
+    # Product recommendations & search fallback
+    products = context_data.get("products_summary", [])
+    if products:
+        sample_list = ", ".join([f"{p['name']} (₹{p['price_inr']})" for p in products[:4]])
+        if is_bn:
+            return f"কারিগরসেতু মার্কেটপ্লেসে বর্তমানে অনেকগুলো অনুমোদিত খাঁটি হস্তশিল্প রয়েছে, যেমন: {sample_list}। আপনি ক্যাটাগরি ও ফিল্টার ব্যবহার করে আরও পণ্য দেখতে পারেন।"
+        if is_hi:
+            return f"कारीगरसेतु मार्केटप्लेस पर वर्तमान में प्रामाणिक हस्तशिल्प उपलब्ध हैं, जैसे: {sample_list}। आप मार्केटप्लेस पर जाकर फिल्टर का उपयोग कर सकते हैं।"
+        return f"KarigarSetu features authentic artisan crafts including: {sample_list}. You can explore, filter by price, or message artisans directly!"
+
+    if is_bn:
+        return "নমস্কার! আমি কারিগরসেতু এআই সহকারী। হস্তশিল্প পণ্য, মূল্য, অর্ডার, বা কারিগরদের সাথে যোগাযোগ সংক্রান্ত যে কোনো তথ্য জানতে আমাকে জিজ্ঞাসা করতে পারেন।"
+    if is_hi:
+        return "नमस्ते! मैं कारीगरसेतु एआई सहायक हूँ। आप हस्तशिल्प उत्पादों, कीमतों, ऑर्डर की स्थिति, या कारीगरों से संपर्क के बारे में कुछ भी पूछ सकते हैं।"
+    return "Namaste! I am the KarigarSetu AI Assistant. Feel free to ask about our handcrafted products, artisan stories, custom requests, pricing, or order tracking!"
+
+
+@app.post("/api/ai-assistant/chat")
+def ai_assistant_chat():
+    """Context-aware Multilingual AI Chat Assistant for KarigarSetu (Advisory & Read-Only)."""
+    data = request.get_json(silent=True) or {}
+    message = str(data.get("message", "")).strip()
+    language = str(data.get("language", "en-IN")).strip()
+    current_route = str(data.get("current_route", "/")).strip()
+    product_id = data.get("product_id")
+    artisan_id = data.get("artisan_id")
+    custom_request_id = data.get("custom_request_id")
+
+    if not message:
+        return jsonify({
+            "success": False,
+            "message": "Message is required",
+        }), 400
+
+    if len(message) > 1000:
+        return jsonify({
+            "success": False,
+            "message": "Message is too long (maximum 1000 characters)",
+        }), 400
+
+    # Determine user identity securely from session/headers
+    user_role, user_id = require_message_user()
+
+    # Collect live backend context safely
+    context_data = build_ai_assistant_context(
+        user_role=user_role,
+        user_id=user_id,
+        current_route=current_route,
+        product_id=product_id,
+        artisan_id=artisan_id,
+        custom_request_id=custom_request_id,
+    )
+
+    lang_instructions = {
+        "bn-IN": "Respond strictly in fluent, natural Bengali (বাংলা). Use respectful terms (e.g., আপনি, নমস্কার).",
+        "hi-IN": "Respond strictly in fluent, natural Hindi (हिंदी). Use respectful terms (e.g., आप, नमस्ते).",
+        "en-IN": "Respond in warm, professional, clear English. You may use traditional greetings like 'Namaste'.",
+    }.get(language, "Respond in warm, clear English.")
+
+    system_prompt = f"""
+You are the official "KarigarSetu AI Assistant" for KarigarSetu — India's verified artisan marketplace and digital craft studio.
+
+CORE PURPOSE:
+- Help customers explore authentic Indian handicrafts, understand craft heritage, find products, check stock/dimensions/prices, understand the custom request workflow, track their own orders, and message artisans.
+- Help artisans navigate their Artisan Studio dashboard, understand the AI price suggestion formula (living wage + materials + craft intricacy), manage product listings, and answer custom product requests.
+
+BEHAVIORAL RULES:
+1. STRICTLY ADVISORY & READ-ONLY: You CANNOT modify data, place orders, delete items, change prices, approve products, or ban accounts. Guide users to the correct buttons/pages if they wish to perform actions.
+2. ACCURACY & NO HALLUCINATIONS: Only mention products, orders, artisans, prices, and stock that exist in the live context below or generally exist in KarigarSetu. If specific data is not available, state politely that it is unavailable.
+3. PRIVACY: Never reveal sensitive database internals, password hashes, or another user's private data.
+4. TONE & CONCISENESS: Be warm, respectful, culturally appreciative of Indian artisans, and concise (usually 2 to 4 sentences or a neat bulleted list).
+5. LANGUAGE REQUIREMENT: {lang_instructions}
+
+LIVE APP & USER CONTEXT:
+- User Role: {context_data['role']} (User ID: {user_id or 'Guest'})
+- Current Page Route: {context_data['current_route']}
+- Active Product Context: {json.dumps(context_data['current_product'], ensure_ascii=False) if context_data['current_product'] else 'None'}
+- Active Artisan Context: {json.dumps(context_data['current_artisan'], ensure_ascii=False) if context_data['current_artisan'] else 'None'}
+- Approved Marketplace Crafts Sample: {json.dumps(context_data['products_summary'][:8], ensure_ascii=False)}
+- Customer Orders (if logged in): {json.dumps(context_data['customer_orders_summary'], ensure_ascii=False)}
+- Customer Custom Requests (if logged in): {json.dumps(context_data['customer_custom_requests'], ensure_ascii=False)}
+- Artisan Own Listings (if logged in): {json.dumps(context_data['artisan_products_summary'], ensure_ascii=False)}
+- Artisan Custom Requests (if logged in): {json.dumps(context_data['artisan_custom_requests'], ensure_ascii=False)}
+""".strip()
+
+    if not GEMINI_API_KEY:
+        # Graceful fallback without failing or crashing
+        reply = generate_fallback_ai_reply(message, language, user_role, context_data)
+        return jsonify({
+            "success": True,
+            "reply": reply,
+            "source": "smart_assistant_fallback",
+        }), 200
+
+    request_body = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": f"{system_prompt}\n\nUser Question:\n{message}"}
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 600,
+        },
+    }
+    endpoint = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{GEMINI_MODEL}:generateContent"
+    )
+
+    try:
+        response = requests.post(
+            endpoint,
+            headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
+            json=request_body,
+            timeout=(5, 20),
+        )
+        if response.ok:
+            result_json = response.json()
+            candidates = result_json.get("candidates") or []
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts") or []
+                if parts and "text" in parts[0]:
+                    reply_text = parts[0]["text"].strip()
+                    return jsonify({
+                        "success": True,
+                        "reply": reply_text,
+                        "source": "gemini",
+                    }), 200
+
+        # In case Gemini returns an error status code or empty reply
+        app.logger.warning("Gemini AI assistant returned status %s: %s", response.status_code if response else "None", response.text if response else "")
+        reply = generate_fallback_ai_reply(message, language, user_role, context_data)
+        return jsonify({
+            "success": True,
+            "reply": reply,
+            "source": "smart_assistant_fallback",
+        }), 200
+
+    except requests.RequestException as error:
+        app.logger.warning("Gemini AI assistant request failed: %s", error)
+        reply = generate_fallback_ai_reply(message, language, user_role, context_data)
+        return jsonify({
+            "success": True,
+            "reply": reply,
+            "source": "smart_assistant_fallback",
+        }), 200
+
+
 initialize_database()
 
 if __name__ == "__main__":
@@ -3775,3 +4206,4 @@ if __name__ == "__main__":
         port=5000,
         debug=True,
     )
+

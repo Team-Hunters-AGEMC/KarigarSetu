@@ -522,7 +522,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
               </li>
               <li>
                 <Link to="/artisan/add-product" className="hover:text-white transition-colors">
-                  {t.artisan?.addProduct || 'Add Product'}
+                  {t.artisan?.addProductBtn || 'Add Product'}
                 </Link>
               </li>
               <li>

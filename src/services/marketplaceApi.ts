@@ -18,6 +18,10 @@ export interface MarketplaceProduct {
   cultural_significance?: string;
   tags?: string[];
   created_at: string;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  dimension_unit?: string | null;
 }
 
 export interface ArtisanPublicData {
@@ -49,6 +53,10 @@ export function sanitizeForMarketplace(p: ProductItem): MarketplaceProduct {
     cultural_significance: p.cultural_significance,
     tags: p.tags,
     created_at: p.created_at,
+    length: p.length != null ? Number(p.length) : null,
+    width: p.width != null ? Number(p.width) : null,
+    height: p.height != null ? Number(p.height) : null,
+    dimension_unit: p.dimension_unit ?? null,
   };
 }
 

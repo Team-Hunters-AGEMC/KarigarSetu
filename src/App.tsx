@@ -29,6 +29,7 @@ import { ProtectedArtisanRoute } from './components/ProtectedArtisanRoute';
 import { SupportedLanguage } from './types';
 
 import { LanguageProvider } from './i18n/LanguageContext';
+import { AiAssistant } from './components/common/AiAssistant';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -156,6 +157,8 @@ function MainLayout() {
           <Route path="*" element={<Home />} />
         </Routes>
       </div>
+
+      <AiAssistant />
     </div>
   );
 }

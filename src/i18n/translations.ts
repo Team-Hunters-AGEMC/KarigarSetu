@@ -121,6 +121,8 @@ export const translations = {
       artisanOtherCrafts: 'More Handcrafted Pieces by this Artisan',
       stockLeft: 'in stock',
       directArtisanImpact: 'Direct Artisan Living Wage Guaranteed',
+      backToMarketplace: 'Back to Marketplace',
+      artisanCraftsmanship: 'Direct Artisan Craftsmanship & Inquiries',
     },
     // Customer Cart
     cart: {
@@ -140,6 +142,7 @@ export const translations = {
     },
     // Checkout & Payment
     checkout: {
+      continue: 'Continue',
       confirmDetails: 'Confirm Details',
       deliveryAddress: 'Delivery Address',
       deliveringTo: 'Delivering to',
@@ -167,6 +170,9 @@ export const translations = {
       payAndPlaceOrder: 'Pay & Place Order',
       orderPlacedSuccess: 'Order Placed Successfully!',
       redirectingToOrders: 'Redirecting to your orders...',
+      payment: 'Payment',
+      payOnDelivery: 'Pay in cash when order is delivered',
+      upiApps: 'Google Pay, PhonePe, Paytm, BHIM',
     },
     // My Orders
     orders: {
@@ -185,9 +191,13 @@ export const translations = {
     customRequests: {
       title: 'My Custom Product Requests',
       subtitle: 'Track status, review artisan quotes, and accept custom handcrafted orders.',
+      browseCrafts: 'Browse Crafts for Custom Order',
       browseForCustom: 'Browse Crafts for Custom Order',
+      emptyTitle: 'No Custom Requests Yet',
+      emptyHint: 'Find any handcrafted item on the marketplace and click "Request Custom Product" to order tailored sizes, colors, or motifs directly from master artisans.',
       noRequestsTitle: 'No Custom Requests Yet',
       noRequestsHint: 'Find any handcrafted item on the marketplace and click "Request Custom Product" to order tailored sizes, colors, or motifs directly from master artisans.',
+      requestNumber: 'Request #',
       exploreMarketplace: 'Explore Marketplace',
       requestDetails: 'Customization Details',
       preferredColor: 'Preferred Color',
@@ -196,12 +206,18 @@ export const translations = {
       referenceImage: 'Reference Image',
       additionalNote: 'Additional Notes',
       artisanQuote: 'Artisan Price Quote',
+      artisanQuotedPrice: 'Artisan Price Quote',
       artisanMessage: 'Artisan Message',
       awaitingQuote: 'Awaiting Artisan Quote',
       quoteReceived: 'Quote Received',
       quoteAccepted: 'Quote Accepted',
       orderPlaced: 'Custom Order Placed',
       declined: 'Declined by Artisan',
+      statusPending: 'Awaiting Artisan Quote',
+      statusQuoted: 'Quote Received',
+      statusAccepted: 'Quote Accepted',
+      statusOrdered: 'Custom Order Placed',
+      statusDeclined: 'Declined by Artisan',
       acceptQuote: 'Accept Quote & Order',
       proceedToCheckout: 'Proceed to Checkout',
       submitRequestTitle: 'Custom Product Request',
@@ -211,6 +227,12 @@ export const translations = {
       submitButton: 'Send Custom Request to Artisan',
       submitting: 'Submitting request...',
       requestSuccess: 'Custom request sent to artisan successfully!',
+      chatWithArtisan: 'Chat with Artisan',
+      requestFormTitle: 'Direct Karigar Custom Order Request',
+      requestFormSubtitle: 'Tell the master artisan exactly what size, motif, color, or personalized design you would like handcrafted.',
+      customizationDetails: 'Customization Details',
+      additionalNotes: 'Additional Notes & Deadlines',
+      submitRequest: 'Submit Custom Request',
     },
     // Customer Auth & Profile
     customerAuth: {
@@ -251,6 +273,7 @@ export const translations = {
       namaste: 'Namaste',
       catalogTab: 'My Craft Catalog',
       customRequestsTab: 'Custom Requests',
+      addProduct: 'Add Product',
       addProductBtn: '+ Add New Craft',
       smartStudio: 'Smart Catalog Studio (AI)',
       proStudio: 'Professional Studio (Manual)',
@@ -479,6 +502,41 @@ export const translations = {
       delete: 'Delete',
       deleting: 'Deleting...',
     },
+    // AI Assistant
+    aiAssistant: {
+      title: 'KarigarSetu AI Assistant',
+      subtitle: 'Smart Artisan & Craft Guide',
+      askAnything: 'Ask about crafts, orders, pricing...',
+      send: 'Send',
+      thinking: 'Thinking...',
+      clearChat: 'Clear Chat',
+      suggestedQuestions: 'Suggested Questions',
+      somethingWentWrong: 'Something went wrong while connecting with KarigarSetu AI.',
+      tryAgain: 'Try Again',
+      onlineStatus: 'Online • KarigarSetu Smart Guide',
+      welcomeCustomer: 'Namaste! I am your KarigarSetu AI Assistant. How can I help you explore authentic Indian handicrafts today?',
+      welcomeArtisan: 'Namaste Artisan! I am your KarigarSetu Studio AI Assistant. Need help creating products, understanding pricing, or managing orders?',
+      welcomeGeneral: 'Namaste! Welcome to KarigarSetu. How can I help you discover authentic handmade crafts today?',
+      copyReply: 'Copy response',
+      copied: 'Copied!',
+      disclaimer: 'Advisory assistant: live marketplace & studio data.',
+      promptPills: {
+        customer: [
+          'Show me terracotta products under ₹1000',
+          'How do I request a custom product?',
+          'Where can I see my orders?',
+          'How do I message an artisan?',
+          'What craft categories are available?',
+        ],
+        artisan: [
+          'How do I add a new product?',
+          'How does AI price suggestion work?',
+          'Where are my custom requests?',
+          'How do I update stock?',
+          'How do I reply to customers?',
+        ],
+      },
+    },
     // Common Messages
     common: {
       loading: 'Loading...',
@@ -604,6 +662,8 @@ export const translations = {
       artisanOtherCrafts: 'এই কারিগরের অন্যান্য সৃষ্টি',
       stockLeft: 'টি স্টকে আছে',
       directArtisanImpact: 'সরাসরি কারিগরের ন্যায্য মজুরি নিশ্চিত',
+      backToMarketplace: 'মার্কেটপ্লেসে ফিরে যান',
+      artisanCraftsmanship: 'সরাসরি কারিগরি শিল্প ও অনুসন্ধান',
     },
     // Customer Cart
     cart: {
@@ -623,6 +683,7 @@ export const translations = {
     },
     // Checkout & Payment
     checkout: {
+      continue: 'এগিয়ে যান',
       confirmDetails: 'অর্ডার বিবরণ নিশ্চিত করুন',
       deliveryAddress: 'ডেলিভারি ঠিকানা',
       deliveringTo: 'যার কাছে পৌঁছাবে',
@@ -650,6 +711,9 @@ export const translations = {
       payAndPlaceOrder: 'পেমেন্ট করে অর্ডার দিন',
       orderPlacedSuccess: 'অর্ডার সফলভাবে গ্রহণ করা হয়েছে!',
       redirectingToOrders: 'অর্ডার পাতায় নিয়ে যাওয়া হচ্ছে...',
+      payment: 'পেমেন্ট',
+      payOnDelivery: 'অর্ডার ডেলিভারির সময় নগদে মূল্য পরিশোধ করুন',
+      upiApps: 'গুগল পে, ফোনপে, পেটিএম, ভীম',
     },
     // My Orders
     orders: {
@@ -668,9 +732,13 @@ export const translations = {
     customRequests: {
       title: 'আমার কাস্টম পণ্যের অনুরোধ',
       subtitle: 'অনুরোধের অবস্থা ট্র্যাক করুন এবং কারিগরের কোট গ্রহণ করুন।',
+      browseCrafts: 'কাস্টম অর্ডারের জন্য পণ্য খুঁজুন',
       browseForCustom: 'কাস্টম অর্ডারের জন্য পণ্য খুঁজুন',
+      emptyTitle: 'এখনও কোনো কাস্টম অনুরোধ নেই',
+      emptyHint: 'মার্কেটপ্লেস থেকে যেকোনো হস্তশিল্প বেছে নিয়ে সরাসরি কারিগরের কাছে কাস্টম মাপ বা রঙের জন্য অনুরোধ পাঠান।',
       noRequestsTitle: 'কোনো কাস্টম অনুরোধ নেই',
       noRequestsHint: 'মার্কেটপ্লেস থেকে যেকোনো পণ্য বেছে নিয়ে "কাস্টম পণ্যের অনুরোধ" বাটনে ক্লিক করে আপনার পছন্দমতো তৈরি করিয়ে নিন।',
+      requestNumber: 'অনুরোধ #',
       exploreMarketplace: 'মার্কেটপ্লেস দেখুন',
       requestDetails: 'কাস্টমাইজেশনের বিবরণ',
       preferredColor: 'পছন্দের রঙ',
@@ -679,12 +747,18 @@ export const translations = {
       referenceImage: 'রেফারেন্স ছবি',
       additionalNote: 'অতিরিক্ত তথ্য',
       artisanQuote: 'কারিগরের মূল্যের কোটেশন',
+      artisanQuotedPrice: 'কারিগরের প্রস্তাবিত মূল্য',
       artisanMessage: 'কারিগরের বার্তা',
       awaitingQuote: 'কারিগরের কোটেশনের অপেক্ষায়',
       quoteReceived: 'কোটেশন এসেছে',
       quoteAccepted: 'কোটেশন গৃহীত হয়েছে',
       orderPlaced: 'কাস্টম অর্ডার সম্পন্ন',
       declined: 'অনুরোধ প্রত্যাখ্যান করা হয়েছে',
+      statusPending: 'কারিগর কোটেশনের অপেক্ষায়',
+      statusQuoted: 'কোটেশন পাওয়া গেছে',
+      statusAccepted: 'কোটেশন গৃহীত হয়েছে',
+      statusOrdered: 'কাস্টম অর্ডার দেওয়া হয়েছে',
+      statusDeclined: 'কারিগর দ্বারা প্রত্যাখ্যাত',
       acceptQuote: 'কোট গ্রহণ করে অর্ডার দিন',
       proceedToCheckout: 'চেকআউটে এগিয়ে যান',
       submitRequestTitle: 'কাস্টম পণ্যের অনুরোধ জমা দিন',
@@ -694,6 +768,12 @@ export const translations = {
       submitButton: 'কারিগরকে অনুরোধ পাঠান',
       submitting: 'অনুরোধ পাঠানো হচ্ছে...',
       requestSuccess: 'কাস্টম অনুরোধ সফলভাবে কারিগরের কাছে পৌঁছেছে!',
+      chatWithArtisan: 'কারিগরের সাথে চ্যাট করুন',
+      requestFormTitle: 'সরাসরি কারিগর কাস্টম অর্ডারের অনুরোধ',
+      requestFormSubtitle: 'আপনার পছন্দের মাপ, নকশা, রঙ বা বিশেষ হস্তশিল্প তৈরির বিবরণ সরাসরি কারিগরকে জানান।',
+      customizationDetails: 'কাস্টমাইজেশনের বিবরণ',
+      additionalNotes: 'অতিরিক্ত তথ্য ও ডেলিভারি সময়সীমা',
+      submitRequest: 'কাস্টম অনুরোধ জমা দিন',
     },
     // Customer Auth & Profile
     customerAuth: {
@@ -734,6 +814,7 @@ export const translations = {
       namaste: 'নমস্কার',
       catalogTab: 'আমার পণ্যের ক্যাটালগ',
       customRequestsTab: 'কাস্টম অনুরোধসমূহ',
+      addProduct: 'পণ্য যোগ করুন',
       addProductBtn: '+ নতুন পণ্য যোগ করুন',
       smartStudio: 'স্মার্ট ক্যাটালগ স্টুডিও (AI)',
       proStudio: 'প্রফেশনাল স্টুডিও (ম্যানুয়াল)',
@@ -962,6 +1043,41 @@ export const translations = {
       delete: 'মুছুন',
       deleting: 'মুছে ফেলা হচ্ছে...',
     },
+    // AI Assistant
+    aiAssistant: {
+      title: 'কারিগরসেতু এআই সহকারী',
+      subtitle: 'স্মার্ট কারিগর ও হস্তশিল্প সহায়ক',
+      askAnything: 'হস্তশিল্প, অর্ডার, মূল্য বা পণ্য সম্পর্কে জিজ্ঞাসা করুন...',
+      send: 'পাঠান',
+      thinking: 'ভাবছে...',
+      clearChat: 'চ্যাট পরিষ্কার করুন',
+      suggestedQuestions: 'প্রস্তাবিত প্রশ্নাবলী',
+      somethingWentWrong: 'কারিগরসেতু এআই-এর সাথে যোগাযোগে সমস্যা হয়েছে।',
+      tryAgain: 'আবার চেষ্টা করুন',
+      onlineStatus: 'অনলাইন • কারিগরসেতু স্মার্ট গাইড',
+      welcomeCustomer: 'নমস্কার! আমি আপনার কারিগরসেতু এআই সহকারী। খাঁটি ভারতীয় হস্তশিল্প খুঁজতে কীভাবে সাহায্য করতে পারি?',
+      welcomeArtisan: 'নমস্কার কারিগর মশাই! আমি আপনার কারিগরসেতু স্টুডিও এআই সহকারী। পণ্য তৈরি, মূল্যের হিসাব বা অর্ডারে সাহায্য চান?',
+      welcomeGeneral: 'নমস্কার! কারিগরসেতুতে স্বাগতম। খাঁটি হস্তশিল্প পণ্য খুঁজতে কীভাবে সাহায্য করতে পারি?',
+      copyReply: 'উত্তর কপি করুন',
+      copied: 'কপি হয়েছে!',
+      disclaimer: 'পরামর্শমূলক সহকারী: সরাসরি মার্কেটপ্লেস ও স্টুডিও তথ্যের ভিত্তিতে প্রস্তুত।',
+      promptPills: {
+        customer: [
+          '১০০০ টাকার নিচে পোড়ামাটির পণ্য দেখান',
+          'কাস্টম পণ্যের জন্য কীভাবে অনুরোধ করব?',
+          'আমার অর্ডারগুলো কোথায় দেখতে পাব?',
+          'কারিগরকে কীভাবে মেসেজ পাঠাব?',
+          'কী কী ধরণের হস্তশিল্প পাওয়া যায়?',
+        ],
+        artisan: [
+          'নতুন পণ্য কীভাবে যুক্ত করব?',
+          'এআই প্রস্তাবিত মূল্য কীভাবে কাজ করে?',
+          'আমার কাস্টম অর্ডারগুলো কোথায় পাব?',
+          'স্টক কীভাবে আপডেট করব?',
+          'ক্রেতাদের কীভাবে উত্তর দেব?',
+        ],
+      },
+    },
     // Common Messages
     common: {
       loading: 'লোড হচ্ছে...',
@@ -1087,6 +1203,8 @@ export const translations = {
       artisanOtherCrafts: 'इस कारीगर के अन्य उत्पाद',
       stockLeft: 'स्टॉक में शेष',
       directArtisanImpact: 'सीधा कारीगर को उचित मेहनताना सुनिश्चित',
+      backToMarketplace: 'मार्केटप्लेस पर वापस जाएं',
+      artisanCraftsmanship: 'प्रत्यक्ष कारीगरी शिल्प एवं पूछताछ',
     },
     // Customer Cart
     cart: {
@@ -1106,6 +1224,7 @@ export const translations = {
     },
     // Checkout & Payment
     checkout: {
+      continue: 'जारी रखें',
       confirmDetails: 'ऑर्डर विवरण की पुष्टि',
       deliveryAddress: 'डिलीवरी का पता',
       deliveringTo: 'डिलीवरी इनके लिए',
@@ -1133,6 +1252,9 @@ export const translations = {
       payAndPlaceOrder: 'भुगतान करें और ऑर्डर दें',
       orderPlacedSuccess: 'ऑर्डर सफलतापूर्वक दर्ज किया गया!',
       redirectingToOrders: 'ऑर्डर पृष्ठ पर जा रहे हैं...',
+      payment: 'भुगतान',
+      payOnDelivery: 'ऑर्डर डिलीवरी के समय नकद भुगतान करें',
+      upiApps: 'गूगल पे, फोनपे, पेटीएम, भीम',
     },
     // My Orders
     orders: {
@@ -1151,9 +1273,13 @@ export const translations = {
     customRequests: {
       title: 'मेरे कस्टम उत्पाद अनुरोध',
       subtitle: 'अनुरोध की स्थिति ट्रैक करें और कारीगर का कोट स्वीकार करें।',
+      browseCrafts: 'कस्टम ऑर्डर के लिए शिल्प देखें',
       browseForCustom: 'कस्टम ऑर्डर के लिए उत्पाद खोजें',
+      emptyTitle: 'अभी तक कोई कस्टम अनुरोध नहीं',
+      emptyHint: 'मार्केटप्लेस से कोई भी हस्तशिल्प चुनें और अपनी पसंद के अनुसार सीधे मास्टर कारीगर को अनुरोध भेजें।',
       noRequestsTitle: 'कोई कस्टम अनुरोध नहीं है',
       noRequestsHint: 'मार्केटप्लेस से कोई भी उत्पाद चुनें और "कस्टम उत्पाद का अनुरोध" पर क्लिक करके अपनी पसंद का शिल्प बनवाएं।',
+      requestNumber: 'अनुरोध #',
       exploreMarketplace: 'मार्केटप्लेस देखें',
       requestDetails: 'कस्टमाइज़ेशन विवरण',
       preferredColor: 'पसंदीदा रंग',
@@ -1162,12 +1288,18 @@ export const translations = {
       referenceImage: 'संदर्भ तस्वीर',
       additionalNote: 'अतिरिक्त जानकारी',
       artisanQuote: 'कारीगर का मूल्य उद्धरण (कोटेशन)',
+      artisanQuotedPrice: 'कारीगर द्वारा तय मूल्य',
       artisanMessage: 'कारीगर का संदेश',
       awaitingQuote: 'कारीगर के कोटेशन की प्रतीक्षा',
       quoteReceived: 'कोटेशन प्राप्त हुआ',
       quoteAccepted: 'कोटेशन स्वीकार किया गया',
       orderPlaced: 'कस्टम ऑर्डर दर्ज हुआ',
       declined: 'अनुरोध अस्वीकार किया गया',
+      statusPending: 'कारीगर के कोटेशन की प्रतीक्षा',
+      statusQuoted: 'कोटेशन प्राप्त हुआ',
+      statusAccepted: 'कोटेशन स्वीकार किया गया',
+      statusOrdered: 'कस्टम ऑर्डर दिया गया',
+      statusDeclined: 'कारीगर द्वारा अस्वीकृत',
       acceptQuote: 'कोट स्वीकार करें और ऑर्डर दें',
       proceedToCheckout: 'चेकआउट के लिए आगे बढ़ें',
       submitRequestTitle: 'कस्टम उत्पाद का अनुरोध भेजें',
@@ -1177,6 +1309,12 @@ export const translations = {
       submitButton: 'कारीगर को अनुरोध भेजें',
       submitting: 'अनुरोध भेजा जा रहा है...',
       requestSuccess: 'कस्टम अनुरोध सफलतापूर्वक कारीगर को भेज दिया गया है!',
+      chatWithArtisan: 'कारीगर से चैट करें',
+      requestFormTitle: 'प्रत्यक्ष कारीगर कस्टम ऑर्डर अनुरोध',
+      requestFormSubtitle: 'मास्टर कारीगर को बताएं कि आप किस आकार, रंग, डिज़ाइन या नक्काशी का हस्तशिल्प बनवाना चाहते हैं।',
+      customizationDetails: 'कस्टमाइज़ेशन विवरण',
+      additionalNotes: 'अतिरिक्त निर्देश व समय-सीमा',
+      submitRequest: 'कस्टम अनुरोध भेजें',
     },
     // Customer Auth & Profile
     customerAuth: {
@@ -1217,6 +1355,7 @@ export const translations = {
       namaste: 'नमस्ते',
       catalogTab: 'मेरा शिल्प कैटलॉग',
       customRequestsTab: 'कस्टम अनुरोध',
+      addProduct: 'उत्पाद जोड़ें',
       addProductBtn: '+ नया शिल्प जोड़ें',
       smartStudio: 'स्मार्ट कैटलॉग स्टूडियो (AI)',
       proStudio: 'प्रोफेशनल स्टूडियो (मैनुअल)',
@@ -1445,6 +1584,41 @@ export const translations = {
       delete: 'हटाएँ',
       deleting: 'हटाया जा रहा है...',
     },
+    // AI Assistant
+    aiAssistant: {
+      title: 'कारीगरसेतु एआई सहायक',
+      subtitle: 'स्मार्ट कारीगर और शिल्प मार्गदर्शक',
+      askAnything: 'हस्तशिल्प, ऑर्डर, मूल्य या उत्पाद के बारे में पूछें...',
+      send: 'भेजें',
+      thinking: 'सोच रहा है...',
+      clearChat: 'चैट साफ करें',
+      suggestedQuestions: 'सुझाए गए प्रश्न',
+      somethingWentWrong: 'कारीगरसेतु एआई से जुड़ने में कोई समस्या आई।',
+      tryAgain: 'पुनः प्रयास करें',
+      onlineStatus: 'ऑनलाइन • कारीगरसेतु स्मार्ट गाइड',
+      welcomeCustomer: 'नमस्ते! मैं आपका कारीगरसेतु एआई सहायक हूँ। प्रामाणिक भारतीय हस्तशिल्प खोजने में मैं आपकी क्या मदद कर सकता हूँ?',
+      welcomeArtisan: 'नमस्ते कारीगर जी! मैं आपका कारीगरसेतु स्टूडियो एआई सहायक हूँ। उत्पाद बनाने, मूल्य निर्धारण या ऑर्डर प्रबंधन में मदद चाहिए?',
+      welcomeGeneral: 'नमस्ते! कारीगरसेतु में आपका स्वागत है। प्रामाणिक हस्तशिल्प खोजने में मैं आपकी क्या मदद कर सकता हूँ?',
+      copyReply: 'उत्तर कॉपी करें',
+      copied: 'कॉपी किया गया!',
+      disclaimer: 'सलाहकार सहायक: वास्तविक मार्केटप्लेस और स्टूडियो डेटा के आधार पर तैयार।',
+      promptPills: {
+        customer: [
+          'मुझे ₹1000 से कम के टेराकोटा उत्पाद दिखाएं',
+          'मैं कस्टम उत्पाद का अनुरोध कैसे करूँ?',
+          'मैं अपने ऑर्डर कहाँ देख सकता हूँ?',
+          'कारीगर को संदेश कैसे भेजें?',
+          'यहाँ कौन-कौन से शिल्प उपलब्ध हैं?',
+        ],
+        artisan: [
+          'नया उत्पाद कैसे जोड़ें?',
+          'एआई सुझाई गई कीमत कैसे काम करती है?',
+          'मेरे कस्टम अनुरोध कहाँ हैं?',
+          'स्टॉक कैसे अपडेट करें?',
+          'ग्राहकों को उत्तर कैसे दें?',
+        ],
+      },
+    },
     // Common Messages
     common: {
       loading: 'लोड हो रहा है...',
@@ -1463,4 +1637,12 @@ export const translations = {
   },
 } as const;
 
-export type TranslationDictionary = typeof translations['en-IN'];
+type DeepString<T> = {
+  readonly [K in keyof T]: T[K] extends string
+    ? string
+    : T[K] extends readonly string[]
+    ? readonly string[]
+    : DeepString<T[K]>;
+};
+
+export type TranslationDictionary = DeepString<typeof translations['en-IN']>;
