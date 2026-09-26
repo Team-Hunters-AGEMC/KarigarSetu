@@ -34,7 +34,13 @@ export const ArtisanMessages: React.FC = () => {
   const [activeMenuMessageId, setActiveMenuMessageId] = useState<number | null>(null);
   const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<ChatMessage | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -112,7 +118,9 @@ export const ArtisanMessages: React.FC = () => {
       setMessages((previous) => [...previous, result.data]);
       setDraft('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'সমস্যা হয়েছে।');
+      const msg = err instanceof Error ? err.message : 'সমস্যা হয়েছে।';
+      setError(msg);
+      showToast(msg, 'error');
     }
   };
 
@@ -128,8 +136,11 @@ export const ArtisanMessages: React.FC = () => {
       if (!response.ok || !result.success) throw new Error(result.message || 'Failed to delete message');
       setMessages((old) => old.filter((m) => m.id !== messageId));
       loadInbox().catch(() => {});
+      showToast(t.chat?.deleteForMe || 'Message deleted for you');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete message');
+      const msg = err instanceof Error ? err.message : 'Failed to delete message';
+      setError(msg);
+      showToast(msg, 'error');
     }
   };
 
@@ -150,8 +161,11 @@ export const ArtisanMessages: React.FC = () => {
       );
       setDeleteConfirmTarget(null);
       loadInbox().catch(() => {});
+      showToast(t.chat?.deleteForEveryone || 'Message deleted for everyone');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete for everyone');
+      const msg = err instanceof Error ? err.message : 'Failed to delete for everyone';
+      setError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -253,77 +267,88 @@ export const ArtisanMessages: React.FC = () => {
                   </div>
                 </header>
 
-                {/* Warm Subtle Dot-Grid Chat Canvas */}
+                {/* Warm Sage & Cream Subtle Handmade Background Canvas */}
                 <div
-                  className="relative flex-1 space-y-3.5 overflow-y-auto bg-[#fbf9f6] p-4 sm:p-6"
-                  style={{ backgroundImage: 'radial-gradient(#e5ded6 0.75px, transparent 0.75px)', backgroundSize: '16px 16px' }}
+                  className="relative flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-8 bg-gradient-to-b from-[#f9fbf8] via-[#f7f9f6] to-[#f4f7f3]"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle, #dbe4dd 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
                 >
                   {messages.map((message) => {
                     const isMe = message.sender_role === 'artisan';
                     const isDeletedEveryone = Boolean(message.is_deleted_everyone);
+                    const isMenuOpen = activeMenuMessageId === message.id;
 
                     return (
                       <div
                         key={message.id}
-                        className={`group relative flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                        className={`group relative flex ${isMe ? 'justify-end' : 'justify-start'} py-0.5`}
                       >
-                        <div
-                          className={`relative max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-xs transition-all ${
-                            isMe
-                              ? isDeletedEveryone
-                                ? 'rounded-br-sm border border-[#e2ece5] bg-[#f0f4f1] text-slate-500 italic'
-                                : 'rounded-br-sm bg-[#0b5538] text-white'
-                              : isDeletedEveryone
-                              ? 'rounded-bl-sm border border-[#edebe8] bg-[#f4f2ef] text-slate-500 italic'
-                              : 'rounded-bl-sm border border-[#e4ede6] bg-white text-[#173b2d]'
-                          }`}
-                        >
-                          {/* Message Body or Placeholder */}
-                          <div className="flex items-start gap-2">
-                            {isDeletedEveryone && <Ban size={14} className="mt-0.5 shrink-0 opacity-60" />}
-                            <p className="leading-relaxed break-words">
-                              {isDeletedEveryone
-                                ? isMe
-                                  ? t.chat?.youDeletedMessage || 'You deleted this message'
-                                  : t.chat?.thisMessageDeleted || 'This message was deleted'
-                                : message.body}
-                            </p>
+                        <div className={`relative max-w-[85%] sm:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+                          <div
+                            className={`relative rounded-2xl px-4.5 py-3 text-sm transition-all ${
+                              isMe
+                                ? isDeletedEveryone
+                                  ? 'rounded-br-xs border border-[#e2ece5] bg-[#f0f4f1] text-slate-500 italic shadow-xs'
+                                  : 'rounded-br-xs bg-[#0b5538] text-white shadow-xs'
+                                : isDeletedEveryone
+                                ? 'rounded-bl-xs border border-[#edebe8] bg-[#f7f5f2] text-slate-500 italic shadow-xs'
+                                : 'rounded-bl-xs border border-[#e5ece6] bg-[#ffffff] text-[#173b2d] shadow-xs'
+                            }`}
+                          >
+                            {/* Message Body or Placeholder */}
+                            <div className="flex items-start gap-2">
+                              {isDeletedEveryone && <Ban size={14} className="mt-0.5 shrink-0 opacity-60" />}
+                              <p className="leading-relaxed break-words">
+                                {isDeletedEveryone
+                                  ? isMe
+                                    ? t.chat?.youDeletedMessage || 'You deleted this message'
+                                    : t.chat?.thisMessageDeleted || 'This message was deleted'
+                                  : message.body}
+                              </p>
+                            </div>
+
+                            {/* Timestamp */}
+                            {message.created_at && (
+                              <div className="mt-1 flex items-center justify-between gap-3 text-[10px]">
+                                <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-slate-400'}>
+                                  {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
-                          {/* Timestamp */}
-                          {message.created_at && (
-                            <div className="mt-1 flex items-center justify-between gap-3 text-[10px]">
-                              <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-slate-400'}>
-                                {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Contextual Action Button (Three Dots) */}
+                          {/* 3-Dot Action Menu Button */}
                           {!isDeletedEveryone && (
-                            <div className={`absolute top-2 ${isMe ? '-left-8' : '-right-8'} opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100`}>
+                            <div
+                              className={`absolute top-2 ${isMe ? '-left-8 sm:-left-9' : '-right-8 sm:-right-9'} ${
+                                isMenuOpen ? 'opacity-100 z-30' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+                              } transition-opacity`}
+                            >
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setActiveMenuMessageId(activeMenuMessageId === message.id ? null : message.id);
+                                  setActiveMenuMessageId(isMenuOpen ? null : message.id);
                                 }}
-                                className="rounded-full bg-white/90 p-1 text-slate-500 shadow-sm hover:bg-white hover:text-slate-800"
+                                className="rounded-full bg-white/95 p-1.5 text-slate-600 shadow-md border border-slate-200/80 hover:bg-white hover:text-slate-900 transition-colors"
                                 title="Message options"
+                                aria-label="Message options"
                               >
-                                <MoreVertical size={15} />
+                                <MoreVertical size={14} />
                               </button>
 
                               {/* Dropdown Menu */}
-                              {activeMenuMessageId === message.id && (
+                              {isMenuOpen && (
                                 <div
                                   onClick={(e) => e.stopPropagation()}
-                                  className={`absolute z-30 top-7 ${isMe ? 'left-0' : 'right-0'} w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-xs`}
+                                  className={`absolute z-40 top-8 ${isMe ? 'right-0 sm:left-0 sm:right-auto' : 'left-0 sm:right-0 sm:left-auto'} w-44 rounded-2xl border border-[#dce8df] bg-white py-1.5 shadow-xl text-xs`}
                                 >
                                   <button
                                     type="button"
                                     onClick={(e) => handleDeleteForMe(message.id, e)}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50"
+                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-slate-700 hover:bg-[#f4f8f5] transition-colors"
                                   >
                                     <Trash2 size={14} className="text-slate-500" />
                                     <span>{t.chat?.deleteForMe || 'Delete for Me'}</span>
@@ -337,7 +362,7 @@ export const ArtisanMessages: React.FC = () => {
                                         setActiveMenuMessageId(null);
                                         setDeleteConfirmTarget(message);
                                       }}
-                                      className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-red-600 hover:bg-red-50"
+                                      className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-red-600 hover:bg-red-50 transition-colors"
                                     >
                                       <Ban size={14} className="text-red-500" />
                                       <span>{t.chat?.deleteForEveryone || 'Delete for Everyone'}</span>
@@ -384,6 +409,21 @@ export const ArtisanMessages: React.FC = () => {
           </p>
         )}
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
+          <div
+            className={`rounded-2xl px-4 py-3 text-xs font-bold shadow-lg border flex items-center gap-2 ${
+              toastMessage.type === 'error'
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : 'bg-[#ebf5ee] text-[#0b5538] border-[#c4e0cb]'
+            }`}
+          >
+            <span>{toastMessage.text}</span>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal for Delete for Everyone */}
       {deleteConfirmTarget && (

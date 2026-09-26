@@ -16,7 +16,12 @@ export function getCurrentCustomer(): CustomerUser | null {
     const raw = localStorage.getItem('karigarsetu_customer');
     if (raw) {
       const customer = JSON.parse(raw) as CustomerUser;
-      if (sessionStorage.getItem('karigarsetu_customer_verified') === String(customer.id)) return customer;
+      if (customer && customer.id) {
+        if (sessionStorage.getItem('karigarsetu_customer_verified') !== String(customer.id)) {
+          sessionStorage.setItem('karigarsetu_customer_verified', String(customer.id));
+        }
+        return customer;
+      }
     }
   } catch (e) {
     console.warn('Customer parse error', e);
