@@ -63,7 +63,10 @@ CORS(
                 "http://localhost:3001",
                 "http://127.0.0.1:3001",
                 "https://karigarsetu-frontend.onrender.com",
-            ]
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization", "X-Customer-Id", "X-Requested-With", "Accept"],
+            "expose_headers": ["Content-Type", "X-Customer-Id"],
         }
     },
 )
