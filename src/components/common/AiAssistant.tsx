@@ -11,9 +11,14 @@ import {
   HelpCircle,
   Copy,
   Check,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { apiUrl } from '../../services/apiConfig';
+import { VoiceInputButton } from './VoiceInputButton';
+
+const aiAssistantLogo = new URL('../../assets/ai-assistant-logo.png', import.meta.url).href;
 
 interface ChatMessage {
   id: string;
@@ -44,6 +49,7 @@ export const AiAssistant: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +78,22 @@ export const AiAssistant: React.FC = () => {
       document.removeEventListener('touchstart', handleOutsideClick);
     };
   }, [isOpen]);
+
+  // Stop any ongoing speech synthesis when assistant panel closes or unmounts
+  useEffect(() => {
+    if (!isOpen && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // Determine user role and context from route & localStorage
   const isArtisanRoute = location.pathname.startsWith('/artisan');
@@ -188,6 +210,24 @@ export const AiAssistant: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleToggleSpeak = (msgId: string, text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (speakingId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language || 'en-IN';
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+    setSpeakingId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
   // Select initial welcome message
   const welcomeText = isArtisanRoute
     ? t.aiAssistant.welcomeArtisan
@@ -214,8 +254,12 @@ export const AiAssistant: React.FC = () => {
           {/* Header */}
           <div className="bg-[#2c4c38] text-white px-4 py-3.5 flex items-center justify-between shadow-sm relative">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-700/60 border border-emerald-400/30 flex items-center justify-center text-amber-200 shadow-inner">
-                <Sparkles className="w-5 h-5 animate-pulse text-[#ffd186]" />
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 border border-[#ffd186]/40 p-0.5 shadow-inner shrink-0 flex items-center justify-center">
+                <img
+                  src={aiAssistantLogo}
+                  alt="KarigarSetu AI"
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
               <div>
                 <h3 className="font-semibold text-sm sm:text-base leading-tight flex items-center gap-1.5 text-stone-100">
@@ -249,7 +293,7 @@ export const AiAssistant: React.FC = () => {
               <div className="space-y-4">
                 <div className="bg-white/90 border border-emerald-900/10 p-4 rounded-2xl shadow-sm text-stone-800">
                   <div className="flex items-center gap-2 text-emerald-900 font-medium text-xs mb-1">
-                    <Bot className="w-4 h-4 text-emerald-700" />
+                    <img src={aiAssistantLogo} alt="AI" className="w-5 h-5 rounded-full object-cover shrink-0" />
                     <span>KarigarSetu Smart Guide</span>
                   </div>
                   <p className="text-sm leading-relaxed text-stone-700">{welcomeText}</p>
@@ -284,8 +328,8 @@ export const AiAssistant: React.FC = () => {
                 className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender === 'assistant' && (
-                  <div className="w-7 h-7 rounded-lg bg-[#2c4c38] text-amber-200 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                    <Bot className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-full overflow-hidden bg-[#2c4c38] p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs border border-emerald-400/30">
+                    <img src={aiAssistantLogo} alt="AI" className="w-full h-full object-cover rounded-full" />
                   </div>
                 )}
 
@@ -304,18 +348,32 @@ export const AiAssistant: React.FC = () => {
                   >
                     <span>{msg.timestamp}</span>
                     {msg.sender === 'assistant' && (
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(msg.id, msg.text)}
-                        className="opacity-0 group-hover:opacity-100 hover:text-stone-600 transition-opacity p-0.5"
-                        title={copiedId === msg.id ? t.aiAssistant.copied : t.aiAssistant.copyReply}
-                      >
-                        {copiedId === msg.id ? (
-                          <Check className="w-3 h-3 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSpeak(msg.id, msg.text)}
+                          className="opacity-0 group-hover:opacity-100 hover:text-stone-700 transition-opacity p-0.5 cursor-pointer"
+                          title={speakingId === msg.id ? (t.voiceInput?.stopReading || 'Stop reading') : (t.voiceInput?.readAloud || 'Read aloud')}
+                        >
+                          {speakingId === msg.id ? (
+                            <VolumeX className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                          ) : (
+                            <Volume2 className="w-3.5 h-3.5 text-stone-500" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(msg.id, msg.text)}
+                          className="opacity-0 group-hover:opacity-100 hover:text-stone-600 transition-opacity p-0.5 cursor-pointer"
+                          title={copiedId === msg.id ? t.aiAssistant.copied : t.aiAssistant.copyReply}
+                        >
+                          {copiedId === msg.id ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -331,8 +389,8 @@ export const AiAssistant: React.FC = () => {
             {/* Typing / Loading Indicator */}
             {isLoading && (
               <div className="flex gap-2.5 justify-start items-center">
-                <div className="w-7 h-7 rounded-lg bg-[#2c4c38] text-amber-200 flex items-center justify-center shrink-0 shadow-2xs">
-                  <Bot className="w-4 h-4 animate-spin" />
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-[#2c4c38] p-0.5 flex items-center justify-center shrink-0 shadow-2xs border border-emerald-400/30 animate-pulse">
+                  <img src={aiAssistantLogo} alt="AI" className="w-full h-full object-cover rounded-full" />
                 </div>
                 <div className="bg-white text-stone-600 border border-stone-200 px-3.5 py-2 rounded-2xl rounded-bl-xs text-xs flex items-center gap-2 shadow-2xs">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
@@ -380,7 +438,7 @@ export const AiAssistant: React.FC = () => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-2.5 bg-white border-t border-stone-200 flex items-center gap-2"
+            className="p-2.5 bg-white border-t border-stone-200 flex items-center gap-1.5 sm:gap-2"
           >
             <input
               ref={inputRef}
@@ -390,7 +448,14 @@ export const AiAssistant: React.FC = () => {
               placeholder={t.aiAssistant.askAnything}
               disabled={isLoading}
               maxLength={1000}
-              className="flex-1 bg-stone-100 hover:bg-stone-50 focus:bg-white text-stone-900 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-stone-200 focus:border-emerald-600 focus:outline-none transition-colors"
+              className="min-w-0 flex-1 bg-stone-100 hover:bg-stone-50 focus:bg-white text-stone-900 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-stone-200 focus:border-emerald-600 focus:outline-none transition-colors"
+            />
+            <VoiceInputButton
+              language={language}
+              onTranscript={(transcript) => {
+                setInputMessage((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
+              }}
+              disabled={isLoading}
             />
             <button
               type="submit"
@@ -413,7 +478,7 @@ export const AiAssistant: React.FC = () => {
         ref={launcherRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="group relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#0c4b31] hover:bg-[#073623] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-[#ffd186]/50 cursor-pointer"
+        className="group relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#0c4b31] hover:bg-[#073623] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-[#ffd186]/60 cursor-pointer overflow-hidden p-1"
         aria-label="Toggle KarigarSetu AI Assistant"
         style={{
           boxShadow: '0 8px 24px -2px rgba(12, 75, 49, 0.45), 0 0 0 1px rgba(255, 209, 134, 0.25)',
@@ -422,9 +487,13 @@ export const AiAssistant: React.FC = () => {
         {isOpen ? (
           <ChevronDown className="w-6 h-6 text-[#ffd186] transition-transform duration-200" />
         ) : (
-          <div className="relative flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-[#ffd186] transition-transform group-hover:rotate-12 duration-300" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-[#0c4b31] rounded-full animate-pulse"></span>
+          <div className="relative w-full h-full flex items-center justify-center">
+            <img
+              src={aiAssistantLogo}
+              alt="KarigarSetu AI"
+              className="w-full h-full object-cover rounded-full"
+            />
+            <span className="absolute top-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-[#0c4b31] rounded-full animate-pulse shadow-sm"></span>
           </div>
         )}
 

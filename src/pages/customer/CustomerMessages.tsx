@@ -15,6 +15,7 @@ import { MarketplaceNavbar } from '../../components/marketplace/MarketplaceNavba
 import { API_BASE } from '../../services/apiConfig';
 import { getCurrentCustomer } from '../../services/customerAuth';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { VoiceInputButton } from '../../components/common/VoiceInputButton';
 
 type Conversation = {
   customer_id: number;
@@ -44,7 +45,7 @@ type ChatMessage = {
 };
 
 export const CustomerMessages: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [params] = useSearchParams();
   const navigate = useNavigate();
 
@@ -660,9 +661,9 @@ export const CustomerMessages: React.FC = () => {
                 {/* Chat Composer */}
                 <form
                   onSubmit={sendReply}
-                  className="flex items-center gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3.5 sm:p-4"
+                  className="flex items-center gap-2 sm:gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3 sm:p-4"
                 >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#edf6f0] text-[#0b5538]">
+                  <div className="hidden sm:grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#edf6f0] text-[#0b5538]">
                     <UserRound size={18} />
                   </div>
                   <input
@@ -670,12 +671,19 @@ export const CustomerMessages: React.FC = () => {
                     onChange={(e) => setDraft(e.target.value)}
                     maxLength={1500}
                     placeholder={t.customerMessages?.writeMessage || 'Write a message to artisan…'}
-                    className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
+                    className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
+                  />
+                  <VoiceInputButton
+                    language={language}
+                    onTranscript={(transcript) => {
+                      setDraft((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
+                    }}
+                    disabled={sending}
                   />
                   <button
                     type="submit"
                     disabled={!draft.trim() || sending}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0b5538] px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#0b5538] px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shrink-0"
                   >
                     <Send size={16} />
                     <span className="hidden sm:inline">

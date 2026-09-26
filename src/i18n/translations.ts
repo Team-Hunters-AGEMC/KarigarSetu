@@ -556,6 +556,17 @@ export const translations = {
         ],
       },
     },
+    // Voice Input
+    voiceInput: {
+      voiceInput: 'Voice input',
+      listening: 'Listening...',
+      stopListening: 'Stop listening',
+      micPermissionDenied: 'Microphone permission denied',
+      notSupported: 'Voice input is not supported in this browser',
+      noSpeechDetected: 'No speech detected',
+      readAloud: 'Read aloud',
+      stopReading: 'Stop reading',
+    },
     // Common Messages
     common: {
       loading: 'Loading...',
@@ -1116,6 +1127,17 @@ export const translations = {
         ],
       },
     },
+    // Voice Input
+    voiceInput: {
+      voiceInput: 'ভয়েস ইনপুট',
+      listening: 'শুনছি...',
+      stopListening: 'শোনা বন্ধ করুন',
+      micPermissionDenied: 'মাইক্রোফোনের অনুমতি পাওয়া যায়নি',
+      notSupported: 'এই ব্রাউজারে ভয়েস ইনপুট সমর্থিত নয়',
+      noSpeechDetected: 'কোনো কথা শোনা যায়নি',
+      readAloud: 'জোরে শুনুন',
+      stopReading: 'পড়া বন্ধ করুন',
+    },
     // Common Messages
     common: {
       loading: 'লোড হচ্ছে...',
@@ -1675,6 +1697,17 @@ export const translations = {
           'ग्राहकों को उत्तर कैसे दें?',
         ],
       },
+    },
+    // Voice Input
+    voiceInput: {
+      voiceInput: 'वॉइस इनपुट',
+      listening: 'सुन रहा हूँ...',
+      stopListening: 'सुनना बंद करें',
+      micPermissionDenied: 'माइक्रोफ़ोन की अनुमति नहीं मिली',
+      notSupported: 'इस ब्राउज़र में वॉइस इनपुट समर्थित नहीं है',
+      noSpeechDetected: 'कोई आवाज़ नहीं मिली',
+      readAloud: 'बोलकर सुनें',
+      stopReading: 'सुनना बंद करें',
     },
     // Common Messages
     common: {

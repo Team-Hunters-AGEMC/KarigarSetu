@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Send, UserRound, MoreVertical, Trash2, Ban } from 'lucide-react';
 import { API_BASE } from '../services/apiConfig';
 import { useLanguage } from '../i18n/LanguageContext';
+import { VoiceInputButton } from '../components/common/VoiceInputButton';
 
 type Conversation = {
   customer_id: number;
@@ -23,7 +24,7 @@ type ChatMessage = {
 };
 
 export const ArtisanMessages: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [inbox, setInbox] = useState<Conversation[]>([]);
   const [active, setActive] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -381,19 +382,26 @@ export const ArtisanMessages: React.FC = () => {
 
                 <form
                   onSubmit={sendReply}
-                  className="flex items-center gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3.5 sm:p-4"
+                  className="flex items-center gap-2 sm:gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3 sm:p-4"
                 >
                   <input
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
                     placeholder={t.artisan.replyPlaceholder}
-                    className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
+                    className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
+                  />
+
+                  <VoiceInputButton
+                    language={language}
+                    onTranscript={(transcript) => {
+                      setDraft((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
+                    }}
                   />
 
                   <button
                     type="submit"
                     disabled={!draft.trim()}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0b5538] px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#0b5538] px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50 shrink-0 cursor-pointer"
                   >
                     <Send size={16} />
                   </button>
