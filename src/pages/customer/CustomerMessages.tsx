@@ -10,6 +10,8 @@ import {
   Trash2,
   Ban,
   Package,
+  Search,
+  ExternalLink,
 } from 'lucide-react';
 import { MarketplaceNavbar } from '../../components/marketplace/MarketplaceNavbar';
 import { API_BASE } from '../../services/apiConfig';
@@ -54,6 +56,7 @@ export const CustomerMessages: React.FC = () => {
   const queryArtisanName = params.get('artisan_name') || '';
 
   const [inbox, setInbox] = useState<Conversation[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [active, setActive] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -347,8 +350,18 @@ export const CustomerMessages: React.FC = () => {
     }
   };
 
+  const displayedInbox = inbox.filter((c) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (c.artisan_name && c.artisan_name.toLowerCase().includes(q)) ||
+      (c.product_name && c.product_name.toLowerCase().includes(q)) ||
+      (c.body && c.body.toLowerCase().includes(q))
+    );
+  });
+
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-[#173b2d]">
+    <div className="min-h-screen bg-[#faf6f0] text-[#173b2d]">
       <MarketplaceNavbar searchQuery="" onSearchChange={() => {}} selectedCategory="All" onSelectCategory={() => {}} />
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
@@ -356,7 +369,7 @@ export const CustomerMessages: React.FC = () => {
         <div className="mb-4 flex items-center justify-between">
           <Link
             to={active?.product_id ? `/marketplace/products/${active.product_id}` : '/marketplace'}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0b5538] hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0c4b31] hover:underline"
           >
             <ArrowLeft size={16} />
             <span>
@@ -368,52 +381,70 @@ export const CustomerMessages: React.FC = () => {
         </div>
 
         {/* Main Inbox & Chat Container */}
-        <div className="overflow-hidden rounded-3xl border border-[#dce9df] bg-white shadow-md grid md:grid-cols-[340px_1fr] min-h-[620px]">
+        <div className="overflow-hidden rounded-3xl border border-[#e6dfd1] bg-[#fbf9f5] shadow-md grid md:grid-cols-[340px_1fr] min-h-[640px]">
           {/* Left Column: Conversations Inbox List */}
           <aside
-            className={`border-b border-[#e8f0ea] bg-[#f7faf8] p-4 md:border-b-0 md:border-r ${
+            className={`border-b border-[#e9e3d6] bg-[#f7f3eb] p-4 md:border-b-0 md:border-r md:border-[#e9e3d6] ${
               mobileShowChat ? 'hidden md:block' : 'block'
             }`}
           >
-            <div className="mb-4 flex items-center justify-between border-b border-[#e5ece7] pb-3">
-              <h1 className="flex items-center gap-2 font-extrabold text-[#0b5538] text-base">
-                <MessageCircle size={20} />
+            <div className="mb-3.5 flex items-center justify-between border-b border-[#e6dfd1] pb-3">
+              <h1 className="flex items-center gap-2 font-bold font-serif text-[#16382a] text-lg">
+                <MessageCircle size={22} className="text-[#0c4b31]" />
                 <span>{t.customerMessages?.title || 'My Messages'}</span>
               </h1>
               {inbox.length > 0 && (
-                <span className="text-xs font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-[#7c7263]">
                   {inbox.length} {inbox.length === 1 ? 'chat' : 'chats'}
                 </span>
               )}
             </div>
 
+            {/* Search conversations input matching Reference 1 */}
+            <div className="relative mb-3">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8273]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full rounded-xl bg-[#eee7db]/80 border border-[#ded5c5] pl-9 pr-3 py-2 text-xs text-[#1c382b] placeholder-[#8c8273] focus:outline-none focus:border-[#0c4b31] focus:bg-white transition-colors"
+              />
+            </div>
+
             {loadingInbox ? (
-              <div className="py-16 text-center text-sm font-medium text-slate-400">
+              <div className="py-16 text-center text-sm font-medium text-[#8c8273]">
                 Loading conversations…
               </div>
-            ) : inbox.length === 0 ? (
+            ) : displayedInbox.length === 0 ? (
               <div className="py-14 text-center px-2">
-                <div className="mx-auto mb-3.5 grid h-12 w-12 place-items-center rounded-2xl bg-[#ebf5ee] text-[#0b5538]">
+                <div className="mx-auto mb-3.5 grid h-12 w-12 place-items-center rounded-2xl bg-[#ede7dc] text-[#0c4b31]">
                   <MessageCircle size={22} />
                 </div>
-                <h3 className="font-extrabold text-sm text-[#173b2d]">
-                  {t.customerMessages?.noConversations || 'No conversations yet'}
+                <h3 className="font-bold text-sm text-[#173b2d]">
+                  {searchQuery
+                    ? 'No matching conversations'
+                    : t.customerMessages?.noConversations || 'No conversations yet'}
                 </h3>
-                <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">
-                  {t.customerMessages?.noConversationsHint ||
-                    'Start a conversation with an artisan from any product page or custom request.'}
+                <p className="mt-1.5 text-xs text-[#7c7263] leading-relaxed">
+                  {searchQuery
+                    ? 'Try a different search term or artisan name.'
+                    : t.customerMessages?.noConversationsHint ||
+                      'Start a conversation with an artisan from any product page or custom request.'}
                 </p>
-                <Link
-                  to="/marketplace"
-                  className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0c4b31] hover:bg-[#08422b] text-white text-xs font-bold shadow-xs transition-colors"
-                >
-                  <Store size={14} />
-                  <span>{t.customerMessages?.browseMarketplace || 'Explore Crafts'}</span>
-                </Link>
+                {!searchQuery && (
+                  <Link
+                    to="/marketplace"
+                    className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0c4b31] hover:bg-[#08422b] text-white text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <Store size={14} />
+                    <span>{t.customerMessages?.browseMarketplace || 'Explore Crafts'}</span>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="space-y-1.5 overflow-y-auto max-h-[600px] pr-1">
-                {inbox.map((item, index) => {
+                {displayedInbox.map((item, index) => {
                   const isSelected =
                     active?.artisan_id === item.artisan_id &&
                     (active?.product_id || null) === (item.product_id || null);
@@ -425,13 +456,13 @@ export const CustomerMessages: React.FC = () => {
                       onClick={() => openConversation(item)}
                       className={`w-full rounded-2xl p-3.5 text-left transition-all cursor-pointer ${
                         isSelected
-                          ? 'border border-[#bedfc9] bg-white shadow-xs'
-                          : 'hover:bg-white/80 border border-transparent'
+                          ? 'border border-[#a8cfb6] bg-[#edf4ee] shadow-xs'
+                          : 'border border-[#eee7da] bg-[#ffffff] hover:bg-[#faf7f2] hover:border-[#ded5c5]'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-[#0b5538] text-[#ffd186] font-extrabold text-xs flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-[#0c4b31] text-[#fde047] font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                             {item.artisan_name ? item.artisan_name.charAt(0).toUpperCase() : 'A'}
                           </div>
                           <span className="truncate text-sm font-bold text-[#173b2d]">
@@ -440,22 +471,29 @@ export const CustomerMessages: React.FC = () => {
                         </div>
 
                         {item.unread_count ? item.unread_count > 0 && (
-                          <span className="rounded-full bg-[#e87722] px-2 py-0.5 text-[10px] font-extrabold text-white shrink-0">
+                          <span className="rounded-full bg-[#ea580c] px-2 py-0.5 text-[10px] font-extrabold text-white shrink-0 shadow-2xs">
                             {item.unread_count} new
                           </span>
                         ) : null}
                       </div>
 
                       {item.product_name && (
-                        <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#0c4b31] truncate">
-                          <Package size={12} className="text-[#e27d35] shrink-0" />
+                        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#0c4b31] truncate">
+                          <Package size={12} className="text-[#d97706] shrink-0" />
                           <span className="truncate">{item.product_name}</span>
                         </div>
                       )}
 
-                      <p className="mt-1 truncate text-xs text-slate-500">
-                        {item.body || 'No messages yet'}
-                      </p>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <p className="truncate text-xs text-[#78716c] flex-1">
+                          {item.body || 'No messages yet'}
+                        </p>
+                        {item.created_at && (
+                          <span className="text-[10px] text-[#8c8273] shrink-0 font-medium">
+                            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -466,14 +504,14 @@ export const CustomerMessages: React.FC = () => {
           {/* Right Column: Chat History and Composer */}
           <section className={`flex flex-col min-h-[580px] ${mobileShowChat ? 'block' : 'hidden md:flex'}`}>
             {!active ? (
-              <div className="m-auto text-center text-slate-500 py-16 px-4">
-                <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-2xl bg-[#ebf5ee] text-[#0b5538]">
+              <div className="m-auto text-center text-[#7c7263] py-16 px-4">
+                <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-2xl bg-[#ede7dc] text-[#0c4b31]">
                   <MessageCircle size={26} />
                 </div>
-                <h3 className="font-extrabold text-[#173b2d] text-base">
+                <h3 className="font-serif font-bold text-[#173b2d] text-lg">
                   {t.customerMessages?.selectConversation || 'Select a conversation'}
                 </h3>
-                <p className="mt-1.5 text-xs text-slate-400 max-w-sm mx-auto">
+                <p className="mt-1.5 text-xs text-[#8c8273] max-w-sm mx-auto">
                   {t.customerMessages?.selectConversationHint ||
                     'Select any artisan conversation from the left to view messages and reply.'}
                 </p>
@@ -481,68 +519,94 @@ export const CustomerMessages: React.FC = () => {
             ) : (
               <>
                 {/* Active Chat Header */}
-                <header className="flex items-center justify-between border-b border-[#e8f0ea] bg-gradient-to-r from-[#f0f7f2] via-[#f7faf8] to-[#fbfdfb] px-4 py-3.5 sm:px-6">
+                <header className="flex items-center justify-between border-b border-[#e8e2d5] bg-[#fdfbf7] px-4 py-3 sm:px-6">
                   <div className="flex items-center gap-3">
                     {/* Mobile Back Button to inbox list */}
                     <button
                       type="button"
                       onClick={() => setMobileShowChat(false)}
-                      className="md:hidden p-1.5 -ml-1 text-[#0b5538] hover:bg-emerald-50 rounded-lg cursor-pointer"
+                      className="md:hidden p-1.5 -ml-1 text-[#0c4b31] hover:bg-[#edf4ee] rounded-lg cursor-pointer"
                       title={t.customerMessages?.backToConversations || 'Back to Conversations'}
                     >
                       <ArrowLeft size={18} />
                     </button>
 
-                    <div className="w-10 h-10 rounded-2xl bg-[#0b5538] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-                      <Store size={18} />
+                    <div className="w-10 h-10 rounded-full bg-[#0c4b31] text-[#fde047] flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                      {active.artisan_name ? active.artisan_name.charAt(0).toUpperCase() : <Store size={18} />}
                     </div>
 
                     <div>
-                      <h2 className="text-sm sm:text-base font-extrabold text-[#173b2d] flex items-center gap-2">
+                      <h2 className="text-sm sm:text-base font-bold font-serif text-[#173b2d] flex items-center gap-2">
                         <span>{active.artisan_name || 'Artisan'}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-[#0c4b31] font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#edf4ee] text-[#0c4b31] border border-[#bedfc9] font-bold">
                           Artisan
                         </span>
                       </h2>
 
                       {active.product_name ? (
-                        <Link
-                          to={active.product_id ? `/marketplace/products/${active.product_id}` : '#'}
-                          className="text-[11px] font-semibold text-[#0c4b31] hover:underline flex items-center gap-1 mt-0.5"
-                        >
-                          <Package size={12} className="text-[#e27d35]" />
-                          <span className="truncate max-w-[240px] sm:max-w-md">{active.product_name}</span>
-                        </Link>
+                        <div className="text-[11px] font-medium text-[#496555] flex items-center gap-1 mt-0.5">
+                          <Package size={12} className="text-[#d97706] shrink-0" />
+                          <span className="truncate max-w-[200px] sm:max-w-xs">{active.product_name}</span>
+                        </div>
                       ) : (
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-[#7c7263]">
                           {t.customerMessages?.directArtisanChat || 'Direct Artisan Chat'}
                         </p>
                       )}
                     </div>
                   </div>
+
+                  {active.product_id && (
+                    <Link
+                      to={`/marketplace/products/${active.product_id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#ded5c5] bg-white hover:bg-[#faf7f2] text-[#173b2d] text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    >
+                      <span>View Product</span>
+                      <ExternalLink size={13} className="text-[#0c4b31]" />
+                    </Link>
+                  )}
                 </header>
 
-                {/* Messages Canvas */}
+                {/* Messages Canvas - Warm Handcrafted Paper & Artisan Subtle Pattern */}
                 <div
-                  className="relative flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-8 bg-gradient-to-b from-[#f9fbf8] via-[#f7f9f6] to-[#f4f7f3]"
+                  className="relative flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-8 bg-[#fdfbf7]"
                   style={{
-                    backgroundImage: 'radial-gradient(circle, #dbe4dd 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
+                    backgroundImage: `radial-gradient(circle, #e2dcd0 1px, transparent 1px), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239c8d76' fill-opacity='0.04' fill-rule='evenodd'%3E%3Cpath d='M30 30c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm-20 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10z'/%3E%3C/g%3E%3C/svg%3E")`,
+                    backgroundSize: '24px 24px, 120px 120px',
                   }}
                 >
                   {loadingMessages ? (
-                    <div className="pt-20 text-center text-sm font-medium text-slate-500">
+                    <div className="pt-20 text-center text-sm font-medium text-[#8c8273]">
                       Loading messages…
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="pt-20 text-center">
-                      <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-full bg-[#ebf5ee] text-[#0b5538]">
-                        <MessageCircle size={26} />
+                    <div className="pt-16 pb-12 text-center flex flex-col items-center justify-center">
+                      {/* Dual overlapping chat bubbles with sparkles (Reference Image 1) */}
+                      <div className="relative mb-5 w-24 h-20 flex items-center justify-center">
+                        {/* Radiating craft sparkle dashes */}
+                        <span className="absolute -top-1 left-2 w-1 h-2 bg-[#d97706]/40 rounded-full rotate-[-25deg]"></span>
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-2 bg-[#d97706]/50 rounded-full"></span>
+                        <span className="absolute -top-1 right-2 w-1 h-2 bg-[#d97706]/40 rounded-full rotate-[25deg]"></span>
+
+                        {/* Sage Green rear bubble */}
+                        <div className="absolute top-0 left-1 w-14 h-12 rounded-2xl bg-[#86a789] shadow-sm flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/70 mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/70 mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/70 mx-0.5"></span>
+                        </div>
+
+                        {/* Warm Cream front bubble */}
+                        <div className="absolute bottom-0 right-1 w-14 h-12 rounded-2xl bg-[#eae2d3] border border-[#d8cdbc] shadow-md flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#52493c] mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#52493c] mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#52493c] mx-0.5"></span>
+                        </div>
                       </div>
-                      <h3 className="font-extrabold text-[#173b2d]">
-                        {t.customRequests?.chatWithArtisan || 'Start a conversation'}
+
+                      <h3 className="font-serif font-bold text-2xl text-[#18392b]">
+                        {t.customRequests?.chatWithArtisan || 'Chat with Artisan'}
                       </h3>
-                      <p className="mx-auto mt-1.5 max-w-sm text-xs text-slate-500">
+                      <p className="mx-auto mt-2 max-w-sm text-xs sm:text-sm text-[#6b6255] leading-relaxed">
                         Ask about this handmade craft, customizations, materials, or order details.
                       </p>
                     </div>
@@ -562,11 +626,11 @@ export const CustomerMessages: React.FC = () => {
                               className={`relative rounded-2xl px-4.5 py-3 text-sm transition-all ${
                                 isMe
                                   ? isDeletedEveryone
-                                    ? 'rounded-br-xs border border-[#e2ece5] bg-[#f0f4f1] text-slate-500 italic shadow-xs'
-                                    : 'rounded-br-xs bg-[#0b5538] text-white shadow-xs'
+                                    ? 'rounded-br-xs border border-[#ded7ca] bg-[#f0eae1] text-[#78716c] italic shadow-xs'
+                                    : 'rounded-br-xs bg-[#0c4b31] text-white shadow-xs border border-[#083824]'
                                   : isDeletedEveryone
-                                  ? 'rounded-bl-xs border border-[#edebe8] bg-[#f7f5f2] text-slate-500 italic shadow-xs'
-                                  : 'rounded-bl-xs border border-[#e5ece6] bg-[#ffffff] text-[#173b2d] shadow-xs'
+                                  ? 'rounded-bl-xs border border-[#ede7dc] bg-[#f7f3ec] text-[#78716c] italic shadow-xs'
+                                  : 'rounded-bl-xs border border-[#e8e2d4] bg-[#ffffff] text-[#173b2d] shadow-2xs'
                               }`}
                             >
                               {/* Message Content or Placeholder */}
@@ -583,7 +647,7 @@ export const CustomerMessages: React.FC = () => {
 
                               {/* Timestamp */}
                               <div className="mt-1 flex items-center justify-between gap-3 text-[10px]">
-                                <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-slate-400'}>
+                                <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-[#8c8273]'}>
                                   {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </div>
@@ -602,7 +666,7 @@ export const CustomerMessages: React.FC = () => {
                                     e.stopPropagation();
                                     setActiveMenuMessageId(isMenuOpen ? null : message.id);
                                   }}
-                                  className="rounded-full bg-white/95 p-1.5 text-slate-600 shadow-md border border-slate-200/80 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
+                                  className="rounded-full bg-white/95 p-1.5 text-[#5c5446] shadow-md border border-[#e4ddd0] hover:bg-white hover:text-[#173b2d] transition-colors cursor-pointer"
                                   title="Message options"
                                   aria-label="Message options"
                                 >
@@ -615,12 +679,12 @@ export const CustomerMessages: React.FC = () => {
                                     onClick={(e) => e.stopPropagation()}
                                     className={`absolute z-40 top-8 ${
                                       isMe ? 'right-0 sm:left-0 sm:right-auto' : 'left-0 sm:right-0 sm:left-auto'
-                                    } w-44 rounded-2xl border border-[#dce8df] bg-white py-1.5 shadow-xl text-xs`}
+                                    } w-44 rounded-2xl border border-[#ded6c7] bg-white py-1.5 shadow-xl text-xs`}
                                   >
                                     <button
                                       type="button"
                                       onClick={(e) => handleDeleteForMe(message.id, e)}
-                                      className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-slate-700 hover:bg-[#f4f8f5] transition-colors cursor-pointer"
+                                      className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-slate-700 hover:bg-[#faf7f2] transition-colors cursor-pointer"
                                     >
                                       <Trash2 size={14} className="text-slate-500" />
                                       <span>{t.chat?.deleteForMe || 'Delete for Me'}</span>
@@ -653,27 +717,28 @@ export const CustomerMessages: React.FC = () => {
                 </div>
 
                 {error && (
-                  <p className="mx-5 my-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                  <p className="mx-5 my-2 rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs font-semibold text-red-700">
                     {error}
                   </p>
                 )}
 
-                {/* Chat Composer */}
+                {/* Chat Composer - Clean and Handcrafted like Reference Image 1 */}
                 <form
                   onSubmit={sendReply}
-                  className="flex items-center gap-2 sm:gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3 sm:p-4"
+                  className="flex items-center gap-2 sm:gap-3 border-t border-[#e8e2d5] bg-[#faf7f2] p-3 sm:p-4"
                 >
-                  <div className="hidden sm:grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#edf6f0] text-[#0b5538]">
-                    <UserRound size={18} />
+                  <div className="hidden sm:grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ede7dc] text-[#0c4b31]">
+                    <UserRound size={17} />
                   </div>
                   <input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     maxLength={1500}
-                    placeholder={t.customerMessages?.writeMessage || 'Write a message to artisan…'}
-                    className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
+                    placeholder={t.customerMessages?.writeMessage || 'Write a message...'}
+                    className="min-w-0 flex-1 rounded-full sm:rounded-2xl border border-[#ded7c8] bg-white px-4 py-2.5 text-xs sm:text-sm text-[#18392b] placeholder-[#8c8273] outline-none transition-colors focus:border-[#0c4b31] focus:ring-1 focus:ring-[#0c4b31]"
                   />
                   <VoiceInputButton
+                    theme="light"
                     language={language}
                     onTranscript={(transcript) => {
                       setDraft((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
@@ -683,9 +748,9 @@ export const CustomerMessages: React.FC = () => {
                   <button
                     type="submit"
                     disabled={!draft.trim() || sending}
-                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#0b5538] px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shrink-0"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl bg-[#0c4b31] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition-colors hover:bg-[#083824] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed shrink-0"
                   >
-                    <Send size={16} />
+                    <Send size={15} />
                     <span className="hidden sm:inline">
                       {sending ? 'Sending…' : t.customerMessages?.send || 'Send'}
                     </span>

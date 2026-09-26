@@ -9,6 +9,7 @@ export interface VoiceInputButtonProps {
   onTranscript: (transcript: string) => void;
   disabled?: boolean;
   className?: string;
+  theme?: 'light' | 'dark';
 }
 
 export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
@@ -16,6 +17,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   onTranscript,
   disabled = false,
   className = '',
+  theme = 'light',
 }) => {
   const { t } = useLanguage();
   const [toastNotice, setToastNotice] = useState<string | null>(null);
@@ -88,6 +90,10 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
         className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 shrink-0 ${
           isListening
             ? 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-500/30 ring-2 ring-red-400 ring-offset-1 animate-pulse'
+            : theme === 'dark'
+            ? isSupported
+              ? 'bg-[#0b3342]/90 hover:bg-[#104457] text-cyan-300 border border-cyan-500/40 hover:border-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+              : 'bg-slate-800 text-slate-500 border border-slate-700 opacity-50'
             : isSupported
             ? 'bg-emerald-50/80 hover:bg-emerald-100 text-[#0c4b31] border border-[#bedfc9] hover:border-[#0c4b31] shadow-2xs'
             : 'bg-stone-100 text-stone-400 border border-stone-200 opacity-60'

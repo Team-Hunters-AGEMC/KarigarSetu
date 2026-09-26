@@ -246,15 +246,12 @@ export const AiAssistant: React.FC = () => {
       {isOpen && (
         <div
           ref={panelRef}
-          className="w-[92vw] sm:w-[410px] h-[580px] max-h-[85vh] bg-[#fcfaf6] rounded-2xl shadow-2xl border border-stone-200 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200"
-          style={{
-            boxShadow: '0 20px 40px -15px rgba(44, 76, 56, 0.25), 0 0 0 1px rgba(44, 76, 56, 0.08)',
-          }}
+          className="w-[92vw] sm:w-[410px] h-[580px] max-h-[85vh] bg-[#051822] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_30px_rgba(6,182,212,0.2)] border border-cyan-500/30 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200 backdrop-blur-xl"
         >
           {/* Header */}
-          <div className="bg-[#2c4c38] text-white px-4 py-3.5 flex items-center justify-between shadow-sm relative">
+          <div className="bg-[#072430]/95 backdrop-blur-md border-b border-cyan-500/25 text-white px-4 py-3.5 flex items-center justify-between shadow-sm relative">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 border border-[#ffd186]/40 p-0.5 shadow-inner shrink-0 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-[#092b3a] border-2 border-cyan-400/70 p-0.5 shadow-[0_0_12px_rgba(6,182,212,0.4)] shrink-0 flex items-center justify-center">
                 <img
                   src={aiAssistantLogo}
                   alt="KarigarSetu AI"
@@ -262,11 +259,11 @@ export const AiAssistant: React.FC = () => {
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-sm sm:text-base leading-tight flex items-center gap-1.5 text-stone-100">
+                <h3 className="font-bold text-sm sm:text-base leading-tight flex items-center gap-1.5 text-white">
                   {t.aiAssistant.title}
                 </h3>
-                <p className="text-[11px] text-emerald-200/90 font-light flex items-center gap-1">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <p className="text-[11px] text-cyan-300 font-medium flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse"></span>
                   {t.aiAssistant.onlineStatus}
                 </p>
               </div>
@@ -278,7 +275,7 @@ export const AiAssistant: React.FC = () => {
                   type="button"
                   onClick={handleClearChat}
                   title={t.aiAssistant.clearChat}
-                  className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-emerald-700/50 transition-colors text-xs flex items-center gap-1 cursor-pointer"
+                  className="p-1.5 rounded-lg text-cyan-400/80 hover:text-cyan-200 hover:bg-cyan-900/40 transition-colors text-xs flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -286,23 +283,30 @@ export const AiAssistant: React.FC = () => {
             </div>
           </div>
 
-          {/* Chat Messages Body */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-gradient-to-b from-[#f9f6f0] to-[#f4eee4]">
+          {/* Chat Messages Body - Deep Navy & Glowing Teal Wave Pattern */}
+          <div
+            className="flex-1 overflow-y-auto p-4 space-y-3.5 relative"
+            style={{
+              backgroundColor: '#061b26',
+              backgroundImage: `radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.16), transparent 55%), radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.13), transparent 55%), url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 60 Q 30 40, 60 60 T 120 60' stroke='%2306b6d4' stroke-width='0.6' fill='none' stroke-opacity='0.08'/%3E%3Cpath d='M0 80 Q 30 60, 60 80 T 120 80' stroke='%2310b981' stroke-width='0.6' fill='none' stroke-opacity='0.06'/%3E%3C/svg%3E")`,
+              backgroundSize: 'cover, cover, 120px 120px',
+            }}
+          >
             {/* Greeting Card if no messages */}
             {messages.length === 0 && (
               <div className="space-y-4">
-                <div className="bg-white/90 border border-emerald-900/10 p-4 rounded-2xl shadow-sm text-stone-800">
-                  <div className="flex items-center gap-2 text-emerald-900 font-medium text-xs mb-1">
-                    <img src={aiAssistantLogo} alt="AI" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                <div className="bg-[#082939]/80 border border-cyan-500/25 p-4 rounded-2xl shadow-lg text-cyan-50 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-cyan-300 font-semibold text-xs mb-1.5">
+                    <img src={aiAssistantLogo} alt="AI" className="w-5 h-5 rounded-full object-cover shrink-0 border border-cyan-400/40" />
                     <span>KarigarSetu Smart Guide</span>
                   </div>
-                  <p className="text-sm leading-relaxed text-stone-700">{welcomeText}</p>
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-200">{welcomeText}</p>
                 </div>
 
                 {/* Quick Prompts */}
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider font-semibold text-stone-700 mb-2 flex items-center gap-1 px-1">
-                    <HelpCircle className="w-3.5 h-3.5 text-emerald-700" />
+                  <p className="text-[11px] uppercase tracking-wider font-semibold text-cyan-300/80 mb-2 flex items-center gap-1 px-1">
+                    <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
                     {t.aiAssistant.suggestedQuestions}
                   </p>
                   <div className="flex flex-col gap-1.5">
@@ -311,7 +315,7 @@ export const AiAssistant: React.FC = () => {
                         key={idx}
                         type="button"
                         onClick={() => handleSendMessage(pill)}
-                        className="text-left text-xs bg-white hover:bg-emerald-50 text-stone-700 hover:text-emerald-900 px-3 py-2 rounded-xl border border-stone-200 hover:border-emerald-300 transition-all shadow-2xs font-normal"
+                        className="text-left text-xs bg-[#092b3a]/75 hover:bg-[#0d3b50] text-cyan-100 hover:text-white px-3.5 py-2.5 rounded-xl border border-cyan-500/25 hover:border-cyan-400/50 transition-all shadow-sm font-medium cursor-pointer"
                       >
                         {pill}
                       </button>
@@ -328,7 +332,7 @@ export const AiAssistant: React.FC = () => {
                 className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full overflow-hidden bg-[#2c4c38] p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs border border-emerald-400/30">
+                  <div className="w-7 h-7 rounded-full overflow-hidden bg-[#092b3a] p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs border border-cyan-400/50">
                     <img src={aiAssistantLogo} alt="AI" className="w-full h-full object-cover rounded-full" />
                   </div>
                 )}
@@ -336,14 +340,14 @@ export const AiAssistant: React.FC = () => {
                 <div
                   className={`relative group max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                     msg.sender === 'user'
-                      ? 'bg-[#2c4c38] text-white rounded-br-xs shadow-xs'
-                      : 'bg-white text-stone-800 border border-stone-200/80 rounded-bl-xs shadow-2xs'
+                      ? 'bg-gradient-to-r from-[#0d6e53] to-[#0a5a44] text-white border border-emerald-400/30 rounded-br-xs shadow-md'
+                      : 'bg-[#092937]/90 text-slate-100 border border-cyan-500/25 rounded-bl-xs shadow-lg backdrop-blur-xs'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.text}</div>
                   <div
-                    className={`text-[10px] mt-1 flex items-center justify-between gap-3 ${
-                      msg.sender === 'user' ? 'text-emerald-200' : 'text-stone-400'
+                    className={`text-[10px] mt-1.5 flex items-center justify-between gap-3 ${
+                      msg.sender === 'user' ? 'text-emerald-200/80' : 'text-slate-400'
                     }`}
                   >
                     <span>{msg.timestamp}</span>
@@ -352,25 +356,25 @@ export const AiAssistant: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleToggleSpeak(msg.id, msg.text)}
-                          className="opacity-0 group-hover:opacity-100 hover:text-stone-700 transition-opacity p-0.5 cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 hover:text-cyan-200 transition-opacity p-0.5 cursor-pointer text-slate-400"
                           title={speakingId === msg.id ? (t.voiceInput?.stopReading || 'Stop reading') : (t.voiceInput?.readAloud || 'Read aloud')}
                         >
                           {speakingId === msg.id ? (
-                            <VolumeX className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                            <VolumeX className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
                           ) : (
-                            <Volume2 className="w-3.5 h-3.5 text-stone-500" />
+                            <Volume2 className="w-3.5 h-3.5 hover:text-cyan-300" />
                           )}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleCopy(msg.id, msg.text)}
-                          className="opacity-0 group-hover:opacity-100 hover:text-stone-600 transition-opacity p-0.5 cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 hover:text-cyan-200 transition-opacity p-0.5 cursor-pointer text-slate-400"
                           title={copiedId === msg.id ? t.aiAssistant.copied : t.aiAssistant.copyReply}
                         >
                           {copiedId === msg.id ? (
-                            <Check className="w-3 h-3 text-emerald-600" />
+                            <Check className="w-3 h-3 text-cyan-300" />
                           ) : (
-                            <Copy className="w-3 h-3" />
+                            <Copy className="w-3 h-3 hover:text-cyan-300" />
                           )}
                         </button>
                       </div>
@@ -379,7 +383,7 @@ export const AiAssistant: React.FC = () => {
                 </div>
 
                 {msg.sender === 'user' && (
-                  <div className="w-7 h-7 rounded-lg bg-stone-200 text-stone-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-lg bg-[#0d4f3e] text-emerald-200 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/30">
                     <User className="w-4 h-4" />
                   </div>
                 )}
@@ -389,11 +393,11 @@ export const AiAssistant: React.FC = () => {
             {/* Typing / Loading Indicator */}
             {isLoading && (
               <div className="flex gap-2.5 justify-start items-center">
-                <div className="w-7 h-7 rounded-full overflow-hidden bg-[#2c4c38] p-0.5 flex items-center justify-center shrink-0 shadow-2xs border border-emerald-400/30 animate-pulse">
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-[#092b3a] p-0.5 flex items-center justify-center shrink-0 shadow-2xs border border-cyan-400/50 animate-pulse">
                   <img src={aiAssistantLogo} alt="AI" className="w-full h-full object-cover rounded-full" />
                 </div>
-                <div className="bg-white text-stone-600 border border-stone-200 px-3.5 py-2 rounded-2xl rounded-bl-xs text-xs flex items-center gap-2 shadow-2xs">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                <div className="bg-[#092937]/90 text-cyan-200 border border-cyan-500/25 px-3.5 py-2 rounded-2xl rounded-bl-xs text-xs flex items-center gap-2 shadow-lg backdrop-blur-xs">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
                   <span>{t.aiAssistant.thinking}</span>
                 </div>
               </div>
@@ -401,12 +405,12 @@ export const AiAssistant: React.FC = () => {
 
             {/* Error Message banner */}
             {errorMsg && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center justify-between">
+              <div className="p-3 bg-red-950/80 border border-red-500/40 text-red-200 rounded-xl text-xs flex items-center justify-between">
                 <span>{errorMsg}</span>
                 <button
                   type="button"
                   onClick={() => handleSendMessage()}
-                  className="font-medium underline ml-2 hover:text-red-900"
+                  className="font-medium underline ml-2 hover:text-red-100 cursor-pointer"
                 >
                   {t.aiAssistant.tryAgain}
                 </button>
@@ -418,13 +422,13 @@ export const AiAssistant: React.FC = () => {
 
           {/* Quick Prompt Pills when in conversation */}
           {messages.length > 0 && !isLoading && (
-            <div className="px-3 py-1.5 bg-[#f4eee4] border-t border-stone-200/60 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
+            <div className="px-3 py-1.5 bg-[#061e2b] border-t border-cyan-500/20 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
               {suggestedPills.slice(0, 3).map((pill, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSendMessage(pill)}
-                  className="inline-block text-[11px] bg-white hover:bg-emerald-50 text-stone-600 hover:text-emerald-900 px-2.5 py-1 rounded-full border border-stone-200 transition-colors shadow-2xs"
+                  className="inline-block text-[11px] bg-[#0a2e3f] hover:bg-[#0f3f56] text-cyan-200 hover:text-white px-2.5 py-1 rounded-full border border-cyan-500/30 transition-colors shadow-2xs cursor-pointer"
                 >
                   {pill}
                 </button>
@@ -438,7 +442,7 @@ export const AiAssistant: React.FC = () => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-2.5 bg-white border-t border-stone-200 flex items-center gap-1.5 sm:gap-2"
+            className="p-2.5 sm:p-3 bg-[#051c27] border-t border-cyan-500/20 flex items-center gap-1.5 sm:gap-2"
           >
             <input
               ref={inputRef}
@@ -448,9 +452,10 @@ export const AiAssistant: React.FC = () => {
               placeholder={t.aiAssistant.askAnything}
               disabled={isLoading}
               maxLength={1000}
-              className="min-w-0 flex-1 bg-stone-100 hover:bg-stone-50 focus:bg-white text-stone-900 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-stone-200 focus:border-emerald-600 focus:outline-none transition-colors"
+              className="min-w-0 flex-1 bg-[#092b3a] hover:bg-[#0c3345] focus:bg-[#0c374b] text-white placeholder-slate-400 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 border border-cyan-500/30 focus:border-cyan-400 focus:outline-none transition-colors"
             />
             <VoiceInputButton
+              theme="dark"
               language={language}
               onTranscript={(transcript) => {
                 setInputMessage((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
@@ -460,7 +465,7 @@ export const AiAssistant: React.FC = () => {
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}
-              className="w-9 h-9 rounded-xl bg-[#2c4c38] hover:bg-[#233d2c] disabled:opacity-40 disabled:hover:bg-[#2c4c38] text-white flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              className="w-9 h-9 rounded-xl bg-gradient-to-r from-[#0ea5e9] to-[#0d9488] hover:from-[#38bdf8] hover:to-[#14b8a6] disabled:opacity-30 text-white flex items-center justify-center transition-all shadow-[0_0_12px_rgba(14,165,233,0.35)] shrink-0 cursor-pointer disabled:cursor-not-allowed"
               title={t.aiAssistant.send}
             >
               {isLoading ? (
@@ -473,19 +478,16 @@ export const AiAssistant: React.FC = () => {
         </div>
       )}
 
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button - Glowing Cyan Futuristic Ring (Reference Image 2) */}
       <button
         ref={launcherRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="group relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#0c4b31] hover:bg-[#073623] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-[#ffd186]/60 cursor-pointer overflow-hidden p-1"
+        className="group relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#0c394c] via-[#082836] to-[#041620] hover:from-[#0e4359] text-white shadow-[0_0_22px_rgba(6,182,212,0.45),0_8px_20px_rgba(0,0,0,0.6)] hover:shadow-[0_0_28px_rgba(6,182,212,0.65)] hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-cyan-400/80 cursor-pointer overflow-hidden p-1"
         aria-label="Toggle KarigarSetu AI Assistant"
-        style={{
-          boxShadow: '0 8px 24px -2px rgba(12, 75, 49, 0.45), 0 0 0 1px rgba(255, 209, 134, 0.25)',
-        }}
       >
         {isOpen ? (
-          <ChevronDown className="w-6 h-6 text-[#ffd186] transition-transform duration-200" />
+          <ChevronDown className="w-6 h-6 text-cyan-300 transition-transform duration-200" />
         ) : (
           <div className="relative w-full h-full flex items-center justify-center">
             <img
@@ -493,13 +495,13 @@ export const AiAssistant: React.FC = () => {
               alt="KarigarSetu AI"
               className="w-full h-full object-cover rounded-full"
             />
-            <span className="absolute top-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-[#0c4b31] rounded-full animate-pulse shadow-sm"></span>
+            <span className="absolute top-0 right-0 w-3 h-3 bg-cyan-400 border-2 border-[#051822] rounded-full animate-pulse shadow-[0_0_8px_#22d3ee]"></span>
           </div>
         )}
 
         {/* Hover Tooltip if closed */}
         {!isOpen && (
-          <span className="absolute right-16 bg-[#0c4b31] text-[#ffd186] text-xs font-bold px-3 py-1.5 rounded-xl shadow-lg border border-[#ffd186]/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <span className="absolute right-16 bg-[#072533] text-cyan-200 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xl border border-cyan-400/40 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             {t.aiAssistant.title}
           </span>
         )}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MessageCircle, Send, UserRound, MoreVertical, Trash2, Ban } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, UserRound, MoreVertical, Trash2, Ban, Search, Package } from 'lucide-react';
 import { API_BASE } from '../services/apiConfig';
 import { useLanguage } from '../i18n/LanguageContext';
 import { VoiceInputButton } from '../components/common/VoiceInputButton';
@@ -26,6 +26,7 @@ type ChatMessage = {
 export const ArtisanMessages: React.FC = () => {
   const { t, language } = useLanguage();
   const [inbox, setInbox] = useState<Conversation[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [active, setActive] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -188,58 +189,104 @@ export const ArtisanMessages: React.FC = () => {
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
+  const displayedInbox = inbox.filter((c) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (c.customer_name && c.customer_name.toLowerCase().includes(q)) ||
+      (c.product_name && c.product_name.toLowerCase().includes(q)) ||
+      (c.body && c.body.toLowerCase().includes(q))
+    );
+  });
+
   return (
-    <main className="min-h-screen bg-[#faf8f5] px-4 py-8 text-[#173b2d]">
+    <main className="min-h-screen bg-[#faf6f0] px-4 py-8 text-[#173b2d]">
       <div className="mx-auto max-w-6xl">
         <Link
           to="/artisan/dashboard"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#0b5538] hover:underline"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31] hover:underline"
         >
           <ArrowLeft size={18} />
           {t.artisan.dashboardTitle}
         </Link>
 
-        <div className="grid overflow-hidden rounded-3xl border border-[#dce9df] bg-white shadow-md md:grid-cols-[320px_1fr]">
-          <aside className="border-b border-[#e8f0ea] bg-[#f7faf8] p-4 md:border-b-0 md:border-r">
-            <h1 className="mb-4 flex items-center gap-2 font-extrabold text-[#0b5538]">
-              <MessageCircle size={20} />
-              {t.artisan.buyerMessagesTitle}
-            </h1>
+        <div className="grid overflow-hidden rounded-3xl border border-[#e6dfd1] bg-[#fbf9f5] shadow-md md:grid-cols-[330px_1fr] min-h-[640px]">
+          <aside className="border-b border-[#e9e3d6] bg-[#f7f3eb] p-4 md:border-b-0 md:border-r md:border-[#e9e3d6]">
+            <div className="mb-3.5 flex items-center justify-between border-b border-[#e6dfd1] pb-3">
+              <h1 className="flex items-center gap-2 font-serif font-bold text-[#16382a] text-lg">
+                <MessageCircle size={22} className="text-[#0c4b31]" />
+                <span>{t.artisan.buyerMessagesTitle}</span>
+              </h1>
+              {inbox.length > 0 && (
+                <span className="text-xs font-semibold text-[#7c7263]">
+                  {inbox.length} {inbox.length === 1 ? 'chat' : 'chats'}
+                </span>
+              )}
+            </div>
 
-            {inbox.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                {t.artisan.noBuyerMessages}
-              </p>
+            {/* Search conversations input matching Reference 1 */}
+            <div className="relative mb-3">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8273]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full rounded-xl bg-[#eee7db]/80 border border-[#ded5c5] pl-9 pr-3 py-2 text-xs text-[#1c382b] placeholder-[#8c8273] focus:outline-none focus:border-[#0c4b31] focus:bg-white transition-colors"
+              />
+            </div>
+
+            {displayedInbox.length === 0 ? (
+              <div className="py-14 text-center px-2">
+                <div className="mx-auto mb-3.5 grid h-12 w-12 place-items-center rounded-2xl bg-[#ede7dc] text-[#0c4b31]">
+                  <MessageCircle size={22} />
+                </div>
+                <h3 className="font-bold text-sm text-[#173b2d]">
+                  {searchQuery ? 'No matching conversations' : t.artisan.noBuyerMessages}
+                </h3>
+                <p className="mt-1.5 text-xs text-[#7c7263]">
+                  {searchQuery ? 'Try a different buyer name.' : 'Inquiries from buyers will appear here.'}
+                </p>
+              </div>
             ) : (
-              <div className="space-y-2 overflow-y-auto max-h-[600px] pr-1">
-                {inbox.map((item, index) => {
+              <div className="space-y-1.5 overflow-y-auto max-h-[600px] pr-1">
+                {displayedInbox.map((item, index) => {
                   const isSelected = active?.customer_id === item.customer_id && active?.product_id === item.product_id;
                   return (
                     <button
                       key={`${item.customer_id}-${item.product_id || index}`}
+                      type="button"
                       onClick={() => openConversation(item)}
-                      className={`w-full rounded-2xl p-3.5 text-left transition-all ${
+                      className={`w-full rounded-2xl p-3.5 text-left transition-all cursor-pointer ${
                         isSelected
-                          ? 'border border-[#c6decb] bg-white shadow-xs'
-                          : 'hover:bg-white/80 border border-transparent'
+                          ? 'border border-[#a8cfb6] bg-[#edf4ee] shadow-xs'
+                          : 'border border-[#eee7da] bg-[#ffffff] hover:bg-[#faf7f2] hover:border-[#ded5c5]'
                       }`}
                     >
-                      <div className="flex justify-between gap-2">
-                        <b className="truncate text-sm text-[#173b2d]">{item.customer_name}</b>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-[#0c4b31] text-[#fde047] font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                            {item.customer_name ? item.customer_name.charAt(0).toUpperCase() : 'B'}
+                          </div>
+                          <span className="truncate text-sm font-bold text-[#173b2d]">{item.customer_name}</span>
+                        </div>
 
                         {item.unread_count > 0 && (
-                          <span className="rounded-full bg-[#0b5538] px-2 py-0.5 text-xs font-bold text-white">
-                            {item.unread_count}
+                          <span className="rounded-full bg-[#ea580c] px-2 py-0.5 text-[10px] font-extrabold text-white shrink-0 shadow-2xs">
+                            {item.unread_count} new
                           </span>
                         )}
                       </div>
 
-                      <p className="mt-1 truncate text-xs font-medium text-slate-600">
-                        {item.product_name || t.artisan.productEnquiry}
-                      </p>
+                      {item.product_name && (
+                        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-[#0c4b31] truncate">
+                          <Package size={12} className="text-[#d97706] shrink-0" />
+                          <span className="truncate">{item.product_name}</span>
+                        </div>
+                      )}
 
-                      <p className="mt-0.5 truncate text-xs text-slate-400">
-                        {item.body}
+                      <p className="mt-1 truncate text-xs text-[#78716c]">
+                        {item.body || 'No messages yet'}
                       </p>
                     </button>
                   );
@@ -250,148 +297,194 @@ export const ArtisanMessages: React.FC = () => {
 
           <section className="flex min-h-[580px] flex-col">
             {!active ? (
-              <div className="m-auto text-center text-slate-500 py-16">
-                <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-full bg-[#ebf5ee] text-[#0b5538]">
+              <div className="m-auto text-center text-[#7c7263] py-16 px-4">
+                <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-2xl bg-[#ede7dc] text-[#0c4b31]">
                   <UserRound size={26} />
                 </div>
-                <p className="font-bold text-[#173b2d]">{t.artisan.selectBuyerConversation}</p>
-                <p className="mt-1 text-xs text-slate-400">Select any conversation from the list to view and reply.</p>
+                <h3 className="font-serif font-bold text-[#173b2d] text-lg">{t.artisan.selectBuyerConversation}</h3>
+                <p className="mt-1.5 text-xs text-[#8c8273]">Select any conversation from the list to view and reply.</p>
               </div>
             ) : (
               <>
-                <header className="flex items-center justify-between border-b border-[#e8f0ea] bg-gradient-to-r from-[#f0f7f2] via-[#f7faf8] to-[#fbfdfb] p-5">
-                  <div>
-                    <b className="text-base text-[#173b2d]">{active.customer_name}</b>
-                    <p className="text-xs font-medium text-slate-500">
-                      {active.product_name || t.artisan.productEnquiry}
-                    </p>
+                <header className="flex items-center justify-between border-b border-[#e8e2d5] bg-[#fdfbf7] px-4 py-3 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#0c4b31] text-[#fde047] flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                      {active.customer_name ? active.customer_name.charAt(0).toUpperCase() : <UserRound size={18} />}
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-bold font-serif text-[#173b2d] flex items-center gap-2">
+                        <span>{active.customer_name}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#edf4ee] text-[#0c4b31] border border-[#bedfc9] font-bold">
+                          Buyer
+                        </span>
+                      </h2>
+                      <p className="text-xs font-medium text-[#496555] flex items-center gap-1 mt-0.5">
+                        {active.product_name && <Package size={12} className="text-[#d97706] shrink-0" />}
+                        <span className="truncate max-w-[200px] sm:max-w-xs">{active.product_name || t.artisan.productEnquiry}</span>
+                      </p>
+                    </div>
                   </div>
                 </header>
 
-                {/* Warm Sage & Cream Subtle Handmade Background Canvas */}
+                {/* Messages Canvas - Warm Handcrafted Paper & Subtle Artisan Pattern */}
                 <div
-                  className="relative flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-8 bg-gradient-to-b from-[#f9fbf8] via-[#f7f9f6] to-[#f4f7f3]"
+                  className="relative flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-8 bg-[#fdfbf7]"
                   style={{
-                    backgroundImage: 'radial-gradient(circle, #dbe4dd 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
+                    backgroundImage: `radial-gradient(circle, #e2dcd0 1px, transparent 1px), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239c8d76' fill-opacity='0.04' fill-rule='evenodd'%3E%3Cpath d='M30 30c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm-20 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10z'/%3E%3C/g%3E%3C/svg%3E")`,
+                    backgroundSize: '24px 24px, 120px 120px',
                   }}
                 >
-                  {messages.map((message) => {
-                    const isMe = message.sender_role === 'artisan';
-                    const isDeletedEveryone = Boolean(message.is_deleted_everyone);
-                    const isMenuOpen = activeMenuMessageId === message.id;
+                  {messages.length === 0 ? (
+                    <div className="pt-16 pb-12 text-center flex flex-col items-center justify-center">
+                      {/* Dual overlapping chat bubbles with sparkles (Reference Image 1) */}
+                      <div className="relative mb-5 w-24 h-20 flex items-center justify-center">
+                        <span className="absolute -top-1 left-2 w-1 h-2 bg-[#d97706]/40 rounded-full rotate-[-25deg]"></span>
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-2 bg-[#d97706]/50 rounded-full"></span>
+                        <span className="absolute -top-1 right-2 w-1 h-2 bg-[#d97706]/40 rounded-full rotate-[25deg]"></span>
 
-                    return (
-                      <div
-                        key={message.id}
-                        className={`group relative flex ${isMe ? 'justify-end' : 'justify-start'} py-0.5`}
-                      >
-                        <div className={`relative max-w-[85%] sm:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
-                          <div
-                            className={`relative rounded-2xl px-4.5 py-3 text-sm transition-all ${
-                              isMe
-                                ? isDeletedEveryone
-                                  ? 'rounded-br-xs border border-[#e2ece5] bg-[#f0f4f1] text-slate-500 italic shadow-xs'
-                                  : 'rounded-br-xs bg-[#0b5538] text-white shadow-xs'
-                                : isDeletedEveryone
-                                ? 'rounded-bl-xs border border-[#edebe8] bg-[#f7f5f2] text-slate-500 italic shadow-xs'
-                                : 'rounded-bl-xs border border-[#e5ece6] bg-[#ffffff] text-[#173b2d] shadow-xs'
-                            }`}
-                          >
-                            {/* Message Body or Placeholder */}
-                            <div className="flex items-start gap-2">
-                              {isDeletedEveryone && <Ban size={14} className="mt-0.5 shrink-0 opacity-60" />}
-                              <p className="leading-relaxed break-words">
-                                {isDeletedEveryone
-                                  ? isMe
-                                    ? t.chat?.youDeletedMessage || 'You deleted this message'
-                                    : t.chat?.thisMessageDeleted || 'This message was deleted'
-                                  : message.body}
-                              </p>
-                            </div>
+                        <div className="absolute top-0 left-1 w-14 h-12 rounded-2xl bg-[#86a789] shadow-sm flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/70 mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/70 mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/70 mx-0.5"></span>
+                        </div>
 
-                            {/* Timestamp */}
-                            {message.created_at && (
-                              <div className="mt-1 flex items-center justify-between gap-3 text-[10px]">
-                                <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-slate-400'}>
-                                  {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                        <div className="absolute bottom-0 right-1 w-14 h-12 rounded-2xl bg-[#eae2d3] border border-[#d8cdbc] shadow-md flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#52493c] mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#52493c] mx-0.5"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#52493c] mx-0.5"></span>
+                        </div>
+                      </div>
 
-                          {/* 3-Dot Action Menu Button */}
-                          {!isDeletedEveryone && (
+                      <h3 className="font-serif font-bold text-2xl text-[#18392b]">
+                        Chat with Buyer
+                      </h3>
+                      <p className="mx-auto mt-2 max-w-sm text-xs sm:text-sm text-[#6b6255] leading-relaxed">
+                        Respond to questions about craftsmanship, customizations, or order details.
+                      </p>
+                    </div>
+                  ) : (
+                    messages.map((message) => {
+                      const isMe = message.sender_role === 'artisan';
+                      const isDeletedEveryone = Boolean(message.is_deleted_everyone);
+                      const isMenuOpen = activeMenuMessageId === message.id;
+
+                      return (
+                        <div
+                          key={message.id}
+                          className={`group relative flex ${isMe ? 'justify-end' : 'justify-start'} py-0.5`}
+                        >
+                          <div className={`relative max-w-[85%] sm:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
                             <div
-                              className={`absolute top-2 ${isMe ? '-left-8 sm:-left-9' : '-right-8 sm:-right-9'} ${
-                                isMenuOpen ? 'opacity-100 z-30' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
-                              } transition-opacity`}
+                              className={`relative rounded-2xl px-4.5 py-3 text-sm transition-all ${
+                                isMe
+                                  ? isDeletedEveryone
+                                    ? 'rounded-br-xs border border-[#ded7ca] bg-[#f0eae1] text-[#78716c] italic shadow-xs'
+                                    : 'rounded-br-xs bg-[#0c4b31] text-white shadow-xs border border-[#083824]'
+                                  : isDeletedEveryone
+                                  ? 'rounded-bl-xs border border-[#ede7dc] bg-[#f7f3ec] text-[#78716c] italic shadow-xs'
+                                  : 'rounded-bl-xs border border-[#e8e2d4] bg-[#ffffff] text-[#173b2d] shadow-2xs'
+                              }`}
                             >
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuMessageId(isMenuOpen ? null : message.id);
-                                }}
-                                className="rounded-full bg-white/95 p-1.5 text-slate-600 shadow-md border border-slate-200/80 hover:bg-white hover:text-slate-900 transition-colors"
-                                title="Message options"
-                                aria-label="Message options"
-                              >
-                                <MoreVertical size={14} />
-                              </button>
+                              {/* Message Body or Placeholder */}
+                              <div className="flex items-start gap-2">
+                                {isDeletedEveryone && <Ban size={14} className="mt-0.5 shrink-0 opacity-60" />}
+                                <p className="leading-relaxed break-words">
+                                  {isDeletedEveryone
+                                    ? isMe
+                                      ? t.chat?.youDeletedMessage || 'You deleted this message'
+                                      : t.chat?.thisMessageDeleted || 'This message was deleted'
+                                    : message.body}
+                                </p>
+                              </div>
 
-                              {/* Dropdown Menu */}
-                              {isMenuOpen && (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className={`absolute z-40 top-8 ${isMe ? 'right-0 sm:left-0 sm:right-auto' : 'left-0 sm:right-0 sm:left-auto'} w-44 rounded-2xl border border-[#dce8df] bg-white py-1.5 shadow-xl text-xs`}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleDeleteForMe(message.id, e)}
-                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-slate-700 hover:bg-[#f4f8f5] transition-colors"
-                                  >
-                                    <Trash2 size={14} className="text-slate-500" />
-                                    <span>{t.chat?.deleteForMe || 'Delete for Me'}</span>
-                                  </button>
-
-                                  {isMe && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveMenuMessageId(null);
-                                        setDeleteConfirmTarget(message);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      <Ban size={14} className="text-red-500" />
-                                      <span>{t.chat?.deleteForEveryone || 'Delete for Everyone'}</span>
-                                    </button>
-                                  )}
+                              {/* Timestamp */}
+                              {message.created_at && (
+                                <div className="mt-1 flex items-center justify-between gap-3 text-[10px]">
+                                  <span className={isMe && !isDeletedEveryone ? 'text-emerald-100/80' : 'text-[#8c8273]'}>
+                                    {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
                                 </div>
                               )}
                             </div>
-                          )}
+
+                            {/* 3-Dot Action Menu Button */}
+                            {!isDeletedEveryone && (
+                              <div
+                                className={`absolute top-2 ${isMe ? '-left-8 sm:-left-9' : '-right-8 sm:-right-9'} ${
+                                  isMenuOpen ? 'opacity-100 z-30' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+                                } transition-opacity`}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuMessageId(isMenuOpen ? null : message.id);
+                                  }}
+                                  className="rounded-full bg-white/95 p-1.5 text-[#5c5446] shadow-md border border-[#e4ddd0] hover:bg-white hover:text-[#173b2d] transition-colors cursor-pointer"
+                                  title="Message options"
+                                  aria-label="Message options"
+                                >
+                                  <MoreVertical size={14} />
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {isMenuOpen && (
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`absolute z-40 top-8 ${isMe ? 'right-0 sm:left-0 sm:right-auto' : 'left-0 sm:right-0 sm:left-auto'} w-44 rounded-2xl border border-[#ded6c7] bg-white py-1.5 shadow-xl text-xs`}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDeleteForMe(message.id, e)}
+                                      className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-slate-700 hover:bg-[#faf7f2] transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 size={14} className="text-slate-500" />
+                                      <span>{t.chat?.deleteForMe || 'Delete for Me'}</span>
+                                    </button>
+
+                                    {isMe && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActiveMenuMessageId(null);
+                                          setDeleteConfirmTarget(message);
+                                        }}
+                                        className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                      >
+                                        <Ban size={14} className="text-red-500" />
+                                        <span>{t.chat?.deleteForEveryone || 'Delete for Everyone'}</span>
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
 
+                {/* Chat Composer - Clean and Handcrafted like Reference Image 1 */}
                 <form
                   onSubmit={sendReply}
-                  className="flex items-center gap-2 sm:gap-3 border-t border-[#e8f0ea] bg-[#fafcfb] p-3 sm:p-4"
+                  className="flex items-center gap-2 sm:gap-3 border-t border-[#e8e2d5] bg-[#faf7f2] p-3 sm:p-4"
                 >
+                  <div className="hidden sm:grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ede7dc] text-[#0c4b31]">
+                    <UserRound size={17} />
+                  </div>
                   <input
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
                     placeholder={t.artisan.replyPlaceholder}
-                    className="min-w-0 flex-1 rounded-xl border border-[#cfe0d5] bg-white px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm outline-none transition-colors focus:border-[#0b5538] focus:ring-1 focus:ring-[#0b5538]"
+                    className="min-w-0 flex-1 rounded-full sm:rounded-2xl border border-[#ded7c8] bg-white px-4 py-2.5 text-xs sm:text-sm text-[#18392b] placeholder-[#8c8273] outline-none transition-colors focus:border-[#0c4b31] focus:ring-1 focus:ring-[#0c4b31]"
                   />
 
                   <VoiceInputButton
+                    theme="light"
                     language={language}
                     onTranscript={(transcript) => {
                       setDraft((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
@@ -401,9 +494,10 @@ export const ArtisanMessages: React.FC = () => {
                   <button
                     type="submit"
                     disabled={!draft.trim()}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0b5538] px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition-opacity hover:bg-[#08422b] disabled:opacity-50 shrink-0 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl bg-[#0c4b31] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition-colors hover:bg-[#083824] disabled:opacity-40 shrink-0 cursor-pointer"
                   >
-                    <Send size={16} />
+                    <Send size={15} />
+                    <span className="hidden sm:inline">Send</span>
                   </button>
                 </form>
               </>
