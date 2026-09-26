@@ -73,7 +73,7 @@ export const ArtisanRegistration: React.FC = () => {
     </label>
   );
 
-  return <main className="min-h-screen bg-[#fbf9f5] px-4 py-8"><div className="mx-auto max-w-5xl">
+  return <main className="min-h-screen bg-transparent px-4 py-8"><div className="mx-auto max-w-5xl">
     <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31]"><ArrowLeft size={17} /> {t.nav.home}</Link>
     <div className="grid overflow-hidden rounded-3xl border bg-white shadow-xl lg:grid-cols-[.8fr_1.2fr]">
       <section className="bg-[#083d29] p-8 text-white"><ShieldCheck className="mb-5 text-emerald-300" size={38} /><h1 className="text-3xl font-black">{t.artisan.verifiedArtisanAccess}</h1><p className="mt-3 text-sm text-emerald-100">{t.artisan.adminVerificationNote}</p><div className="mt-8 space-y-4 text-sm"><p className="flex gap-3"><Image size={19} />{t.artisan.proofReq1}</p><p className="flex gap-3"><Clock size={19} />{t.artisan.proofReq2}</p><p className="flex gap-3"><CheckCircle2 size={19} />{t.artisan.proofReq3}</p></div></section>

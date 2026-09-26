@@ -30,6 +30,7 @@ import { SupportedLanguage } from './types';
 
 import { LanguageProvider } from './i18n/LanguageContext';
 import { AiAssistant } from './components/common/AiAssistant';
+import { KarigarSetuPageBackground } from './components/common/KarigarSetuPageBackground';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -59,10 +60,10 @@ function MainLayout() {
   const hideStandardNav = isMarketplaceOrCustomerRoute || isAdminRoute;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fcfaf6]">
+    <KarigarSetuPageBackground>
       {!hideStandardNav && <Navbar />}
 
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
         <Routes>
           <Route path="/" element={<Home />} />
 
@@ -159,7 +160,7 @@ function MainLayout() {
       </div>
 
       <AiAssistant />
-    </div>
+    </KarigarSetuPageBackground>
   );
 }
 

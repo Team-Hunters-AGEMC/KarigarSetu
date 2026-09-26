@@ -258,7 +258,7 @@ export const ArtisanMessages: React.FC = () => {
   });
 
   return (
-    <div className="relative h-screen max-h-screen flex flex-col bg-[#f5f0e6] text-[#173b2d] overflow-hidden">
+    <div className="relative h-screen max-h-screen flex flex-col bg-transparent text-[#173b2d] overflow-hidden">
       {/* Main Messaging Viewport - Fixed like WhatsApp Web */}
       <main className="relative z-10 flex-1 min-h-0 w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 flex flex-col overflow-hidden">
         {/* Navigation Breadcrumb - Compact flex-shrink-0 */}

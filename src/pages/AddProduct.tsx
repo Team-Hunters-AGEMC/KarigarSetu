@@ -460,7 +460,7 @@ export const AddProduct: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#1a2d23] py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-transparent text-[#1a2d23] py-8 px-4 sm:px-6">
       <main className="max-w-5xl mx-auto">
         
         {/* Navigation Header */}

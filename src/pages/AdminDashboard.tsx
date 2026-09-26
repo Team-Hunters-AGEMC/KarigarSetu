@@ -271,7 +271,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div id="admin-dashboard-root" className="min-h-screen bg-[#f4f7f5] text-[#1a2e24]">
+    <div id="admin-dashboard-root" className="min-h-screen bg-transparent text-[#1a2e24]">
       {/* Admin Top Security Header */}
       <header className="bg-[#073623] text-white py-3 px-4 sm:px-6 border-b border-[#0f4e34] sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">

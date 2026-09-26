@@ -28,7 +28,7 @@ export const CustomerOrders: React.FC = () => {
   if (!customer) return <Navigate to="/customer/login" replace state={{ from: '/customer/orders' }} />;
 
   return (
-    <div className="min-h-screen bg-[#f7faf8] px-4 py-8 text-[#1a2e24] sm:px-6">
+    <div className="min-h-screen bg-transparent px-4 py-8 text-[#1a2e24] sm:px-6">
       <main className="mx-auto max-w-6xl">
         <Link to="/marketplace" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31]"><ArrowLeft className="h-4 w-4" /> {t.nav.backToMarketplace}</Link>
         <div className="mb-7"><p className="text-xs font-extrabold uppercase tracking-wider text-[#e87722]">Purchase history</p><h1 className="text-3xl font-black text-[#0c4b31]">{t.orders.title}</h1><p className="mt-1 text-sm text-gray-500">{t.orders.subtitle}</p></div>

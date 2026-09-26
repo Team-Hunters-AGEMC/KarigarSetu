@@ -10,7 +10,7 @@ export const CustomerProfile: React.FC = () => {
   if (!customer) return <Navigate to="/customer/login" replace state={{ from: '/customer/profile' }} />;
 
   return (
-    <div className="min-h-screen bg-[#f7faf8] px-4 py-8 sm:px-6">
+    <div className="min-h-screen bg-transparent px-4 py-8 sm:px-6">
       <main className="mx-auto max-w-3xl">
         <Link to="/marketplace" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#0c4b31]">
           <ArrowLeft className="h-4 w-4" /> {t.nav.backToMarketplace}

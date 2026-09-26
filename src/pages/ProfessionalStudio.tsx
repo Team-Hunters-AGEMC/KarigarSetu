@@ -170,7 +170,7 @@ export const ProfessionalStudio: React.FC = () => {
   };
 
   if (submitted) return (
-    <main className="min-h-[65vh] bg-[#fcfaf6] px-4 py-20">
+    <main className="min-h-[65vh] bg-transparent px-4 py-20">
       <div className="mx-auto max-w-xl rounded-3xl border border-[#dce8df] bg-white p-10 text-center shadow-lg">
         <CheckCircle2 className="mx-auto mb-4 h-14 w-14 text-[#0c4b31]" />
         <h1 className="text-3xl font-extrabold text-[#0c4b31]">{approvalStatus === 'approved' ? t.artisan.productApprovedTitle : t.artisan.productSentForReviewTitle}</h1>
@@ -181,7 +181,7 @@ export const ProfessionalStudio: React.FC = () => {
   );
 
   return (
-    <main className="min-h-screen bg-[#fcfaf6] px-4 py-10 text-[#163e2e]">
+    <main className="min-h-screen bg-transparent px-4 py-10 text-[#163e2e]">
       <div className="mx-auto max-w-5xl">
         <Link to="/artisan/dashboard" className="inline-flex items-center gap-2 font-bold text-[#0c4b31]"><ArrowLeft className="h-4 w-4" /> {t.artisan.dashboardTitle}</Link>
         <div className="mb-8 mt-7">

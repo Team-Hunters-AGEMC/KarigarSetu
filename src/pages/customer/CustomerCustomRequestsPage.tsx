@@ -134,7 +134,7 @@ export const CustomerCustomRequestsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#1a2e24]">
+    <div className="min-h-screen bg-transparent text-[#1a2e24]">
       <MarketplaceNavbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">

@@ -10,7 +10,7 @@ export const AddCraftChoice: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <main className="min-h-screen bg-[#fcfaf6] px-4 py-10 text-[#163e2e]">
+    <main className="min-h-screen bg-transparent px-4 py-10 text-[#163e2e]">
       <div className="mx-auto max-w-5xl">
         <Link
           to="/artisan/dashboard"

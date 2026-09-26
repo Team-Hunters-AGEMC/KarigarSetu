@@ -70,7 +70,7 @@ export const PaymentDetails: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f6f8f6] pb-28 text-[#17281f]">
+    <div className="min-h-screen bg-transparent pb-28 text-[#17281f]">
       <header className="border-b bg-white px-4 py-5 shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center gap-4">
           <button onClick={() => navigate(-1)} className="cursor-pointer"><ArrowLeft /></button>

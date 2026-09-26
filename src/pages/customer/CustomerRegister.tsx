@@ -95,7 +95,7 @@ export const CustomerRegister: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] py-10 px-4 sm:px-6">
+    <div className="min-h-screen bg-transparent py-10 px-4 sm:px-6">
       <div className="max-w-xl w-full mx-auto space-y-6">
         
         <div className="text-center space-y-2">

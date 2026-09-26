@@ -90,7 +90,7 @@ export const MarketplacePage: React.FC = () => {
     : (t.categories[selectedCategory as keyof typeof t.categories] || selectedCategory);
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#1a2e24]">
+    <div className="min-h-screen bg-transparent text-[#1a2e24]">
       {/* Marketplace Top Navigation */}
       <MarketplaceNavbar
         searchQuery={searchQuery}

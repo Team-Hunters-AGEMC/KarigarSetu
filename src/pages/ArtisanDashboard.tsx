@@ -257,7 +257,7 @@ export const ArtisanDashboard: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#f7f9f7] text-[#1b2f24]">
+    <div className="min-h-screen bg-transparent text-[#1b2f24]">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         
         {/* Workspace Header */}

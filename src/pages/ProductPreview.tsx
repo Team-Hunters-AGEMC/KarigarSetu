@@ -157,7 +157,7 @@ export const ProductPreview: React.FC = () => {
 
   if (publishSuccess) {
     return (
-      <div className="min-h-screen bg-[#fcfaf6] px-4 flex items-center justify-center text-[#1b2f24]">
+      <div className="min-h-screen bg-transparent px-4 flex items-center justify-center text-[#1b2f24]">
         <div className="w-full max-w-xl rounded-3xl border border-emerald-200 bg-white p-8 sm:p-12 text-center shadow-xl">
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <CheckCircle2 className="h-11 w-11" />
@@ -187,7 +187,7 @@ export const ProductPreview: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#1b2f24] py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-transparent text-[#1b2f24] py-8 px-4 sm:px-6">
       <main className="max-w-6xl mx-auto">
         
         {/* Top Header */}

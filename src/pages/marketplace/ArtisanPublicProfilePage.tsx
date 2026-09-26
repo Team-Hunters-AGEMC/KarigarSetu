@@ -96,7 +96,7 @@ export const ArtisanPublicProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#fcfaf6]">
+      <div className="min-h-screen bg-transparent">
         <MarketplaceNavbar />
         <div className="max-w-6xl mx-auto py-16 px-4 text-center">
           <div className="w-12 h-12 border-4 border-[#0c4b31] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -108,7 +108,7 @@ export const ArtisanPublicProfilePage: React.FC = () => {
 
   if (!artisan) {
     return (
-      <div className="min-h-screen bg-[#fcfaf6]">
+      <div className="min-h-screen bg-transparent">
         <MarketplaceNavbar />
         <div className="max-w-xl mx-auto py-20 px-4 text-center space-y-4">
           <h2 className="text-2xl font-extrabold text-[#0c4b31]">Artisan Profile Not Found</h2>
@@ -127,7 +127,7 @@ export const ArtisanPublicProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#1a2e24]">
+    <div className="min-h-screen bg-transparent text-[#1a2e24]">
       <MarketplaceNavbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">

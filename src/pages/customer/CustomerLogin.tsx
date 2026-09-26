@@ -58,7 +58,7 @@ export const CustomerLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] flex flex-col justify-center py-12 px-4 sm:px-6">
+    <div className="min-h-screen bg-transparent flex flex-col justify-center py-12 px-4 sm:px-6">
       <div className="max-w-md w-full mx-auto space-y-6">
         
         <div className="text-center space-y-2">

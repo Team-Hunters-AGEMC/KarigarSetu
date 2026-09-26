@@ -397,7 +397,7 @@ export const CustomerMessages: React.FC = () => {
   });
 
   return (
-    <div className="relative h-screen max-h-screen flex flex-col bg-[#f5f0e6] text-[#173b2d] overflow-hidden">
+    <div className="relative h-screen max-h-screen flex flex-col bg-transparent text-[#173b2d] overflow-hidden">
       {/* Top Navbar - Fixed flex-shrink-0 */}
       <div className="relative z-20 flex-shrink-0">
         <MarketplaceNavbar searchQuery="" onSearchChange={() => {}} selectedCategory="All" onSelectCategory={() => {}} />

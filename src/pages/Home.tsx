@@ -68,7 +68,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaf6] text-[#1a2d23]">
+    <div className="min-h-screen bg-transparent text-[#1a2d23]">
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-[#e5ebe7] bg-radial-[at_85%_15%] from-[#fff1d6] via-[#fcfaf6] to-[#f4f8f4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
