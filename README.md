@@ -159,25 +159,42 @@ flowchart TD
 
 ## 🌟 Impact & Benefits
 
-### Before vs. After KarigarSetu
+### 🔄 Transformation Matrix (Before vs. After KarigarSetu)
 
-```
-┌────────────────────────────────────────┐       ┌────────────────────────────────────────┐
-│             BEFORE                     │       │                 AFTER                  │
-├────────────────────────────────────────┤       ├────────────────────────────────────────┤
-│ • "How can I reach more buyers?"       │       │ • "My craft reaches buyers globally!"  │
-│ • Dependent on local middlemen         │  ──▶  │ • Direct seller-to-buyer transactions  │
-│ • Complex, text-heavy catalog forms    │       │ • Snap a photo & speak your language   │
-│ • Low margins, delayed payments        │       │ • Fair transparent pricing & direct pay│
-│ • Fake factory-made replicas dominate  │       │ • Verified handmade badge of trust     │
-└────────────────────────────────────────┘       └────────────────────────────────────────┘
-```
+> 🧑🏽‍🎨 **The Grassroots Reality Shift:**
+> * **Before:** *"How can I reach more buyers beyond my weekly village haat?"*
+> * **After KarigarSetu:** *"Now my craft reaches conscious buyers across the country and globe!"*
 
-### Social & Economic Impact
-- **Artisan Empowerment**: Grants marginalized artisans their own verified digital storefront and equitable market access.
-- **Craft Preservation**: Archives traditional craft histories, regional motifs, and artisan profiles, preventing ancient cultural traditions from going extinct.
-- **Wider Market Reach**: Transcends geographic boundaries, allowing rural artisans to sell directly to urban and global heritage craft enthusiasts.
-- **Improved Livelihoods**: Increases artisan household income by capturing the 40–70% margin traditionally lost to intermediaries.
+| Aspect / Dimension | ❌ Traditional Scenario (Before) | ✅ With KarigarSetu (After) | 🚀 Tangible Transformation |
+| :--- | :--- | :--- | :--- |
+| **Market Reach & Visibility** | Restricted to village haats, local tourists, and physical footfall. | 24/7 digital storefront with national and international customer access. | **10x+ Geographic Footprint** beyond local village boundaries. |
+| **Intermediary & Margins** | 3 to 4 layers of middlemen taking **40% – 70%** of the product profit. | **Direct Artisan-to-Consumer (D2C)** connection with zero middleman exploitation. | **Artisans retain 100% of fair selling price**, dramatically improving income. |
+| **Cataloging & Onboarding** | Required English literacy, high-end photography, and complex e-commerce portals. | **Voice-to-Catalog** in native tongue + automated **AI Photo Studio Enhancement**. | **Listing time cut from days to under 60 seconds** with zero technical barrier. |
+| **Language & Communication** | Language barrier preventing village artisans from interacting with urban buyers. | Native speech support in **Bengali, Hindi, and English** with built-in translation. | **True linguistic inclusivity** for grassroots marginalized creators. |
+| **Buyer Trust & Proof** | Mass-produced machine replicas masquerading as authentic handmade crafts. | **Mandatory 2-photo + 30–60s crafting video** review & AI authenticity screening. | **Guaranteed authenticity** that justifies premium artisanal valuation. |
+| **Customer Interaction** | Impersonal wholesale transactions; artisan gets no buyer feedback or bespoke orders. | **Direct in-app secure chat** enabling customization, storytelling, and repeat orders. | **Builds long-term customer relationships** and recurring artisanal patronage. |
+
+---
+
+### 📊 Strategic Impact Matrix
+
+| Impact Pillar | Focus Area | Grassroots Outcome |
+| :--- | :--- | :--- |
+| 🪪 **Artisan Empowerment** | Digital Identity & Financial Independence | Gives marginalized craftspeople a verified digital identity, formal financial agency, and dignity of labor without reliance on exploitative brokers. |
+| 🏺 **Craft Preservation** | Heritage Archival & Cultural Continuity | Documents endangered folk traditions, weaves, and indigenous techniques, preserving authentic cultural narratives for future generations. |
+| 🌍 **Wider Market Reach** | Geographic Expansion | Bridges the urban-rural divide by connecting remote tribal and rural clusters with conscious urban buyers and craft connoisseurs. |
+| 📈 **Improved Livelihoods** | Sustainable Socio-Economic Growth | Replaces predatory distress selling with fair, transparent pricing, enabling consistent household income and inter-generational stability. |
+
+---
+
+### 🎯 Core Functional Benefits Matrix
+
+| Benefit Domain | Feature Linkage | Practical Value for Artisans & Consumers |
+| :--- | :--- | :--- |
+| ⚡ **Easy Smart Cataloging** | Generative AI Multimodal Pipeline | Eliminates manual data entry; transforms simple phone camera snapshots into professional e-commerce product listings. |
+| 🗣️ **Language Accessibility** | Speech-to-Text & Regional Translation | Artisans simply speak in **Bengali, Hindi, or English**; the AI converts speech into structured, SEO-friendly descriptions. |
+| 💬 **Direct Customer Contact** | End-to-End Encrypted Chat | Facilitates bespoke custom orders, transparent delivery queries, and emotional storytelling directly between artisan and buyer. |
+| 🛡️ **Greater Buyer Confidence** | Dual-Gate Video Verification & Admin Review | Rigorous vetting stops fraud, reassures buyers of ethical origin, and unlocks premium pricing for genuine handmade art. |
 
 ---
 
