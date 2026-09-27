@@ -1987,8 +1987,6 @@ def logout_customer_api():
 
 
 def require_customer_id():
-    if session.get("user_role") == "customer" and session.get("user_id"):
-        return int(session["user_id"])
     auth_header = request.headers.get("X-Customer-Id")
     if auth_header:
         try:
@@ -2000,10 +1998,19 @@ def require_customer_id():
                 return int(row["id"])
         except (ValueError, TypeError):
             pass
+    if session.get("user_role") == "customer" and session.get("user_id"):
+        return int(session["user_id"])
     return None
 
 
 def require_message_user():
+    # If the client explicitly declares customer identity via X-Customer-Id, prioritize customer authentication
+    auth_customer_header = request.headers.get("X-Customer-Id")
+    if auth_customer_header:
+        cid = require_customer_id()
+        if cid:
+            return "customer", int(cid)
+
     role = session.get("user_role")
     user_id = session.get("user_id")
     if role in {"customer", "artisan"} and user_id:

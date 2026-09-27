@@ -158,6 +158,11 @@ export const CustomerMessages: React.FC = () => {
 
       const result = await response.json();
       if (!response.ok || !result.success) {
+        if (!item.created_at || response.status === 404) {
+          setMessages([]);
+          setError('');
+          return;
+        }
         throw new Error(result.message || 'Conversation could not be loaded');
       }
 
@@ -218,29 +223,32 @@ export const CustomerMessages: React.FC = () => {
           let artisanName = queryArtisanName;
           let productName: string | undefined = undefined;
 
-          // Fetch artisan public details if name is missing
-          if (!artisanName) {
-            try {
-              const res = await fetch(`${API_BASE}/api/artisans/public/${queryArtisanId}`);
-              const aData = await res.json();
-              if (aData?.success && aData?.data?.name) {
-                artisanName = aData.data.name;
-              }
-            } catch {
-              artisanName = 'Artisan';
-            }
-          }
-
           // Fetch product details if productId is present
           if (queryProductId) {
             try {
-              const pRes = await fetch(`${API_BASE}/api/products/${queryProductId}`);
+              const pRes = await fetch(`${API_BASE}/api/marketplace/products/${queryProductId}`);
               const pData = await pRes.json();
-              if (pData?.success && pData?.product?.product_name) {
-                productName = pData.product.product_name;
+              if (pData?.success && pData?.data) {
+                productName = pData.data.product_name;
+                if (!artisanName && pData.data.artisan_name) {
+                  artisanName = pData.data.artisan_name;
+                }
               }
             } catch {
               // ignore
+            }
+          }
+
+          // Fetch artisan public details if name is still missing
+          if (!artisanName && queryArtisanId) {
+            try {
+              const res = await fetch(`${API_BASE}/api/marketplace/artisans/${queryArtisanId}`);
+              const aData = await res.json();
+              if (aData?.success && aData?.data?.artisan?.name) {
+                artisanName = aData.data.artisan.name;
+              }
+            } catch {
+              artisanName = 'Artisan';
             }
           }
 
@@ -304,6 +312,7 @@ export const CustomerMessages: React.FC = () => {
         headers: getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           artisan_id: active.artisan_id,
+          customer_id: active.customer_id,
           product_id: active.product_id || undefined,
           body,
         }),
@@ -316,6 +325,15 @@ export const CustomerMessages: React.FC = () => {
 
       setMessages((prev) => [...prev, result.data]);
       setDraft('');
+      setActive((prev) =>
+        prev
+          ? {
+              ...prev,
+              body: result.data.body,
+              created_at: result.data.created_at,
+            }
+          : null
+      );
 
       // When sending own reply, always scroll to bottom
       isUserNearBottomRef.current = true;
