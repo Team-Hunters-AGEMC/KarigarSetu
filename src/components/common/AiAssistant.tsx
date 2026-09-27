@@ -57,6 +57,158 @@ export const AiAssistant: React.FC = () => {
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
 
+  // Mobile drag support for the AI Assistant floating launcher
+  const [customPosition, setCustomPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 640;
+  });
+
+  const dragStartPosRef = useRef<{ clientX: number; clientY: number; buttonX: number; buttonY: number } | null>(null);
+  const hasMovedRef = useRef(false);
+  const justDraggedRef = useRef(false);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      if (!mobile) {
+        return;
+      }
+      setCustomPosition((prev) => {
+        if (!prev) return null;
+        const btn = launcherRef.current;
+        const w = btn?.offsetWidth || 56;
+        const h = btn?.offsetHeight || 56;
+        const MARGIN = 8;
+        const minX = MARGIN;
+        const maxX = Math.max(minX, window.innerWidth - w - MARGIN);
+        const minY = MARGIN;
+        const maxY = Math.max(minY, window.innerHeight - h - MARGIN);
+        return {
+          x: Math.max(minX, Math.min(prev.x, maxX)),
+          y: Math.max(minY, Math.min(prev.y, maxY)),
+        };
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isMobile) return;
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+    const btn = launcherRef.current;
+    if (!btn) return;
+
+    const rect = btn.getBoundingClientRect();
+    dragStartPosRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      buttonX: rect.left,
+      buttonY: rect.top,
+    };
+    hasMovedRef.current = false;
+    isDraggingRef.current = false;
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragStartPosRef.current || !isMobile) return;
+
+    const dx = e.clientX - dragStartPosRef.current.clientX;
+    const dy = e.clientY - dragStartPosRef.current.clientY;
+    const distance = Math.hypot(dx, dy);
+
+    if (!hasMovedRef.current) {
+      if (distance > 6) {
+        hasMovedRef.current = true;
+        isDraggingRef.current = true;
+        setIsDragging(true);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // ignore if capture fails
+        }
+      } else {
+        return;
+      }
+    }
+
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
+    const targetX = dragStartPosRef.current.buttonX + dx;
+    const targetY = dragStartPosRef.current.buttonY + dy;
+
+    const btn = launcherRef.current;
+    const w = btn?.offsetWidth || 56;
+    const h = btn?.offsetHeight || 56;
+    const MARGIN = 8;
+    const minX = MARGIN;
+    const maxX = Math.max(minX, window.innerWidth - w - MARGIN);
+    const minY = MARGIN;
+    const maxY = Math.max(minY, window.innerHeight - h - MARGIN);
+
+    const clampedX = Math.max(minX, Math.min(targetX, maxX));
+    const clampedY = Math.max(minY, Math.min(targetY, maxY));
+
+    setCustomPosition({ x: clampedX, y: clampedY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragStartPosRef.current) return;
+
+    if (hasMovedRef.current) {
+      justDraggedRef.current = true;
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // ignore
+      }
+      setTimeout(() => {
+        justDraggedRef.current = false;
+      }, 250);
+    }
+
+    dragStartPosRef.current = null;
+    hasMovedRef.current = false;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartPosRef.current) {
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // ignore
+      }
+      dragStartPosRef.current = null;
+      hasMovedRef.current = false;
+      isDraggingRef.current = false;
+      setIsDragging(false);
+    }
+  };
+
+  const handleToggleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    setIsOpen((prev) => !prev);
+  };
+
   // Close AI Assistant on outside click (desktop & mobile)
   useEffect(() => {
     if (!isOpen) return;
@@ -242,12 +394,16 @@ export const AiAssistant: React.FC = () => {
     : t.aiAssistant.promptPills.customer;
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end max-w-[calc(100vw-2rem)]">
+    <div
+      className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end max-w-[calc(100vw-2rem)] ${
+        customPosition && !isOpen ? 'pointer-events-none' : ''
+      }`}
+    >
       {/* Chat Panel / Drawer */}
       {isOpen && (
         <div
           ref={panelRef}
-          className="relative w-[calc(100vw-2rem)] sm:w-[410px] max-w-[410px] h-[610px] max-h-[86vh] rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(217,164,65,0.22)] border border-[#D9A441]/60 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200 bg-[#073C31]"
+          className="relative w-[calc(100vw-2rem)] sm:w-[410px] max-w-[410px] h-[610px] max-h-[86vh] rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(217,164,65,0.22)] border border-[#D9A441]/60 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200 bg-[#073C31] pointer-events-auto"
         >
           {/* Handcrafted Emerald Atmosphere & Corner Foliage (Reference Match) */}
           <AiAssistantAtmosphere />
@@ -492,20 +648,52 @@ export const AiAssistant: React.FC = () => {
       <button
         ref={launcherRef}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggleClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onTouchMove={(e) => {
+          if (isDraggingRef.current && e.cancelable) {
+            e.preventDefault();
+          }
+        }}
+        style={
+          customPosition
+            ? {
+                position: 'fixed',
+                left: `${customPosition.x}px`,
+                top: `${customPosition.y}px`,
+                right: 'auto',
+                bottom: 'auto',
+                margin: 0,
+                zIndex: 60,
+                touchAction: 'none',
+                transition: isDragging ? 'none' : undefined,
+                userSelect: 'none',
+                pointerEvents: 'auto',
+              }
+            : isMobile
+            ? {
+                touchAction: 'none',
+                userSelect: 'none',
+              }
+            : undefined
+        }
         className="group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#0c5944] via-[#073c31] to-[#04281f] text-white shadow-[0_4px_22px_rgba(7,60,49,0.55),0_0_18px_rgba(217,164,65,0.30)] hover:shadow-[0_6px_28px_rgba(7,60,49,0.7),0_0_24px_rgba(217,164,65,0.50)] hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-[#D9A441]/80 cursor-pointer overflow-hidden p-1"
         aria-label="Toggle KarigarSetu AI Assistant"
       >
         {isOpen ? (
-          <ChevronDown className="w-6 h-6 text-[#FFF4DE] transition-transform duration-200" />
+          <ChevronDown className="w-6 h-6 text-[#FFF4DE] transition-transform duration-200 pointer-events-none" />
         ) : (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center pointer-events-none select-none">
             <img
               src={aiAssistantLogo}
               alt="KarigarSetu AI"
-              className="w-full h-full object-cover rounded-full"
+              draggable={false}
+              className="w-full h-full object-cover rounded-full pointer-events-none select-none"
             />
-            <span className="absolute top-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-[#073c31] rounded-full shadow-[0_0_6px_#34d399] animate-pulse"></span>
+            <span className="absolute top-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-[#073c31] rounded-full shadow-[0_0_6px_#34d399] animate-pulse pointer-events-none"></span>
           </div>
         )}
 
