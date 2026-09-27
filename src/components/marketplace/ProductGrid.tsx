@@ -21,16 +21,16 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 animate-pulse min-w-0 w-full">
         {[1, 2, 3, 4, 5, 6].map((idx) => (
-          <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 space-y-4">
-            <div className="h-52 bg-gray-100 rounded-xl" />
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-100 rounded w-1/3" />
-              <div className="h-5 bg-gray-100 rounded w-3/4" />
-              <div className="h-4 bg-gray-100 rounded w-full" />
+          <div key={idx} className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-2.5 sm:p-4 space-y-2 sm:space-y-4 min-w-0">
+            <div className="aspect-square sm:aspect-auto sm:h-56 bg-gray-100 rounded-lg sm:rounded-xl" />
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="h-3 sm:h-4 bg-gray-100 rounded w-1/3" />
+              <div className="h-4 sm:h-5 bg-gray-100 rounded w-3/4" />
+              <div className="h-3 sm:h-4 bg-gray-100 rounded w-full hidden sm:block" />
             </div>
-            <div className="h-10 bg-gray-100 rounded-xl" />
+            <div className="h-7 sm:h-10 bg-gray-100 rounded-lg sm:rounded-xl" />
           </div>
         ))}
       </div>
@@ -65,7 +65,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" id="marketplace-product-grid">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 min-w-0 w-full" id="marketplace-product-grid">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
       ))}

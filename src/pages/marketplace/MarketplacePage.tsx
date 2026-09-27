@@ -102,59 +102,59 @@ export const MarketplacePage: React.FC = () => {
 
       {/* Hero / Value Proposition Strip */}
       <section 
-        className="relative overflow-hidden bg-[#073323] bg-cover bg-center text-white py-9 px-4 sm:px-6 shadow-md"
+        className="relative overflow-hidden bg-[#073323] bg-cover bg-center text-white py-6 sm:py-9 px-3 sm:px-6 shadow-md w-full max-w-full"
         style={{ backgroundImage: `url(${mktHeroJuteTexture})` }}
       >
         {/* Subtle dark green overlay to ensure maximum text contrast while keeping textile fibers & jute clearly visible */}
         <div className="absolute inset-0 bg-[#042d22]/25 pointer-events-none" />
         
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-          <div className="max-w-2xl space-y-2 text-center md:text-left">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 relative z-10 w-full min-w-0">
+          <div className="max-w-2xl space-y-2 text-center md:text-left min-w-0">
             <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#0b3827]/60 text-[#ffd186] border border-[#ffd186]/30 uppercase tracking-wider inline-flex items-center gap-1.5 backdrop-blur-xs">
               <Sparkles className="w-3 h-3 text-[#ffd186]" /> Direct from Traditional Indian Clusters
             </span>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm break-words">
               Authentic Handmade Crafts & Living Wage Marketplace
             </h1>
-            <p className="text-xs sm:text-sm text-[#e0efe7] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#e0efe7] leading-relaxed break-words">
               {t.nav.marketTagline}
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 shrink-0 text-center w-full md:w-auto">
-            <div className="bg-[#0b3827]/75 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white/20 shadow-lg">
-              <ShieldCheck className="w-5 h-5 text-emerald-300 mx-auto mb-1" />
-              <strong className="text-xs font-bold block text-white">100% Genuine</strong>
-              <span className="text-[10px] text-emerald-100/80">All Human Certified</span>
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 text-center w-full md:w-auto min-w-0">
+            <div className="bg-[#0b3827]/75 backdrop-blur-md px-1.5 sm:px-3.5 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-md min-w-0">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 mx-auto mb-1 shrink-0" />
+              <strong className="text-[10px] sm:text-xs font-bold block text-white truncate">100% Genuine</strong>
+              <span className="text-[8px] sm:text-[10px] text-emerald-100/80 block leading-tight truncate">All Human Certified</span>
             </div>
-            <div className="bg-[#0b3827]/75 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white/20 shadow-lg">
-              <HeartHandshake className="w-5 h-5 text-[#ffd186] mx-auto mb-1" />
-              <strong className="text-xs font-bold block text-white">Fair Wage</strong>
-              <span className="text-[10px] text-amber-100/80">Direct to Karigar</span>
+            <div className="bg-[#0b3827]/75 backdrop-blur-md px-1.5 sm:px-3.5 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-md min-w-0">
+              <HeartHandshake className="w-4 h-4 sm:w-5 sm:h-5 text-[#ffd186] mx-auto mb-1 shrink-0" />
+              <strong className="text-[10px] sm:text-xs font-bold block text-white truncate">Fair Wage</strong>
+              <span className="text-[8px] sm:text-[10px] text-amber-100/80 block leading-tight truncate">Direct to Karigar</span>
             </div>
-            <div className="bg-[#0b3827]/75 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white/20 shadow-lg">
-              <Truck className="w-5 h-5 text-emerald-300 mx-auto mb-1" />
-              <strong className="text-xs font-bold block text-white">Safe Delivery</strong>
-              <span className="text-[10px] text-emerald-100/80">Eco Fragile Packing</span>
+            <div className="bg-[#0b3827]/75 backdrop-blur-md px-1.5 sm:px-3.5 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-md min-w-0">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 mx-auto mb-1 shrink-0" />
+              <strong className="text-[10px] sm:text-xs font-bold block text-white truncate">Safe Delivery</strong>
+              <span className="text-[8px] sm:text-[10px] text-emerald-100/80 block leading-tight truncate">Eco Fragile Packing</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-2.5 sm:px-6 py-5 sm:py-8 min-w-0 w-full">
         {/* Mobile Filter Toggle */}
-        <div className="flex items-center justify-between lg:hidden mb-4">
+        <div className="flex items-center justify-between lg:hidden mb-4 gap-2 min-w-0">
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-            className="py-2 px-3.5 rounded-xl bg-white border border-[#d2dfd6] text-xs font-bold text-[#0c4b31] flex items-center gap-2 shadow-2xs cursor-pointer"
+            className="py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl bg-white border border-[#d2dfd6] text-xs font-bold text-[#0c4b31] flex items-center gap-1.5 shadow-2xs cursor-pointer shrink-0"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>{t.marketplace.filterAndRefine}</span>
           </button>
 
-          <span className="text-xs font-semibold text-gray-500">
+          <span className="text-xs font-semibold text-gray-500 truncate text-right">
             {products.length} {t.marketplace.resultsCount}
           </span>
         </div>
@@ -201,11 +201,11 @@ export const MarketplacePage: React.FC = () => {
 
           {/* Right Product Grid Column */}
           <section className="lg:col-span-9 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-              <h2 className="text-base sm:text-lg font-extrabold text-[#0c4b31]">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 gap-2 min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-[#0c4b31] truncate">
                 {categoryTitle}
               </h2>
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xs text-gray-500 font-medium shrink-0">
                 Showing {products.length} {t.marketplace.resultsCount}
               </span>
             </div>

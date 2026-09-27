@@ -233,24 +233,53 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
         className="relative bg-[#FBF5EA] bg-cover bg-center border-b border-[#dfcfb7]"
         style={{ backgroundImage: `url(${mktNavTexture})` }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-3 lg:gap-6 relative z-10">
-        {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 group" id="mkt-nav-brand">
-          <div className="w-9 h-9 rounded-xl bg-[#0c4b31] text-white flex items-center justify-center font-extrabold text-base shadow-sm group-hover:scale-105 transition-transform">
-            ✦
-          </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <span className="font-extrabold text-xl sm:text-2xl text-[#0b4830] tracking-tight">KarigarSetu</span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-[#e87722] text-white">
-                MARKET
-              </span>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-0 sm:h-18 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 lg:gap-6 relative z-10 w-full min-w-0">
+          {/* Top row on mobile: Logo + Mobile Triggers */}
+          <div className="flex items-center justify-between w-full sm:w-auto gap-2 min-w-0">
+            {/* Brand Logo */}
+            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group min-w-0" id="mkt-nav-brand">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#0c4b31] text-white flex items-center justify-center font-extrabold text-sm sm:text-base shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                ✦
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="font-extrabold text-lg sm:text-2xl text-[#0b4830] tracking-tight">KarigarSetu</span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] sm:text-[10px] font-extrabold bg-[#e87722] text-white shrink-0">
+                    MARKET
+                  </span>
+                </div>
+                <p className="text-[8px] sm:text-[9px] font-semibold text-[#64746d] -mt-0.5 tracking-wider uppercase truncate">
+                  Artisan Handcrafted
+                </p>
+              </div>
+            </Link>
+
+            {/* Mobile triggers (Cart + Hamburger): visible only on mobile (< sm) */}
+            <div className="flex sm:hidden items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleProtectedAction('/customer/cart', 'Please log in or create a customer account to view your cart.')}
+                className="p-1.5 rounded-lg text-[#0c4b31] relative"
+                aria-label={t.nav.shoppingCart}
+              >
+                <ShoppingBag className="w-5 h-5" />
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-[#e87722] text-white text-[9px] font-bold flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-1.5 rounded-lg text-[#0c4b31] hover:bg-gray-100"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </div>
-            <p className="text-[9px] font-semibold text-[#64746d] -mt-0.5 tracking-wider uppercase">
-              Artisan Handcrafted
-            </p>
           </div>
-        </Link>
 
         {/* Categories Dropdown */}
         <div className="relative hidden md:block shrink-0">
@@ -288,7 +317,7 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
         </div>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-xl relative">
+        <div className="w-full sm:flex-1 sm:max-w-xl relative min-w-0">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             id="marketplace-global-search"
@@ -519,8 +548,8 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
           )}
         </div>
 
-        {/* Mobile menu trigger */}
-        <div className="flex lg:hidden items-center gap-2">
+        {/* Tablet menu trigger (sm to lg) */}
+        <div className="hidden sm:flex lg:hidden items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => handleProtectedAction('/customer/cart', 'Please log in or create a customer account to view your cart.')}
