@@ -162,7 +162,8 @@ export const ArtisanDashboard: React.FC = () => {
   };
 
   const handleDelete = (product: ProductItem) => {
-    const confirm = window.confirm(`Are you sure you want to delete "${product.product_name}"?`);
+    const productName = product.product_name || (product as any).title || 'this craft listing';
+    const confirm = window.confirm(`Are you sure you want to delete "${productName}"?`);
     if (!confirm) return;
 
     const artisanId = artisan?.id || getCurrentArtisan()?.id;
@@ -171,14 +172,13 @@ export const ArtisanDashboard: React.FC = () => {
     fetch(deleteUrl, {
       method: 'DELETE',
       credentials: 'include',
-      headers: artisanId ? { 'X-Artisan-Id': String(artisanId) } : {},
     })
       .then(async (response) => {
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.success) throw new Error(result.message || 'Could not delete product.');
         setProducts((prev) => prev.filter((p) => p.id !== product.id));
         await loadData();
-        showToast(`"${product.product_name}" has been deleted.`);
+        showToast(`"${productName}" has been deleted.`);
       })
       .catch((error) => showToast(error instanceof Error ? error.message : 'Could not delete product.', 'error'));
   };
@@ -677,9 +677,13 @@ export const ArtisanDashboard: React.FC = () => {
 
                               <button
                                 type="button"
-                                onClick={() => handleDelete(product)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(product);
+                                }}
                                 className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors"
                                 title="Delete craft listing"
+                                aria-label={`Delete ${product.product_name}`}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
