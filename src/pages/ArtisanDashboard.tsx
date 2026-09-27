@@ -60,7 +60,10 @@ export const ArtisanDashboard: React.FC = () => {
       return; 
     }
     try {
-      const response = await fetch(`/api/products?artisan_id=${current.id}`, { credentials: 'include' });
+      const response = await fetch(`/api/products?artisan_id=${current.id}`, {
+        credentials: 'include',
+        headers: current?.id ? { 'X-Artisan-Id': String(current.id) } : {},
+      });
       const result = await response.json();
       setProducts(result.products || []);
     } catch (e) {
@@ -163,14 +166,22 @@ export const ArtisanDashboard: React.FC = () => {
     const confirm = window.confirm(`Are you sure you want to delete "${product.product_name}"?`);
     if (!confirm) return;
 
-    fetch(`/api/products/${product.id}`, { method: 'DELETE', credentials: 'include' })
-      .then(async response => {
+    const artisanId = artisan?.id || getCurrentArtisan()?.id;
+    const deleteUrl = artisanId ? `/api/products/${product.id}?artisan_id=${artisanId}` : `/api/products/${product.id}`;
+
+    fetch(deleteUrl, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: artisanId ? { 'X-Artisan-Id': String(artisanId) } : {},
+    })
+      .then(async (response) => {
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.success) throw new Error(result.message || 'Could not delete product.');
+        setProducts((prev) => prev.filter((p) => p.id !== product.id));
         await loadData();
         showToast(`"${product.product_name}" has been deleted.`);
       })
-      .catch(error => showToast(error instanceof Error ? error.message : 'Could not delete product.', 'error'));
+      .catch((error) => showToast(error instanceof Error ? error.message : 'Could not delete product.', 'error'));
   };
 
   const handleOpenQuoteModal = (req: any) => {
@@ -547,11 +558,21 @@ export const ArtisanDashboard: React.FC = () => {
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                 product.status === 'approved' 
                                   ? 'bg-emerald-100 text-emerald-800' 
+                                  : product.status === 'rejected'
+                                  ? 'bg-red-100 text-red-800'
                                   : product.status === 'pending_ai_check' || product.status === 'admin_review' || product.status === 'under_review'
                                   ? 'bg-amber-100 text-amber-800'
                                   : 'bg-gray-100 text-gray-700'
                               }`}>
-                                ● {product.status === 'approved' ? t.artisan.approvedFilter : t.artisan.reviewFilter}
+                                ● {
+                                  product.status === 'approved' 
+                                    ? t.artisan.approvedFilter 
+                                    : product.status === 'rejected'
+                                    ? t.artisan.rejectedBadge
+                                    : product.status === 'unpublished'
+                                    ? t.artisan.unpublishedFilter
+                                    : t.artisan.reviewFilter
+                                }
                               </span>
                               <span className="text-[11px] font-semibold text-gray-400">
                                 {product.category}
@@ -637,9 +658,23 @@ export const ArtisanDashboard: React.FC = () => {
                                 <span>{t.artisan.editStockPrice}</span>
                               </button>
 
-                              <span className="rounded-lg bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#0c4b31]">
-                                {product.status === 'approved' ? t.artisan.adminApprovedLive : t.artisan.awaitingAdminDecision}
-                              </span>
+                              {product.status === 'approved' ? (
+                                <span className="rounded-lg bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#0c4b31]">
+                                  {t.artisan.adminApprovedLive}
+                                </span>
+                              ) : product.status === 'rejected' ? (
+                                <span className="rounded-lg bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700">
+                                  {t.artisan.adminRejected}
+                                </span>
+                              ) : product.status === 'unpublished' ? (
+                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-600">
+                                  {t.artisan.unpublishedFilter}
+                                </span>
+                              ) : (
+                                <span className="rounded-lg bg-[#edf8f1] px-3 py-1.5 text-xs font-bold text-[#0c4b31]">
+                                  {t.artisan.awaitingAdminDecision}
+                                </span>
+                              )}
 
                               <button
                                 type="button"

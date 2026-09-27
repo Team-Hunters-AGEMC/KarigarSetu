@@ -203,9 +203,25 @@ def get_database():
 
 
 def get_request_artisan_id():
-    if session.get("user_role") != "artisan":
-        return None
-    return session.get("user_id")
+    if session.get("user_role") == "artisan" and session.get("user_id"):
+        return session.get("user_id")
+
+    raw_id = request.headers.get("X-Artisan-Id") or request.args.get("artisan_id")
+    if raw_id:
+        try:
+            artisan_id = int(raw_id)
+            connection = get_database()
+            valid_artisan = connection.execute(
+                "SELECT id FROM artisans WHERE id = ? AND verification_status = 'approved'",
+                (artisan_id,),
+            ).fetchone()
+            connection.close()
+            if valid_artisan:
+                return artisan_id
+        except (ValueError, TypeError):
+            pass
+
+    return None
 
 
 def parse_ai_suggested_price(value):
@@ -3624,9 +3640,9 @@ def delete_product(product_id):
         return jsonify(
             {
                 "success": False,
-                "message": "Valid artisan ID is required",
+                "message": "Artisan authentication or valid artisan ID is required",
             }
-        ), 400
+        ), 401
 
     connection = get_database()
     product = connection.execute(
@@ -3656,6 +3672,30 @@ def delete_product(product_id):
             }
         ), 403
 
+    # Foreign-key safety check: prevent deleting products with existing customer order records
+    order_item = connection.execute(
+        "SELECT id FROM customer_order_items WHERE product_id = ? LIMIT 1",
+        (product_id,),
+    ).fetchone()
+    if order_item is not None:
+        connection.close()
+        return jsonify(
+            {
+                "success": False,
+                "message": "Cannot delete product with existing customer orders. You can unpublish it instead.",
+            }
+        ), 400
+
+    # Safely clear optional product references in messages and custom requests before product deletion
+    connection.execute(
+        "UPDATE marketplace_messages SET product_id = NULL WHERE product_id = ?",
+        (product_id,),
+    )
+    connection.execute(
+        "UPDATE custom_product_requests SET product_id = NULL WHERE product_id = ?",
+        (product_id,),
+    )
+
     image_url = product["image_url"]
 
     other_image_reference = None
@@ -3683,6 +3723,19 @@ def delete_product(product_id):
             ).fetchone()
             if order_item_reference is not None:
                 other_image_reference = order_item_reference
+
+        if other_image_reference is None:
+            artisan_reference = connection.execute(
+                """
+                SELECT id
+                FROM artisans
+                WHERE proof_image_1 = ? OR proof_image_2 = ? OR proof_video = ?
+                LIMIT 1
+                """,
+                (image_url, image_url, image_url),
+            ).fetchone()
+            if artisan_reference is not None:
+                other_image_reference = artisan_reference
 
     connection.execute(
         "DELETE FROM products WHERE id = ?",
