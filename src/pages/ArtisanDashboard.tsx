@@ -62,7 +62,6 @@ export const ArtisanDashboard: React.FC = () => {
     try {
       const response = await fetch(`/api/products?artisan_id=${current.id}`, {
         credentials: 'include',
-        headers: current?.id ? { 'X-Artisan-Id': String(current.id) } : {},
       });
       const result = await response.json();
       setProducts(result.products || []);
