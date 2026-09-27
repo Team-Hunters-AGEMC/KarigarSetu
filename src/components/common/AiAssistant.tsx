@@ -242,12 +242,12 @@ export const AiAssistant: React.FC = () => {
     : t.aiAssistant.promptPills.customer;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans flex flex-col items-end">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end max-w-[calc(100vw-2rem)]">
       {/* Chat Panel / Drawer */}
       {isOpen && (
         <div
           ref={panelRef}
-          className="relative w-[92vw] sm:w-[410px] h-[610px] max-h-[86vh] rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(217,164,65,0.22)] border border-[#D9A441]/60 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200 bg-[#073C31]"
+          className="relative w-[calc(100vw-2rem)] sm:w-[410px] max-w-[410px] h-[610px] max-h-[86vh] rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(217,164,65,0.22)] border border-[#D9A441]/60 flex flex-col overflow-hidden mb-3 animate-in fade-in slide-in-from-bottom-5 duration-200 bg-[#073C31]"
         >
           {/* Handcrafted Emerald Atmosphere & Corner Foliage (Reference Match) */}
           <AiAssistantAtmosphere />
@@ -511,7 +511,7 @@ export const AiAssistant: React.FC = () => {
 
         {/* Hover Tooltip if closed */}
         {!isOpen && (
-          <span className="absolute right-18 bg-[#073c31] text-[#FFF4DE] text-xs font-bold px-3 py-1.5 rounded-xl shadow-xl border border-[#D9A441]/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <span className="hidden sm:inline-block absolute right-18 bg-[#073c31] text-[#FFF4DE] text-xs font-bold px-3 py-1.5 rounded-xl shadow-xl border border-[#D9A441]/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             KarigarSetu AI Assistant
           </span>
         )}

@@ -75,27 +75,27 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
             {/* Left Column: Vision & Utility */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e2ede4]/85 border border-[#bcdbc8]/80 text-[#133827] text-xs font-bold tracking-wide shadow-2xs">
-                <span className="text-emerald-700 font-extrabold">✓</span>
-                <span>{t.home.badge}</span>
+            <div className="lg:col-span-7 space-y-6 min-w-0">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e2ede4]/85 border border-[#bcdbc8]/80 text-[#133827] text-xs font-bold tracking-wide shadow-2xs max-w-full">
+                <span className="text-emerald-700 font-extrabold shrink-0">✓</span>
+                <span className="truncate">{t.home.badge}</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#133827] tracking-tight leading-[1.08]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#133827] tracking-tight leading-[1.1] break-words">
                 {t.home.heroLine1}
                 <span className="block text-[#be531c]">{t.home.heroLine2}</span>
               </h1>
 
-              <p className="text-base sm:text-lg text-[#3f5247] max-w-2xl leading-relaxed">
+              <p className="text-base sm:text-lg text-[#3f5247] max-w-2xl leading-relaxed break-words">
                 {t.home.heroIntro}
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3.5 pt-2">
                 <Link
                   to="/artisan/register"
                   id="hero-join-artisan-btn"
-                  className="px-6 py-3.5 rounded-xl bg-[#133827] hover:bg-[#0c261a] text-white font-bold text-sm sm:text-base shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                  className="px-6 py-3.5 rounded-xl bg-[#133827] hover:bg-[#0c261a] text-white font-bold text-sm sm:text-base shadow-md hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
                 >
                   <span>{t.home.joinAsArtisan}</span>
                   <ChevronRight className="w-4 h-4 text-[#ffd186]" />
@@ -104,40 +104,40 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                 <Link
                   to="/marketplace"
                   id="hero-explore-marketplace-btn"
-                  className="px-6 py-3.5 rounded-xl bg-[#fbf7ee]/90 hover:bg-[#f5eedf] text-[#133827] border border-[#d6caba] font-bold text-sm sm:text-base hover:-translate-y-0.5 transition-all shadow-xs"
+                  className="px-6 py-3.5 rounded-xl bg-[#fbf7ee]/90 hover:bg-[#f5eedf] text-[#133827] border border-[#d6caba] font-bold text-sm sm:text-base hover:-translate-y-0.5 transition-all shadow-xs flex items-center justify-center"
                 >
                   {t.home.exploreMarketplace}
                 </Link>
               </div>
 
               {/* Capability Badges */}
-              <div className="pt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-[#3d5145]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px]">✓</span>
-                  <span>{t.home.voiceListingBadge}</span>
+              <div className="pt-3 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold text-[#3d5145]">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px] shrink-0">✓</span>
+                  <span className="break-words">{t.home.voiceListingBadge}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px]">✓</span>
-                  <span>{t.home.fairWageBadge}</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px] shrink-0">✓</span>
+                  <span className="break-words">{t.home.fairWageBadge}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px]">✓</span>
-                  <span>{t.home.screeningBadge}</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-4 h-4 rounded-full bg-[#d6e7dc] text-[#133827] flex items-center justify-center font-bold text-[10px] shrink-0">✓</span>
+                  <span className="break-words">{t.home.screeningBadge}</span>
                 </div>
               </div>
             </div>
 
             {/* Right Column: Interactive Live Smart Catalog Preview Card */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md bg-[#fffaf2]/95 backdrop-blur-xs rounded-2xl p-5 border border-[#e8dfd1] shadow-xl hover:shadow-2xl transition-all duration-300">
+            <div className="lg:col-span-5 w-full min-w-0">
+              <div className="relative mx-auto max-w-md w-full bg-[#fffaf2]/95 backdrop-blur-xs rounded-2xl p-4 sm:p-5 border border-[#e8dfd1] shadow-xl hover:shadow-2xl transition-all duration-300">
                 
                 {/* Header of Preview Card */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#ebdcca]">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-xs font-bold text-[#133827]">{t.home.livePreview}</span>
+                <div className="flex items-center justify-between pb-3 border-b border-[#ebdcca] gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span className="text-xs font-bold text-[#133827] truncate">{t.home.livePreview}</span>
                   </div>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fcead2] text-[#b85b14]">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fcead2] text-[#b85b14] shrink-0">
                     GI Tagged • Bankura
                   </span>
                 </div>
@@ -172,33 +172,33 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
                   </p>
 
                   {/* Pricing Breakdown preview */}
-                  <div className="p-2.5 rounded-xl bg-[#f4ede2]/70 border border-[#dfd5c5] flex items-center justify-between text-xs">
-                    <div>
-                      <p className="text-[10px] text-gray-500 font-medium">{t.productDetails.finalFairPrice}</p>
+                  <div className="p-2.5 rounded-xl bg-[#f4ede2]/70 border border-[#dfd5c5] flex items-center justify-between text-xs gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-gray-500 font-medium truncate">{t.productDetails.finalFairPrice}</p>
                       <strong className="text-base font-extrabold text-[#133827]">₹1,450</strong>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-gray-500">{t.productDetails.artisanLabour}</p>
-                      <span className="font-bold text-emerald-800">₹650 (Direct to artisan)</span>
+                    <div className="text-right min-w-0">
+                      <p className="text-[10px] text-gray-500 truncate">{t.productDetails.artisanLabour}</p>
+                      <span className="font-bold text-emerald-800 text-[11px] sm:text-xs">₹650 (Direct to artisan)</span>
                     </div>
                   </div>
 
                   {/* Interactive Voice Demo in Hero */}
                   <div className="pt-2 border-t border-[#ebdcca]">
                     <p className="text-[11px] font-bold text-gray-600 mb-1.5 flex items-center gap-1">
-                      <Mic className="w-3.5 h-3.5 text-[#be531c]" />
+                      <Mic className="w-3.5 h-3.5 text-[#be531c] shrink-0" />
                       Voice Input Test:
                     </p>
                     <button
                       type="button"
                       id="simulate-bengali-voice-btn"
                       onClick={() => handleSimulateVoiceInput('বাঁকুড়ার পঞ্চমুড়ার মাটির ঘোড়া, সম্পূর্ণ হাতে গড়া ও কাঠের আগুনে পোড়ানো।')}
-                      className="w-full text-left p-2 rounded-lg bg-[#fbf4ea] hover:bg-[#f4e8d8] border border-[#e8d5be] text-[11px] font-medium text-[#7d410f] transition-colors flex items-center justify-between cursor-pointer"
+                      className="w-full text-left p-2 rounded-lg bg-[#fbf4ea] hover:bg-[#f4e8d8] border border-[#e8d5be] text-[11px] font-medium text-[#7d410f] transition-colors flex items-center justify-between gap-2 cursor-pointer min-w-0"
                     >
-                      <span className="truncate italic">
+                      <span className="truncate italic min-w-0 flex-1">
                         {voiceTranscriptDemo || '🎙️ "বাঁকুড়ার মাটির ঘোড়া, ১৮ দিন সময় লেগেছে তৈরি করতে..."'}
                       </span>
-                      <span className="text-[10px] font-bold shrink-0 text-[#be531c] ml-2">
+                      <span className="text-[10px] font-bold shrink-0 text-[#be531c]">
                         {voiceTesting ? 'Processing...' : '▶ Test Voice'}
                       </span>
                     </button>
@@ -212,23 +212,23 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
       </section>
 
       {/* Impact & Welfare Stats Ribbon */}
-      <section className="bg-[#133827] text-white py-8 px-4 border-t border-[#1c4d36]">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div className="space-y-1">
-            <strong className="text-2xl sm:text-3xl font-extrabold text-[#ffd186]">1,420+</strong>
-            <p className="text-xs text-[#cfe4d7]">Artisans Digitized</p>
+      <section className="bg-[#133827] text-white py-8 px-4 border-t border-[#1c4d36] w-full max-w-full">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
+          <div className="space-y-1 min-w-0">
+            <strong className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#ffd186] block truncate">1,420+</strong>
+            <p className="text-xs text-[#cfe4d7] truncate">Artisans Digitized</p>
           </div>
-          <div className="space-y-1">
-            <strong className="text-2xl sm:text-3xl font-extrabold text-[#ffd186]">₹42,80,000</strong>
-            <p className="text-xs text-[#cfe4d7]">Living Wages Delivered</p>
+          <div className="space-y-1 min-w-0">
+            <strong className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#ffd186] block truncate">₹42,80,000</strong>
+            <p className="text-xs text-[#cfe4d7] truncate">Living Wages Delivered</p>
           </div>
-          <div className="space-y-1">
-            <strong className="text-2xl sm:text-3xl font-extrabold text-[#ffd186]">98.4%</strong>
-            <p className="text-xs text-[#cfe4d7]">Authenticity Assurance</p>
+          <div className="space-y-1 min-w-0">
+            <strong className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#ffd186] block truncate">98.4%</strong>
+            <p className="text-xs text-[#cfe4d7] truncate">Authenticity Assurance</p>
           </div>
-          <div className="space-y-1">
-            <strong className="text-2xl sm:text-3xl font-extrabold text-[#ffd186]">0%</strong>
-            <p className="text-xs text-[#cfe4d7]">Middleman Extraction</p>
+          <div className="space-y-1 min-w-0">
+            <strong className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#ffd186] block truncate">0%</strong>
+            <p className="text-xs text-[#cfe4d7] truncate">Middleman Extraction</p>
           </div>
         </div>
       </section>
@@ -312,7 +312,7 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none max-w-full min-w-0">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -561,9 +561,9 @@ export const Home: React.FC<{ currentLang?: SupportedLanguage }> = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto pt-8 mt-8 border-t border-[#0f4d33] flex flex-col sm:flex-row items-center justify-between text-xs text-[#80a594]">
-          <p>© 2026 KarigarSetu AI. Built for the artisans of India.</p>
-          <div className="flex gap-4 mt-2 sm:mt-0">
+        <div className="max-w-7xl mx-auto pt-8 mt-8 border-t border-[#0f4d33] flex flex-col sm:flex-row items-center justify-between text-xs text-[#80a594] gap-2">
+          <p className="text-center sm:text-left">© 2026 KarigarSetu AI. Built for the artisans of India.</p>
+          <div className="flex flex-wrap justify-center sm:justify-end gap-x-4 gap-y-1 mt-2 sm:mt-0">
             <span>Privacy</span>
             <span>Terms of Living Wage</span>
             <span>GI Verification</span>

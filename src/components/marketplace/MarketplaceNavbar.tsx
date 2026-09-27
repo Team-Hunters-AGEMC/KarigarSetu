@@ -189,19 +189,20 @@ export const MarketplaceNavbar: React.FC<MarketplaceNavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-[#FBF5EA] shadow-xs">
       {/* Top micro ribbon */}
-      <div className="bg-[#0b4830] text-[#e3f4ea] text-[11px] py-1 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[#f9bc60] font-bold flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> KarigarSetu Verified Marketplace
+      <div className="bg-[#0b4830] text-[#e3f4ea] text-[11px] py-1 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <span className="text-[#f9bc60] font-bold flex items-center gap-1 truncate">
+              <Sparkles className="w-3 h-3 shrink-0" />
+              <span className="truncate">KarigarSetu<span className="hidden xs:inline"> Marketplace</span></span>
             </span>
             <span className="hidden sm:inline text-emerald-300">|</span>
-            <span className="hidden sm:inline text-[#d5e7dd]">
+            <span className="hidden sm:inline text-[#d5e7dd] truncate">
               {t.nav.marketTagline}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Global Language Selector */}
             <LanguageSelector id="mkt-ribbon-language-select" />
 

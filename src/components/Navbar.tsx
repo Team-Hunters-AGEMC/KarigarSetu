@@ -86,25 +86,26 @@ export const Navbar: React.FC<NavbarProps> = () => {
   return (
     <header className="sticky top-0 z-50 bg-[#fcfaf6]/95 backdrop-blur-md border-b border-[#e2eae4]">
       {/* Utility top ribbon */}
-      <div className="bg-[#0b4830] text-[#e3f4ea] text-xs py-1.5 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 font-semibold text-[#f9bc60]">
-              <Sparkles className="w-3.5 h-3.5" /> KarigarSetu Handmade
+      <div className="bg-[#0b4830] text-[#e3f4ea] text-xs py-1.5 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <span className="inline-flex items-center gap-1 font-semibold text-[#f9bc60] text-[11px] sm:text-xs truncate">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">KarigarSetu<span className="hidden xs:inline"> Handmade</span></span>
             </span>
             <span className="hidden sm:inline text-[#a9c9b9]">|</span>
-            <span className="hidden sm:inline text-[#d5e7dd]">
+            <span className="hidden sm:inline text-[#d5e7dd] truncate">
               {t.nav.tagline}
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-medium">
+          <div className="flex items-center gap-2 sm:gap-4 text-xs font-medium shrink-0">
             {/* Global Language Selector */}
             <LanguageSelector id="navbar-language-select" />
 
-            {/* Customer Status in Ribbon (if logged in) */}
+            {/* Customer Status in Ribbon (hidden on mobile to prevent overflow; available in mobile drawer) */}
             {customer && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#10422c] border border-emerald-700/50 text-[#e6f3eb]">
+              <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#10422c] border border-emerald-700/50 text-[#e6f3eb]">
                 <User className="w-3 h-3 text-[#f9bc60]" />
                 <span className="truncate max-w-[100px]">{t.nav.buyer}: <strong className="text-white">{customer.name.split(' ')[0]}</strong></span>
                 <Link
@@ -128,8 +129,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </div>
             )}
 
-            {/* Quick Persona Switcher & Artisan Status */}
-            <div className="relative">
+            {/* Quick Persona Switcher & Artisan Status (desktop/tablet) */}
+            <div className="relative hidden sm:block">
               <button
                 id="artisan-persona-btn"
                 type="button"
@@ -138,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 title="Switch active demo persona or log out"
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${artisan ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                <span>
+                <span className="truncate max-w-[140px]">
                   {t.nav.artisan}: <strong className="text-white font-semibold">{artisan ? artisan.name.split(' ')[0] : `(${t.nav.signedOut})`}</strong>
                 </span>
                 <ChevronDown className="w-3 h-3 text-[#d2e4db]" />
@@ -204,13 +205,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </div>
 
       {/* Main navigation header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand & Logo */}
-        <Link to="/" className="group shrink-0" id="navbar-brand-link" aria-label="KarigarSetu home">
+        <Link to="/" className="group min-w-0 flex items-center shrink" id="navbar-brand-link" aria-label="KarigarSetu home">
           <img
             src={karigarSetuLogo}
             alt="KarigarSetu — Handmade Crafts, Direct from Artisans"
-            className="h-16 sm:h-[68px] lg:h-[76px] w-auto max-w-[320px] sm:max-w-[420px] lg:max-w-[500px] object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+            className="h-11 sm:h-16 lg:h-[72px] w-auto max-w-full object-contain transition-transform duration-200 group-hover:scale-[1.01]"
           />
         </Link>
 
@@ -398,12 +399,20 @@ export const Navbar: React.FC<NavbarProps> = () => {
             {/* Customer actions are available only on the public home page. */}
             {isHomePage && (customer ? (
               <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-amber-900 flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-amber-700" />
-                    <span>{t.nav.buyer}: {customer.name}</span>
+                <div className="min-w-0 pr-2">
+                  <p className="text-xs font-bold text-amber-900 flex items-center gap-1 truncate">
+                    <User className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                    <span className="truncate">{t.nav.buyer}: {customer.name}</span>
                   </p>
-                  <p className="text-[10px] text-amber-700">{customer.email || customer.mobile}</p>
+                  <p className="text-[10px] text-amber-700 truncate">{customer.email || customer.mobile}</p>
+                  <Link
+                    to="/customer/messages"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-[#0c4b31] font-bold text-[11px] flex items-center gap-1 mt-1 hover:underline"
+                  >
+                    <MessageSquare className="w-3 h-3 text-[#e27d35]" />
+                    <span>{t.nav.messages}</span>
+                  </Link>
                 </div>
                 <button
                   type="button"
@@ -412,7 +421,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     handleCustomerLogout();
                     setMobileMenuOpen(false);
                   }}
-                  className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                 >
                   <LogOut className="w-3 h-3" />
                   <span>{t.nav.customerLogout || t.nav.artisanLogout}</span>
@@ -442,12 +451,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
             {/* Artisan Section */}
             {artisan ? (
               <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-emerald-950 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>{t.nav.artisan}: {artisan.name}</span>
+                <div className="min-w-0 pr-2">
+                  <p className="text-xs font-bold text-emerald-950 flex items-center gap-1 truncate">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="truncate">{t.nav.artisan}: {artisan.name}</span>
                   </p>
-                  <p className="text-[10px] text-emerald-700">{artisan.craftType} • {artisan.location.split(',')[0]}</p>
+                  <p className="text-[10px] text-emerald-700 truncate">{artisan.craftType} • {artisan.location.split(',')[0]}</p>
                 </div>
                 <button
                   type="button"
@@ -456,7 +465,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     handleArtisanLogout();
                     setMobileMenuOpen(false);
                   }}
-                  className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                 >
                   <LogOut className="w-3 h-3" />
                   <span>{t.nav.artisanLogout}</span>
@@ -474,6 +483,36 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 </Link>
               </div>
             )}
+
+            {/* Quick Demo Persona Switcher for Mobile */}
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 px-1">
+                Switch Demo Artisan
+              </p>
+              <div className="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto">
+                {artisans.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      selectArtisan(item);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 text-xs transition-colors cursor-pointer ${
+                      artisan?.id === item.id ? 'bg-[#edf8f2] text-[#0b4830] font-bold' : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <img 
+                      src={item.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=50'} 
+                      alt={item.name} 
+                      className="w-6 h-6 rounded-full object-cover border border-emerald-200"
+                    />
+                    <span className="truncate flex-1 font-medium">{item.name} ({item.craftType})</span>
+                    {artisan?.id === item.id && <span className="text-[10px] text-emerald-700 font-bold shrink-0">Active</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

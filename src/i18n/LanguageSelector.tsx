@@ -10,8 +10,8 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
-  className = 'flex items-center gap-1.5 text-[#e6f3eb]',
-  selectClassName = 'bg-transparent text-xs text-white border-none outline-none cursor-pointer pr-1 font-medium',
+  className = 'flex items-center gap-1.5 text-[#e6f3eb] shrink-0',
+  selectClassName = 'bg-transparent text-xs text-white border-none outline-none cursor-pointer pr-1 font-medium max-w-[125px] sm:max-w-none truncate',
   id = 'language-select',
 }) => {
   const { language, setLanguage } = useLanguage();

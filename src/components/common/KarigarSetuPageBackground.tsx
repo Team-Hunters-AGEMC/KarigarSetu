@@ -19,7 +19,7 @@ export const KarigarSetuPageBackground: React.FC<KarigarSetuPageBackgroundProps>
   className = '',
 }) => {
   return (
-    <div className={`relative min-h-screen ${className}`}>
+    <div className={`relative min-h-screen w-full max-w-full ${className}`}>
       {/* Background Layer at z-0 */}
       <div
         className="fixed inset-0 z-0 pointer-events-none bg-[#F8F2E8] bg-cover bg-center bg-no-repeat"
@@ -28,7 +28,7 @@ export const KarigarSetuPageBackground: React.FC<KarigarSetuPageBackgroundProps>
       />
 
       {/* Page Content Layer at relative z-10 */}
-      <div className="relative z-10 min-h-screen flex flex-col">
+      <div className="relative z-10 min-h-screen w-full max-w-full flex flex-col min-w-0">
         {children}
       </div>
     </div>
